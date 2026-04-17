@@ -7,9 +7,7 @@ const nextConfig = {
       { protocol: 'https', hostname: 'lh3.googleusercontent.com' },
     ],
   },
-  experimental: {
-    serverActions: { allowedOrigins: ['localhost:3000'] },
-  },
+  // Server Actions are stable in Next.js 15+, no experimental needed
 };
 
 module.exports = nextConfig;

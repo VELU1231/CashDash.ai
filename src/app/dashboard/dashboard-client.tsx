@@ -4,17 +4,17 @@ import { useMemo } from 'react';
 import { motion } from 'framer-motion';
 import {
   AreaChart, Area, BarChart, Bar, PieChart, Pie, Cell,
-  XAxis, YAxis, CartesianGrid, Tooltip, Legend,
+  XAxis, YAxis, CartesianGrid, Tooltip,
   ResponsiveContainer
 } from 'recharts';
 import {
   TrendingUp, TrendingDown, Wallet, ArrowLeftRight,
-  Brain, DollarSign, ArrowUpRight, ArrowDownRight,
+  Brain, ArrowUpRight, ArrowDownRight,
   Plus, Target, Sparkles, AlertCircle
 } from 'lucide-react';
 import Link from 'next/link';
 import { format, parseISO } from 'date-fns';
-import { formatCurrency, getChartColor, CHART_COLORS, formatPercent, formatRelativeDate } from '@/lib/utils';
+import { formatCurrency, getChartColor, formatRelativeDate } from '@/lib/utils';
 import type { Profile, Transaction, Account } from '@/types';
 
 interface Props {
@@ -28,6 +28,39 @@ interface Props {
 
 const fadeUp = { initial: { opacity: 0, y: 20 }, animate: { opacity: 1, y: 0 } };
 
+// Shared tooltip component for Recharts
+function ChartTooltip({
+  active, payload, label, currency,
+}: {
+  active?: boolean;
+  payload?: { color: string; name: string; value: number }[];
+  label?: string;
+  currency: string;
+}) {
+  if (!active || !payload?.length) return null;
+  return (
+    <div className="rounded-xl border border-border bg-card p-3 shadow-lg text-xs">
+      <p className="font-semibold text-foreground mb-2">{label}</p>
+      {payload.map((p) => (
+        <div key={p.name} className="flex items-center gap-2 text-muted-foreground">
+          <span className="w-2 h-2 rounded-full" style={{ background: p.color }} />
+          <span>{p.name}:</span>
+          <span className="font-medium text-foreground">{formatCurrency(p.value, currency)}</span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function EmptyChart({ message }: { message: string }) {
+  return (
+    <div className="flex flex-col items-center justify-center h-40 text-center">
+      <AlertCircle className="w-8 h-8 text-muted-foreground/40 mb-2" />
+      <p className="text-xs text-muted-foreground">{message}</p>
+    </div>
+  );
+}
+
 export function DashboardClient({ transactions, prevTransactions, accounts, trendData, profile, currentMonth }: Props) {
   const currency = profile?.default_currency || 'USD';
 
@@ -38,13 +71,10 @@ export function DashboardClient({ transactions, prevTransactions, accounts, tren
     const expenses = transactions.filter(t => t.type === 'expense').reduce((s, t) => s + t.amount, 0);
     const prevIncome = prevTransactions.filter(t => t.type === 'income').reduce((s, t) => s + t.amount, 0);
     const prevExpenses = prevTransactions.filter(t => t.type === 'expense').reduce((s, t) => s + t.amount, 0);
-
     const totalBalance = accounts.reduce((s, a) => s + a.balance, 0);
     const savingsRate = income > 0 ? Math.round((income - expenses) / income * 100) : 0;
-
     const incomePct = prevIncome > 0 ? ((income - prevIncome) / prevIncome) * 100 : 0;
     const expensePct = prevExpenses > 0 ? ((expenses - prevExpenses) / prevExpenses) * 100 : 0;
-
     return { income, expenses, totalBalance, savingsRate, incomePct, expensePct, net: income - expenses };
   }, [transactions, prevTransactions, accounts]);
 
@@ -78,11 +108,7 @@ export function DashboardClient({ transactions, prevTransactions, accounts, tren
     trendData.forEach(tx => {
       const key = tx.transaction_date.slice(0, 7);
       if (!monthly[key]) {
-        monthly[key] = {
-          month: key,
-          label: format(parseISO(`${key}-01`), 'MMM'),
-          income: 0, expenses: 0
-        };
+        monthly[key] = { month: key, label: format(parseISO(`${key}-01`), 'MMM'), income: 0, expenses: 0 };
       }
       if (tx.type === 'income') monthly[key].income += tx.amount;
       if (tx.type === 'expense') monthly[key].expenses += tx.amount;
@@ -90,7 +116,8 @@ export function DashboardClient({ transactions, prevTransactions, accounts, tren
     return Object.values(monthly).sort((a, b) => a.month.localeCompare(b.month));
   }, [trendData]);
 
-  // ─── Daily spending last 30 days ──────────────────────────────────────────
+  // ─── Daily Spending ───────────────────────────────────────────────────────
+
   const dailyData = useMemo(() => {
     const daily: Record<string, number> = {};
     transactions.filter(t => t.type === 'expense').forEach(t => {
@@ -99,30 +126,15 @@ export function DashboardClient({ transactions, prevTransactions, accounts, tren
     });
     return Object.entries(daily)
       .sort(([a], [b]) => a.localeCompare(b))
-      .map(([date, amount]) => ({
-        date: format(parseISO(date), 'MMM d'),
-        amount,
-      }));
+      .map(([date, amount]) => ({ date: format(parseISO(date), 'MMM d'), amount }));
   }, [transactions]);
 
-  // ─── Recent transactions ──────────────────────────────────────────────────
   const recentTransactions = transactions.slice(0, 8);
 
-  const CustomTooltip = ({ active, payload, label }: { active?: boolean; payload?: { color: string; name: string; value: number }[]; label?: string }) => {
-    if (!active || !payload?.length) return null;
-    return (
-      <div className="rounded-xl border border-border bg-card p-3 shadow-lg text-xs">
-        <p className="font-semibold text-foreground mb-2">{label}</p>
-        {payload.map((p) => (
-          <div key={p.name} className="flex items-center gap-2 text-muted-foreground">
-            <span className="w-2 h-2 rounded-full" style={{ background: p.color }} />
-            <span>{p.name}:</span>
-            <span className="font-medium text-foreground">{formatCurrency(p.value, currency)}</span>
-          </div>
-        ))}
-      </div>
-    );
-  };
+  // Curry the tooltip to inject currency without breaking Recharts' prop passing
+  const renderTooltip = (props: any) => (
+    <ChartTooltip {...props} currency={currency} />
+  );
 
   return (
     <div className="space-y-6">
@@ -168,61 +180,22 @@ export function DashboardClient({ transactions, prevTransactions, accounts, tren
         variants={{ animate: { transition: { staggerChildren: 0.08 } } }}
       >
         {[
-          {
-            label: 'Total Balance',
-            value: formatCurrency(stats.totalBalance, currency),
-            icon: Wallet,
-            color: 'text-emerald-600',
-            bg: 'bg-emerald-50 dark:bg-emerald-950/50',
-            change: null,
-            sub: `${accounts.length} accounts`,
-          },
-          {
-            label: 'Monthly Income',
-            value: formatCurrency(stats.income, currency),
-            icon: TrendingUp,
-            color: 'text-blue-600',
-            bg: 'bg-blue-50 dark:bg-blue-950/50',
-            change: stats.incomePct,
-            sub: 'vs last month',
-          },
-          {
-            label: 'Monthly Expenses',
-            value: formatCurrency(stats.expenses, currency),
-            icon: TrendingDown,
-            color: 'text-red-600',
-            bg: 'bg-red-50 dark:bg-red-950/50',
-            change: stats.expensePct,
-            sub: 'vs last month',
-            invertChange: true,
-          },
-          {
-            label: 'Savings Rate',
-            value: `${Math.max(0, stats.savingsRate)}%`,
-            icon: Target,
-            color: 'text-purple-600',
-            bg: 'bg-purple-50 dark:bg-purple-950/50',
-            change: null,
-            sub: formatCurrency(stats.net, currency) + ' net',
-          },
+          { label: 'Total Balance', value: formatCurrency(stats.totalBalance, currency), icon: Wallet, color: 'text-emerald-600', bg: 'bg-emerald-50 dark:bg-emerald-950/50', change: null, sub: `${accounts.length} accounts` },
+          { label: 'Monthly Income', value: formatCurrency(stats.income, currency), icon: TrendingUp, color: 'text-blue-600', bg: 'bg-blue-50 dark:bg-blue-950/50', change: stats.incomePct, sub: 'vs last month' },
+          { label: 'Monthly Expenses', value: formatCurrency(stats.expenses, currency), icon: TrendingDown, color: 'text-red-600', bg: 'bg-red-50 dark:bg-red-950/50', change: stats.expensePct, sub: 'vs last month', invertChange: true },
+          { label: 'Savings Rate', value: `${Math.max(0, stats.savingsRate)}%`, icon: Target, color: 'text-purple-600', bg: 'bg-purple-50 dark:bg-purple-950/50', change: null, sub: formatCurrency(stats.net, currency) + ' net' },
         ].map((stat) => {
           const Icon = stat.icon;
           const isPositive = stat.invertChange ? (stat.change ?? 0) < 0 : (stat.change ?? 0) >= 0;
           return (
-            <motion.div
-              key={stat.label}
-              variants={fadeUp}
-              className="stat-card"
-            >
+            <motion.div key={stat.label} variants={fadeUp} className="stat-card">
               <div className="flex items-start justify-between mb-3">
                 <div className={`p-2 rounded-lg ${stat.bg}`}>
                   <Icon className={`w-4 h-4 ${stat.color}`} />
                 </div>
                 {stat.change !== null && (
                   <span className={`inline-flex items-center gap-0.5 text-xs font-medium ${isPositive ? 'text-emerald-600' : 'text-red-500'}`}>
-                    {isPositive
-                      ? <ArrowUpRight className="w-3 h-3" />
-                      : <ArrowDownRight className="w-3 h-3" />}
+                    {isPositive ? <ArrowUpRight className="w-3 h-3" /> : <ArrowDownRight className="w-3 h-3" />}
                     {Math.abs(stat.change).toFixed(1)}%
                   </span>
                 )}
@@ -238,12 +211,10 @@ export function DashboardClient({ transactions, prevTransactions, accounts, tren
       {/* ─── Charts Row ─── */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
 
-        {/* Income vs Expenses Trend (2/3 width) */}
+        {/* Income vs Expenses Trend */}
         <motion.div
           className="lg:col-span-2 rounded-xl border border-border bg-card p-5 shadow-soft"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.3 }}
+          initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}
         >
           <div className="flex items-center justify-between mb-4">
             <div>
@@ -251,12 +222,8 @@ export function DashboardClient({ transactions, prevTransactions, accounts, tren
               <p className="text-xs text-muted-foreground">6-month trend</p>
             </div>
             <div className="flex items-center gap-4 text-xs">
-              <span className="flex items-center gap-1.5 text-muted-foreground">
-                <span className="w-2.5 h-2.5 rounded-full bg-emerald-500" />Income
-              </span>
-              <span className="flex items-center gap-1.5 text-muted-foreground">
-                <span className="w-2.5 h-2.5 rounded-full bg-red-400" />Expenses
-              </span>
+              <span className="flex items-center gap-1.5 text-muted-foreground"><span className="w-2.5 h-2.5 rounded-full bg-emerald-500" />Income</span>
+              <span className="flex items-center gap-1.5 text-muted-foreground"><span className="w-2.5 h-2.5 rounded-full bg-red-400" />Expenses</span>
             </div>
           </div>
           {trendChartData.length > 0 ? (
@@ -275,8 +242,8 @@ export function DashboardClient({ transactions, prevTransactions, accounts, tren
                 <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                 <XAxis dataKey="label" tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }} axisLine={false} tickLine={false} />
                 <YAxis tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }} axisLine={false} tickLine={false}
-                  tickFormatter={(v) => formatCurrency(v, currency, { compact: true })} />
-                <Tooltip content={<CustomTooltip />} />
+                  tickFormatter={(v: number) => formatCurrency(v, currency, { compact: true })} />
+                <Tooltip content={renderTooltip} />
                 <Area type="monotone" dataKey="income" name="Income" stroke="#10b981" strokeWidth={2} fill="url(#incomeGrad)" dot={{ r: 3, fill: '#10b981' }} />
                 <Area type="monotone" dataKey="expenses" name="Expenses" stroke="#f87171" strokeWidth={2} fill="url(#expenseGrad)" dot={{ r: 3, fill: '#f87171' }} />
               </AreaChart>
@@ -286,12 +253,10 @@ export function DashboardClient({ transactions, prevTransactions, accounts, tren
           )}
         </motion.div>
 
-        {/* Category Pie (1/3 width) */}
+        {/* Category Pie */}
         <motion.div
           className="rounded-xl border border-border bg-card p-5 shadow-soft"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.4 }}
+          initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }}
         >
           <div className="mb-4">
             <h3 className="font-semibold text-sm">Spending by Category</h3>
@@ -301,18 +266,8 @@ export function DashboardClient({ transactions, prevTransactions, accounts, tren
             <>
               <ResponsiveContainer width="100%" height={160}>
                 <PieChart>
-                  <Pie
-                    data={categoryData}
-                    cx="50%"
-                    cy="50%"
-                    innerRadius={45}
-                    outerRadius={70}
-                    dataKey="total"
-                    paddingAngle={2}
-                  >
-                    {categoryData.map((entry, i) => (
-                      <Cell key={i} fill={entry.fill} />
-                    ))}
+                  <Pie data={categoryData} cx="50%" cy="50%" innerRadius={45} outerRadius={70} dataKey="total" paddingAngle={2}>
+                    {categoryData.map((entry, i) => <Cell key={i} fill={entry.fill} />)}
                   </Pie>
                   <Tooltip
                     formatter={(value: number) => [formatCurrency(value, currency), '']}
@@ -353,9 +308,7 @@ export function DashboardClient({ transactions, prevTransactions, accounts, tren
       {dailyData.length > 0 && (
         <motion.div
           className="rounded-xl border border-border bg-card p-5 shadow-soft"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.5 }}
+          initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 }}
         >
           <div className="mb-4">
             <h3 className="font-semibold text-sm">Daily Spending</h3>
@@ -366,24 +319,24 @@ export function DashboardClient({ transactions, prevTransactions, accounts, tren
               <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
               <XAxis dataKey="date" tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} axisLine={false} tickLine={false} />
               <YAxis tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} axisLine={false} tickLine={false}
-                tickFormatter={(v) => formatCurrency(v, currency, { compact: true })} />
-              <Tooltip formatter={(v: number) => [formatCurrency(v, currency), 'Spent']}
-                contentStyle={{ borderRadius: '12px', border: '1px solid hsl(var(--border))' }} />
+                tickFormatter={(v: number) => formatCurrency(v, currency, { compact: true })} />
+              <Tooltip
+                formatter={(v: number) => [formatCurrency(v, currency), 'Spent']}
+                contentStyle={{ borderRadius: '12px', border: '1px solid hsl(var(--border))' }}
+              />
               <Bar dataKey="amount" fill="#10b981" radius={[4, 4, 0, 0]} maxBarSize={32} />
             </BarChart>
           </ResponsiveContainer>
         </motion.div>
       )}
 
-      {/* ─── Bottom Row: Accounts + Recent Transactions ─── */}
+      {/* ─── Bottom Row ─── */}
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-4">
 
         {/* Account Balances */}
         <motion.div
           className="lg:col-span-2 rounded-xl border border-border bg-card p-5 shadow-soft"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.55 }}
+          initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.55 }}
         >
           <div className="flex items-center justify-between mb-4">
             <h3 className="font-semibold text-sm">Accounts</h3>
@@ -397,10 +350,7 @@ export function DashboardClient({ transactions, prevTransactions, accounts, tren
                   className="flex items-center gap-3 p-2.5 rounded-lg hover:bg-muted/50 transition-colors"
                   whileHover={{ x: 2 }}
                 >
-                  <div
-                    className="w-8 h-8 rounded-lg flex items-center justify-center text-sm shrink-0"
-                    style={{ background: `${account.color}20` }}
-                  >
+                  <div className="w-8 h-8 rounded-lg flex items-center justify-center text-sm shrink-0" style={{ background: `${account.color}20` }}>
                     {account.icon}
                   </div>
                   <div className="flex-1 min-w-0">
@@ -425,9 +375,7 @@ export function DashboardClient({ transactions, prevTransactions, accounts, tren
         {/* Recent Transactions */}
         <motion.div
           className="lg:col-span-3 rounded-xl border border-border bg-card p-5 shadow-soft"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.6 }}
+          initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.6 }}
         >
           <div className="flex items-center justify-between mb-4">
             <h3 className="font-semibold text-sm">Recent Transactions</h3>
@@ -451,9 +399,7 @@ export function DashboardClient({ transactions, prevTransactions, accounts, tren
                     <div className="text-sm font-medium truncate">{tx.description || tx.category?.name || 'Transaction'}</div>
                     <div className="text-xs text-muted-foreground">{formatRelativeDate(tx.transaction_date)}</div>
                   </div>
-                  <div className={`text-sm font-semibold shrink-0 ${
-                    tx.type === 'income' ? 'text-emerald-600' : tx.type === 'expense' ? 'text-red-500' : 'text-blue-500'
-                  }`}>
+                  <div className={`text-sm font-semibold shrink-0 ${tx.type === 'income' ? 'text-emerald-600' : tx.type === 'expense' ? 'text-red-500' : 'text-blue-500'}`}>
                     {tx.type === 'income' ? '+' : tx.type === 'expense' ? '-' : ''}
                     {formatCurrency(tx.amount, tx.currency)}
                   </div>
@@ -474,13 +420,11 @@ export function DashboardClient({ transactions, prevTransactions, accounts, tren
         </motion.div>
       </div>
 
-      {/* ─── AI Quick Tip ─── */}
+      {/* ─── Welcome Banner (empty state) ─── */}
       {transactions.length === 0 && (
         <motion.div
           className="rounded-xl border border-primary/20 bg-primary/5 p-5 flex items-start gap-4"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.7 }}
+          initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.7 }}
         >
           <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
             <Brain className="w-5 h-5 text-primary" />
@@ -504,31 +448,6 @@ export function DashboardClient({ transactions, prevTransactions, accounts, tren
           </div>
         </motion.div>
       )}
-    </div>
-  );
-}
-
-function EmptyChart({ message }: { message: string }) {
-  return (
-    <div className="flex flex-col items-center justify-center h-40 text-center">
-      <AlertCircle className="w-8 h-8 text-muted-foreground/40 mb-2" />
-      <p className="text-xs text-muted-foreground">{message}</p>
-    </div>
-  );
-}
-
-function CustomTooltip({ active, payload, label }: { active?: boolean; payload?: { color: string; name: string; value: number }[]; label?: string }) {
-  if (!active || !payload?.length) return null;
-  return (
-    <div className="rounded-xl border border-border bg-card p-3 shadow-lg text-xs">
-      <p className="font-semibold text-foreground mb-2">{label}</p>
-      {payload.map((p) => (
-        <div key={p.name} className="flex items-center gap-2 text-muted-foreground">
-          <span className="w-2 h-2 rounded-full" style={{ background: p.color }} />
-          <span>{p.name}:</span>
-          <span className="font-medium text-foreground">{p.value.toLocaleString()}</span>
-        </div>
-      ))}
     </div>
   );
 }

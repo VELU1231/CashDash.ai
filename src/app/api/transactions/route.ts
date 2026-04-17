@@ -91,10 +91,12 @@ export async function POST(request: NextRequest) {
     // Update account balance
     const balanceChange = type === 'income' ? amountCents : type === 'expense' ? -amountCents : 0;
     if (balanceChange !== 0) {
-      await supabase.rpc('adjust_account_balance', {
-        p_account_id: account_id,
-        p_delta: balanceChange,
-      }).catch(() => {});
+      try {
+        await supabase.rpc('adjust_account_balance', {
+          p_account_id: account_id,
+          p_delta: balanceChange,
+        });
+      } catch { /* non-blocking */ }
     }
 
     // Add tags if provided

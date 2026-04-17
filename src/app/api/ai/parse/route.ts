@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { parseFinancialText } from '@/lib/ai-parser';
-import { AI_CATEGORY_MAP } from '@/lib/utils';
 import type { TransactionType } from '@/types';
 
 export async function POST(request: NextRequest) {
@@ -58,10 +57,6 @@ export async function POST(request: NextRequest) {
             categoryId = existingCat.id;
           } else {
             // Auto-create category
-            const catKey = tx.category_name.toLowerCase().replace(/[^a-z0-9]/g, '_');
-            const mappedInfo = Object.entries(AI_CATEGORY_MAP).find(
-              ([, v]) => v.category === tx.category_name
-            );
 
             const { data: newCat } = await supabase
               .from('categories')
@@ -83,7 +78,7 @@ export async function POST(request: NextRequest) {
         // Find default account for this user
         const { data: defaultAccount } = await supabase
           .from('accounts')
-          .select('id, currency')
+          .select('id, currency, balance')
           .eq('user_id', user.id)
           .eq('is_hidden', false)
           .order('display_order')
@@ -128,12 +123,14 @@ export async function POST(request: NextRequest) {
 
           if (newTx) created.push(newTx);
 
-          // Update account balance
+          // Update account balance (non-blocking, ignore errors)
           const balanceChange = tx.category_type === 'income' ? tx.amount : -tx.amount;
-          await supabase.rpc('update_account_balance', {
-            p_account_id: newAccount.id,
-            p_amount: balanceChange,
-          }).catch(() => {}); // Non-blocking
+          try {
+            await supabase.rpc('adjust_account_balance', {
+              p_account_id: newAccount.id,
+              p_delta: balanceChange,
+            });
+          } catch { /* non-blocking */ }
 
         } else {
           const { data: newTx } = await supabase
@@ -155,13 +152,14 @@ export async function POST(request: NextRequest) {
 
           if (newTx) created.push(newTx);
 
-          // Update account balance
+          // Update account balance (non-blocking)
           const balanceChange = tx.category_type === 'income' ? tx.amount : -tx.amount;
-          await supabase
-            .from('accounts')
-            .update({ balance: defaultAccount.balance + balanceChange })
-            .eq('id', defaultAccount.id)
-            .catch(() => {});
+          try {
+            await supabase.rpc('adjust_account_balance', {
+              p_account_id: defaultAccount.id,
+              p_delta: balanceChange,
+            });
+          } catch { /* non-blocking */ }
         }
       } catch (txError) {
         console.error('Error creating transaction:', txError);
