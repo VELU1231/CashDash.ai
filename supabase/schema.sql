@@ -22,6 +22,9 @@ CREATE TABLE IF NOT EXISTS public.profiles (
   monthly_budget BIGINT,
   show_balance BOOLEAN DEFAULT true,
   compact_mode BOOLEAN DEFAULT false,
+  subscription_tier TEXT DEFAULT 'free' CHECK (subscription_tier IN ('free','pro','family','business')),
+  lemonsqueezy_customer_id TEXT,
+  lemonsqueezy_subscription_id TEXT,
   created_at TIMESTAMPTZ DEFAULT now(),
   updated_at TIMESTAMPTZ DEFAULT now()
 );
@@ -160,6 +163,17 @@ CREATE TABLE IF NOT EXISTS public.exchange_rates (
   UNIQUE(base_currency, target_currency, source)
 );
 
+-- ─── CHAT MESSAGES ────────────────────────────────────────────
+CREATE TABLE IF NOT EXISTS public.chat_messages (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  role TEXT NOT NULL CHECK (role IN ('user','assistant','system')),
+  content TEXT NOT NULL,
+  parsed_transactions JSONB,
+  created_transactions JSONB,
+  created_at TIMESTAMPTZ DEFAULT now()
+);
+
 -- ─── ENABLE ROW LEVEL SECURITY ────────────────────────────────
 ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.accounts ENABLE ROW LEVEL SECURITY;
@@ -171,6 +185,7 @@ ALTER TABLE public.transaction_tags ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.tag_group_members ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.transaction_templates ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.transaction_attachments ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.chat_messages ENABLE ROW LEVEL SECURITY;
 
 -- ─── RLS POLICIES ─────────────────────────────────────────────
 CREATE POLICY "Users own their profile" ON public.profiles FOR ALL USING (auth.uid() = id);
@@ -185,6 +200,7 @@ CREATE POLICY "Users own their tag group members" ON public.tag_group_members FO
   USING (EXISTS (SELECT 1 FROM public.tag_groups g WHERE g.id = tag_group_id AND g.user_id = auth.uid()));
 CREATE POLICY "Users own their templates" ON public.transaction_templates FOR ALL USING (auth.uid() = user_id);
 CREATE POLICY "Users own their attachments" ON public.transaction_attachments FOR ALL USING (auth.uid() = user_id);
+CREATE POLICY "Users own their chat messages" ON public.chat_messages FOR ALL USING (auth.uid() = user_id);
 CREATE POLICY "Exchange rates are public" ON public.exchange_rates FOR SELECT USING (true);
 
 -- ─── INDEXES ──────────────────────────────────────────────────

@@ -22,7 +22,7 @@ const ACCOUNT_TYPES: { value: AccountType; label: string; icon: string }[] = [
 ];
 
 export default function AccountsPage() {
-  const [accounts, setAccounts] = useState<Account[]>([]);
+  const [accounts, setAccounts] = useState<(Account & { subaccounts?: Account[] })[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [editingAccount, setEditingAccount] = useState<Account | null>(null);
@@ -59,12 +59,11 @@ export default function AccountsPage() {
       if (!res.ok) throw new Error(data.error);
 
       if (editingAccount) {
-        setAccounts(prev => prev.map(a => a.id === editingAccount.id ? data.data : a));
         toast.success('Account updated');
       } else {
-        setAccounts(prev => [...prev, data.data]);
         toast.success('Account created');
       }
+      fetchAccounts();
       setShowForm(false);
       setEditingAccount(null);
       setForm({ name: '', type: 'cash', icon: '💰', color: '#10b981', currency: 'USD', initial_balance: '0', description: '', parent_id: '' });
@@ -74,23 +73,27 @@ export default function AccountsPage() {
   };
 
   const deleteAccount = async (id: string) => {
-    if (!confirm('Delete this account? All transactions will be affected.')) return;
+    if (!confirm('Delete this account? All transactions will be affected. Sub-accounts will also be deleted.')) return;
     try {
       await fetch(`/api/accounts/${id}`, { method: 'DELETE' });
-      setAccounts(prev => prev.filter(a => a.id !== id));
       toast.success('Account deleted');
+      fetchAccounts();
     } catch { toast.error('Failed to delete'); }
   };
 
-  const totalBalance = accounts.reduce((s, a) => s + a.balance, 0);
-  const totalInAccounts = accounts.filter(a => !a.is_hidden).length;
+  const totalBalance = accounts.reduce((s, a) => {
+    const subTotal = (a.subaccounts || []).reduce((ss, sub) => ss + sub.balance, 0);
+    return s + a.balance + subTotal;
+  }, 0);
+  
+  const totalInAccounts = accounts.length + accounts.reduce((s, a) => s + (a.subaccounts?.length || 0), 0);
 
   const groupedByType = accounts.reduce((groups, account) => {
     const type = account.type;
     if (!groups[type]) groups[type] = [];
     groups[type].push(account);
     return groups;
-  }, {} as Record<string, Account[]>);
+  }, {} as Record<string, (Account & { subaccounts?: Account[] })[]>);
 
   return (
     <div className="space-y-5">
@@ -154,55 +157,91 @@ export default function AccountsPage() {
               {accts.map((account, i) => (
                 <motion.div
                   key={account.id}
-                  className="rounded-xl border border-border bg-card p-4 card-hover group"
+                  className="rounded-xl border border-border bg-card overflow-hidden card-hover"
                   initial={{ opacity: 0, y: 15 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: i * 0.05 }}
                 >
-                  <div className="flex items-start justify-between mb-3">
-                    <div className="flex items-center gap-2.5">
-                      <div className="w-10 h-10 rounded-xl flex items-center justify-center text-xl"
-                        style={{ background: `${account.color}20` }}>
-                        {account.icon}
+                  <div className="p-4 group">
+                    <div className="flex items-start justify-between mb-3">
+                      <div className="flex items-center gap-2.5">
+                        <div className="w-10 h-10 rounded-xl flex items-center justify-center text-xl"
+                          style={{ background: `${account.color}20` }}>
+                          {account.icon}
+                        </div>
+                        <div>
+                          <div className="font-semibold text-sm">{account.name}</div>
+                          <div className="text-xs text-muted-foreground capitalize">{account.type}</div>
+                        </div>
                       </div>
-                      <div>
-                        <div className="font-semibold text-sm">{account.name}</div>
-                        <div className="text-xs text-muted-foreground capitalize">{account.type}</div>
+                      <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <button onClick={() => { setForm({
+                          name: '', type: account.type, icon: '🏦', color: account.color, currency: account.currency,
+                          initial_balance: '0', description: '', parent_id: account.id
+                        }); setShowForm(true); }}
+                          className="p-1.5 rounded-lg hover:bg-muted text-muted-foreground hover:text-primary transition-colors" title="Add Sub-account">
+                          <Plus className="w-3.5 h-3.5" />
+                        </button>
+                        <button onClick={() => { setEditingAccount(account); setForm({
+                          name: account.name, type: account.type, icon: account.icon,
+                          color: account.color, currency: account.currency,
+                          initial_balance: (account.initial_balance / 100).toString(),
+                          description: account.description || '', parent_id: account.parent_id || '',
+                        }); setShowForm(true); }}
+                          className="p-1.5 rounded-lg hover:bg-muted text-muted-foreground hover:text-foreground transition-colors">
+                          <Edit3 className="w-3.5 h-3.5" />
+                        </button>
+                        <button onClick={() => deleteAccount(account.id)}
+                          className="p-1.5 rounded-lg hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors">
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
                       </div>
                     </div>
-                    <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <button onClick={() => { setEditingAccount(account); setForm({
-                        name: account.name, type: account.type, icon: account.icon,
-                        color: account.color, currency: account.currency,
-                        initial_balance: (account.initial_balance / 100).toString(),
-                        description: account.description || '', parent_id: account.parent_id || '',
-                      }); setShowForm(true); }}
-                        className="p-1.5 rounded-lg hover:bg-muted text-muted-foreground hover:text-foreground transition-colors">
-                        <Edit3 className="w-3.5 h-3.5" />
-                      </button>
-                      <button onClick={() => deleteAccount(account.id)}
-                        className="p-1.5 rounded-lg hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors">
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </button>
+
+                    <div className={`text-2xl font-bold ${account.balance >= 0 ? 'text-foreground' : 'text-red-500'}`}>
+                      {formatCurrency(account.balance, account.currency)}
+                    </div>
+                    <div className="flex items-center justify-between mt-2">
+                      <span className="text-xs text-muted-foreground">{account.currency}</span>
+                      <div className="h-1.5 flex-1 mx-3 rounded-full bg-muted overflow-hidden">
+                        <motion.div
+                          className="h-full rounded-full"
+                          style={{ background: account.color }}
+                          initial={{ width: 0 }}
+                          animate={{ width: account.balance > 0 ? `${Math.min((account.balance / Math.max(...accounts.map(a => a.balance))) * 100, 100)}%` : '0%' }}
+                          transition={{ duration: 0.8, delay: i * 0.05 }}
+                        />
+                      </div>
+                      {account.is_hidden && <EyeOff className="w-3 h-3 text-muted-foreground" />}
                     </div>
                   </div>
 
-                  <div className={`text-2xl font-bold ${account.balance >= 0 ? 'text-foreground' : 'text-red-500'}`}>
-                    {formatCurrency(account.balance, account.currency)}
-                  </div>
-                  <div className="flex items-center justify-between mt-2">
-                    <span className="text-xs text-muted-foreground">{account.currency}</span>
-                    <div className="h-1.5 flex-1 mx-3 rounded-full bg-muted overflow-hidden">
-                      <motion.div
-                        className="h-full rounded-full"
-                        style={{ background: account.color }}
-                        initial={{ width: 0 }}
-                        animate={{ width: account.balance > 0 ? `${Math.min((account.balance / Math.max(...accounts.map(a => a.balance))) * 100, 100)}%` : '0%' }}
-                        transition={{ duration: 0.8, delay: i * 0.05 }}
-                      />
+                  {account.subaccounts && account.subaccounts.length > 0 && (
+                    <div className="bg-muted/30 border-t border-border px-4 py-2 space-y-2">
+                      {account.subaccounts.map(sub => (
+                        <div key={sub.id} className="flex items-center justify-between group/sub">
+                          <div className="flex items-center gap-2">
+                            <div className="w-6 h-6 rounded flex items-center justify-center text-xs" style={{ background: `${sub.color}20` }}>
+                              {sub.icon}
+                            </div>
+                            <span className="text-xs font-medium">{sub.name}</span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <span className={`text-xs font-semibold ${sub.balance >= 0 ? 'text-foreground' : 'text-red-500'}`}>
+                              {formatCurrency(sub.balance, sub.currency)}
+                            </span>
+                            <div className="flex items-center opacity-0 group-hover/sub:opacity-100 transition-opacity">
+                              <button onClick={() => { setEditingAccount(sub); setForm({
+                                name: sub.name, type: sub.type, icon: sub.icon, color: sub.color, currency: sub.currency,
+                                initial_balance: (sub.initial_balance / 100).toString(), description: sub.description || '', parent_id: account.id,
+                              }); setShowForm(true); }} className="p-1 hover:bg-muted rounded text-muted-foreground"><Edit3 className="w-3 h-3" /></button>
+                              <button onClick={() => deleteAccount(sub.id)} className="p-1 hover:bg-destructive/10 rounded text-muted-foreground"><Trash2 className="w-3 h-3" /></button>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
                     </div>
-                    {account.is_hidden && <EyeOff className="w-3 h-3 text-muted-foreground" />}
-                  </div>
+                  )}
                 </motion.div>
               ))}
             </div>
@@ -261,6 +300,17 @@ export default function AccountsPage() {
                     className="w-full px-3 py-2 rounded-lg border border-input bg-background text-sm focus:outline-none"
                     placeholder="0.00" step="0.01" />
                 </div>
+              </div>
+
+              <div>
+                <label className="text-sm font-medium mb-1 block">Parent Account (Optional)</label>
+                <select value={form.parent_id} onChange={e => setForm(f => ({ ...f, parent_id: e.target.value }))}
+                  className="w-full px-3 py-2 rounded-lg border border-input bg-background text-sm focus:outline-none">
+                  <option value="">None (Top-Level)</option>
+                  {accounts.filter(a => a.id !== editingAccount?.id).map(a => (
+                    <option key={a.id} value={a.id}>{a.icon} {a.name}</option>
+                  ))}
+                </select>
               </div>
 
               <div>

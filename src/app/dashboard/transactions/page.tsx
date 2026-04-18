@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Plus, Search, Filter, X, ArrowLeftRight, TrendingUp, TrendingDown, Brain,
-  Trash2, Edit3, CheckCircle2, Loader2, Save
+  Trash2, Edit3, CheckCircle2, Loader2, Save, Paperclip
 } from 'lucide-react';
 import { formatCurrency, formatRelativeDate, formatDate, groupTransactionsByDate } from '@/lib/utils';
 import { toast } from 'sonner';
@@ -278,6 +278,12 @@ export default function TransactionsPage() {
                           {tx.category && <span className="text-xs text-muted-foreground">{tx.category.name}</span>}
                           <span className="text-xs text-muted-foreground">·</span>
                           <span className="text-xs text-muted-foreground">{tx.account?.name}</span>
+                          {tx.attachments && tx.attachments.length > 0 && (
+                            <>
+                              <span className="text-xs text-muted-foreground">·</span>
+                              <Paperclip className="w-3 h-3 text-muted-foreground" />
+                            </>
+                          )}
                         </div>
                       </div>
 

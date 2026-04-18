@@ -24,7 +24,8 @@ export async function GET(request: NextRequest) {
         *,
         category:categories(id, name, icon, color, type),
         account:accounts(id, name, icon, color, currency),
-        dest_account:accounts!dest_account_id(id, name, icon, color, currency)
+        dest_account:accounts!dest_account_id(id, name, icon, color, currency),
+        attachments:transaction_attachments(*)
       `, { count: 'exact' })
       .eq('user_id', user.id)
       .order('transaction_date', { ascending: false })
@@ -60,7 +61,11 @@ export async function POST(request: NextRequest) {
     if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
     const body = await request.json();
-    const { type, amount, currency, description, note, category_id, account_id, dest_account_id, transaction_date, tag_ids } = body;
+    const { 
+      type, amount, currency, description, note, 
+      category_id, account_id, dest_account_id, transaction_date, tag_ids,
+      attachment_path, attachment_name, attachment_size, attachment_type 
+    } = body;
 
     if (!type || !amount || !account_id) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
@@ -104,6 +109,18 @@ export async function POST(request: NextRequest) {
       await supabase.from('transaction_tags').insert(
         tag_ids.map((tid: string) => ({ transaction_id: tx.id, tag_id: tid }))
       );
+    }
+
+    // Add attachment if provided
+    if (attachment_path) {
+      await supabase.from('transaction_attachments').insert({
+        transaction_id: tx.id,
+        user_id: user.id,
+        file_path: attachment_path,
+        file_name: attachment_name || 'attachment',
+        file_size: attachment_size || null,
+        mime_type: attachment_type || null,
+      });
     }
 
     return NextResponse.json({ data: tx }, { status: 201 });

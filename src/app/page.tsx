@@ -313,8 +313,8 @@ export default function HomePage() {
               },
               {
                 name: 'Pro', price: '$5', period: '/month',
-                features: ['Everything in Free', 'Unlimited AI messages', 'Unlimited accounts', 'Advanced analytics', 'Receipt scanning (coming)', 'Priority support'],
-                cta: 'Start Pro trial', href: '/register?plan=pro', highlight: true,
+                features: ['Everything in Free', 'Unlimited AI messages', 'Unlimited accounts', 'Proactive AI Insights', 'AI Receipt Scanning', 'Multi-currency support'],
+                cta: 'Upgrade to Pro', href: process.env.NEXT_PUBLIC_LEMONSQUEEZY_CHECKOUT_URL || '/pricing', highlight: true,
               },
             ].map((plan) => (
               <motion.div

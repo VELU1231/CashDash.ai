@@ -7,11 +7,10 @@ export async function GET() {
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
   const { data, error } = await supabase
-    .from('accounts')
-    .select('*, subaccounts:accounts(*)')
+    .from('transaction_templates')
+    .select('*, category:categories(*), account:accounts(*), dest_account:accounts!dest_account_id(*)')
     .eq('user_id', user.id)
-    .is('parent_id', null)
-    .order('display_order');
+    .order('created_at', { ascending: false });
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   return NextResponse.json({ data: data || [] });
@@ -23,24 +22,26 @@ export async function POST(request: NextRequest) {
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
   const body = await request.json();
-  const initialBalance = body.initial_balance
-    ? Math.round(parseFloat(body.initial_balance) * 100) : 0;
+  const { name, type, amount, currency, description, category_id, account_id, dest_account_id, schedule_type } = body;
+
+  const amountCents = amount ? Math.round(parseFloat(amount) * 100) : null;
 
   const { data, error } = await supabase
-    .from('accounts')
+    .from('transaction_templates')
     .insert({
       user_id: user.id,
-      name: body.name,
-      type: body.type || 'cash',
-      icon: body.icon || '💰',
-      color: body.color || '#10b981',
-      currency: body.currency || 'USD',
-      balance: initialBalance,
-      initial_balance: initialBalance,
-      description: body.description || null,
-      parent_id: body.parent_id || null,
+      name,
+      type,
+      amount: amountCents,
+      currency: currency || 'USD',
+      description: description || null,
+      category_id: category_id || null,
+      account_id,
+      dest_account_id: dest_account_id || null,
+      schedule_type: schedule_type || 'manual',
+      is_active: true
     })
-    .select()
+    .select('*, category:categories(*), account:accounts(*), dest_account:accounts!dest_account_id(*)')
     .single();
 
   if (error) return NextResponse.json({ error: error.message }, { status: 400 });

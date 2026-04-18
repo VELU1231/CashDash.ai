@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation';
 import { DashboardSidebar } from '@/components/layout/sidebar';
 import { DashboardTopbar } from '@/components/layout/topbar';
 import { MobileNav } from '@/components/layout/mobile-nav';
+import { LockScreen } from '@/components/ui/lock-screen';
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = { title: 'Dashboard' };
@@ -24,24 +25,26 @@ export default async function DashboardLayout({
     .single();
 
   return (
-    <div className="flex h-screen bg-background overflow-hidden">
-      {/* Sidebar - hidden on mobile */}
-      <div className="hidden md:flex flex-col h-full">
-        <DashboardSidebar profile={profile} />
-      </div>
+    <LockScreen>
+      <div className="flex h-screen bg-background overflow-hidden">
+        {/* Sidebar - hidden on mobile */}
+        <div className="hidden md:flex flex-col h-full">
+          <DashboardSidebar profile={profile} />
+        </div>
 
-      {/* Main content */}
-      <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
-        <DashboardTopbar profile={profile} />
-        <main className="flex-1 overflow-y-auto scrollbar-thin">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6">
-            {children}
-          </div>
-        </main>
+        {/* Main content */}
+        <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
+          <DashboardTopbar profile={profile} />
+          <main className="flex-1 overflow-y-auto scrollbar-thin">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6">
+              {children}
+            </div>
+          </main>
 
-        {/* Mobile bottom nav */}
-        <MobileNav />
+          {/* Mobile bottom nav */}
+          <MobileNav />
+        </div>
       </div>
-    </div>
+    </LockScreen>
   );
 }

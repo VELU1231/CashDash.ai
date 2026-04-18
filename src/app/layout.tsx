@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from 'next';
 import { Inter } from 'next/font/google';
 import './globals.css';
 import { Providers } from '@/components/providers';
+import { I18nProvider } from '@/lib/i18n';
 import { Toaster } from 'sonner';
 
 const inter = Inter({
@@ -46,21 +47,23 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={`${inter.variable} font-sans antialiased`}>
-        <Providers>
-          {children}
-          <Toaster
-            position="top-right"
-            richColors
-            closeButton
-            toastOptions={{
-              classNames: {
-                toast: 'rounded-xl border shadow-lg font-sans',
-                title: 'font-semibold text-sm',
-                description: 'text-xs text-muted-foreground',
-              },
-            }}
-          />
-        </Providers>
+        <I18nProvider>
+          <Providers>
+            {children}
+            <Toaster
+              position="top-right"
+              richColors
+              closeButton
+              toastOptions={{
+                classNames: {
+                  toast: 'rounded-xl border shadow-lg font-sans',
+                  title: 'font-semibold text-sm',
+                  description: 'text-xs text-muted-foreground',
+                },
+              }}
+            />
+          </Providers>
+        </I18nProvider>
       </body>
     </html>
   );

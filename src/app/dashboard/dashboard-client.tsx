@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import {
   AreaChart, Area, BarChart, Bar, PieChart, Pie, Cell,
@@ -10,7 +10,7 @@ import {
 import {
   TrendingUp, TrendingDown, Wallet, ArrowLeftRight,
   Brain, ArrowUpRight, ArrowDownRight,
-  Plus, Target, Sparkles, AlertCircle
+  Plus, Target, Sparkles, AlertCircle, Crown
 } from 'lucide-react';
 import Link from 'next/link';
 import { format, parseISO } from 'date-fns';
@@ -32,13 +32,38 @@ const fadeUp = { initial: { opacity: 0, y: 20 }, animate: { opacity: 1, y: 0 } }
 
 export function DashboardClient({ transactions, prevTransactions, accounts, trendData, profile, currentMonth, flags }: Props) {
   const currency = profile?.default_currency || 'USD';
+  const [exchangeRates, setExchangeRates] = useState<Record<string, number>>({});
+  const [insight, setInsight] = useState<string | null>(null);
+
+  useEffect(() => {
+    fetch(`/api/exchange-rates?base=${currency}`)
+      .then(res => res.json())
+      .then(data => {
+        if (data.rates) setExchangeRates(data.rates);
+      })
+      .catch(console.error);
+
+    if (profile?.subscription_tier !== 'free') {
+      fetch('/api/ai/insights')
+        .then(r => r.json())
+        .then(data => {
+          if (data.insight) setInsight(data.insight);
+        }).catch(console.error);
+    }
+  }, [currency, profile?.subscription_tier]);
+
+  // Helper to convert foreign currency to base currency
+  const convert = (amount: number, fromCurr: string) => {
+    if (!fromCurr || fromCurr === currency || !exchangeRates[fromCurr]) return amount;
+    return amount / exchangeRates[fromCurr];
+  };
 
   const stats = useMemo(() => {
-    const income = transactions.filter(t => t.type === 'income').reduce((s, t) => s + t.amount, 0);
-    const expenses = transactions.filter(t => t.type === 'expense').reduce((s, t) => s + t.amount, 0);
-    const prevIncome = prevTransactions.filter(t => t.type === 'income').reduce((s, t) => s + t.amount, 0);
-    const prevExpenses = prevTransactions.filter(t => t.type === 'expense').reduce((s, t) => s + t.amount, 0);
-    const totalBalance = accounts.reduce((s, a) => s + a.balance, 0);
+    const income = transactions.filter(t => t.type === 'income').reduce((s, t) => s + convert(t.amount, t.currency || 'USD'), 0);
+    const expenses = transactions.filter(t => t.type === 'expense').reduce((s, t) => s + convert(t.amount, t.currency || 'USD'), 0);
+    const prevIncome = prevTransactions.filter(t => t.type === 'income').reduce((s, t) => s + convert(t.amount, (t as any).currency || 'USD'), 0);
+    const prevExpenses = prevTransactions.filter(t => t.type === 'expense').reduce((s, t) => s + convert(t.amount, (t as any).currency || 'USD'), 0);
+    const totalBalance = accounts.reduce((s, a) => s + convert(a.balance, a.currency || 'USD'), 0);
     const savingsRate = income > 0 ? Math.round((income - expenses) / income * 100) : 0;
     const incomePct = prevIncome > 0 ? ((income - prevIncome) / prevIncome) * 100 : 0;
     const expensePct = prevExpenses > 0 ? ((expenses - prevExpenses) / prevExpenses) * 100 : 0;
@@ -53,7 +78,7 @@ export function DashboardClient({ transactions, prevTransactions, accounts, tren
       if (!grouped[key]) {
         grouped[key] = { name: cat?.name || 'Uncategorized', icon: cat?.icon || '📦', color: cat?.color || '#94a3b8', total: 0, count: 0 };
       }
-      grouped[key].total += t.amount;
+      grouped[key].total += convert(t.amount, t.currency || 'USD');
       grouped[key].count++;
     });
     return Object.values(grouped)
@@ -64,7 +89,7 @@ export function DashboardClient({ transactions, prevTransactions, accounts, tren
         percentage: stats.expenses > 0 ? Math.round(item.total / stats.expenses * 100) : 0,
         fill: item.color || getChartColor(i),
       }));
-  }, [transactions, stats.expenses]);
+  }, [transactions, stats.expenses, exchangeRates]);
 
   const trendChartData = useMemo(() => {
     const monthly: Record<string, { month: string; label: string; income: number; expenses: number }> = {};
@@ -73,22 +98,22 @@ export function DashboardClient({ transactions, prevTransactions, accounts, tren
       if (!monthly[key]) {
         monthly[key] = { month: key, label: format(parseISO(`${key}-01`), 'MMM'), income: 0, expenses: 0 };
       }
-      if (tx.type === 'income') monthly[key].income += tx.amount;
-      if (tx.type === 'expense') monthly[key].expenses += tx.amount;
+      if (tx.type === 'income') monthly[key].income += convert(tx.amount, tx.currency || 'USD');
+      if (tx.type === 'expense') monthly[key].expenses += convert(tx.amount, tx.currency || 'USD');
     });
     return Object.values(monthly).sort((a, b) => a.month.localeCompare(b.month));
-  }, [trendData]);
+  }, [trendData, exchangeRates]);
 
   const dailyData = useMemo(() => {
     const daily: Record<string, number> = {};
     transactions.filter(t => t.type === 'expense').forEach(t => {
       const day = t.transaction_date.slice(0, 10);
-      daily[day] = (daily[day] || 0) + t.amount;
+      daily[day] = (daily[day] || 0) + convert(t.amount, t.currency || 'USD');
     });
     return Object.entries(daily)
       .sort(([a], [b]) => a.localeCompare(b))
       .map(([date, amount]) => ({ date: format(parseISO(date), 'MMM d'), amount }));
-  }, [transactions]);
+  }, [transactions, exchangeRates]);
 
   const recentTransactions = transactions.slice(0, 8);
 
@@ -117,6 +142,55 @@ export function DashboardClient({ transactions, prevTransactions, accounts, tren
           </Link>
         </div>
       </motion.div>
+
+      {/* Upgrade Banner for Free Users */}
+      {profile?.subscription_tier === 'free' && (
+        <motion.div className="rounded-xl border border-amber-500/30 bg-amber-500/10 p-4 flex items-center justify-between"
+          initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-full bg-amber-500/20 flex items-center justify-center">
+              <Crown className="w-5 h-5 text-amber-600" />
+            </div>
+            <div>
+              <h4 className="font-semibold text-sm text-amber-900 dark:text-amber-500">Upgrade to Pro</h4>
+              <p className="text-xs text-amber-800/80 dark:text-amber-500/80">Unlock Multi-currency, Receipt Scanning, and AI Insights.</p>
+            </div>
+          </div>
+          <Link href="/pricing">
+            <button className="px-4 py-2 rounded-lg bg-amber-500 hover:bg-amber-600 text-white text-sm font-medium transition-colors">
+              Upgrade Now
+            </button>
+          </Link>
+        </motion.div>
+      )}
+
+      {/* Proactive AI Insight */}
+      {profile?.subscription_tier !== 'free' && insight && (
+        <motion.div className="rounded-xl border border-primary/20 bg-primary/5 p-4 flex items-start gap-4"
+          initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
+          <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center shrink-0">
+            <Sparkles className="w-5 h-5 text-primary" />
+          </div>
+          <div>
+            <h4 className="font-semibold text-sm text-foreground mb-1">AI Financial Health Report</h4>
+            <p className="text-sm text-muted-foreground leading-relaxed">{insight}</p>
+          </div>
+        </motion.div>
+      )}
+
+      {/* Proactive AI Insight */}
+      {profile?.subscription_tier !== 'free' && insight && (
+        <motion.div className="rounded-xl border border-primary/20 bg-primary/5 p-4 flex items-start gap-4"
+          initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
+          <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center shrink-0">
+            <Sparkles className="w-5 h-5 text-primary" />
+          </div>
+          <div>
+            <h4 className="font-semibold text-sm text-foreground mb-1">AI Financial Health Report</h4>
+            <p className="text-sm text-muted-foreground leading-relaxed">{insight}</p>
+          </div>
+        </motion.div>
+      )}
 
       {/* Stat Cards */}
       <motion.div className="grid grid-cols-2 lg:grid-cols-4 gap-4" initial="initial" animate="animate"

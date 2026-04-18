@@ -33,6 +33,8 @@ export default function AIAssistantPage() {
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [currency, setCurrency] = useState('PHP');
+  const [isPro, setIsPro] = useState(false);
+  const [loadingHistory, setLoadingHistory] = useState(true);
   // Pending transactions awaiting user confirmation
   const [pendingTxs, setPendingTxs] = useState<ParsedTransaction[]>([]);
   const [pendingMsgId, setPendingMsgId] = useState<string | null>(null);
@@ -42,6 +44,53 @@ export default function AIAssistantPage() {
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, pendingTxs]);
+
+  useEffect(() => {
+    async function fetchHistory() {
+      try {
+        const res = await fetch('/api/ai/chat-history');
+        if (!res.ok) throw new Error('Failed to fetch history');
+        const data = await res.json();
+        setIsPro(data.isPro);
+        if (data.isPro && data.messages.length > 0) {
+          // Format messages from DB
+          const formattedMessages = data.messages.map((m: any) => ({
+            id: m.id,
+            role: m.role,
+            content: m.content,
+            timestamp: m.created_at,
+            parsed_transactions: m.parsed_transactions,
+            created_transactions: m.created_transactions,
+          }));
+          setMessages(formattedMessages);
+        }
+      } catch (error) {
+        console.error('Failed to load chat history:', error);
+      } finally {
+        setLoadingHistory(false);
+      }
+    }
+    fetchHistory();
+  }, []);
+
+  // Save message to DB helper
+  const saveMessageToDB = async (msg: any) => {
+    if (!isPro) return;
+    try {
+      await fetch('/api/ai/chat-history', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          role: msg.role,
+          content: msg.content,
+          parsed_transactions: msg.parsed_transactions,
+          created_transactions: msg.created_transactions,
+        }),
+      });
+    } catch (e) {
+      console.error('Failed to save message to DB', e);
+    }
+  };
 
   // ─── Send message → Parse only (no auto-save) ──────────────────────────────
   const sendMessage = useCallback(async (text?: string) => {
@@ -56,6 +105,8 @@ export default function AIAssistantPage() {
     };
 
     setMessages(prev => [...prev, userMsg]);
+    saveMessageToDB(userMsg);
+
     setInput('');
     setLoading(true);
     setPendingTxs([]);
@@ -94,6 +145,7 @@ export default function AIAssistantPage() {
       };
 
       setMessages(prev => [...prev, assistantMsg]);
+      saveMessageToDB(assistantMsg);
 
       if (parsed?.suggestions?.length > 0) {
         toast.info(parsed.suggestions[0], { duration: 5000 });
@@ -139,11 +191,17 @@ export default function AIAssistantPage() {
       if (!res.ok) throw new Error(data.error || 'Failed to save');
 
       // Update the assistant message to show success
-      setMessages(prev => prev.map(m =>
-        m.id === pendingMsgId
-          ? { ...m, content: `✅ Saved **${data.count} transaction${data.count !== 1 ? 's' : ''}** successfully!`, created_transactions: data.created }
-          : m
-      ));
+      setMessages(prev => {
+        const updated = prev.map(m =>
+          m.id === pendingMsgId
+            ? { ...m, content: `✅ Saved **${data.count} transaction${data.count !== 1 ? 's' : ''}** successfully!`, created_transactions: data.created }
+            : m
+        );
+        // Save the updated assistant message with the created transactions to DB
+        const msgToSave = updated.find(m => m.id === pendingMsgId);
+        if (msgToSave) saveMessageToDB(msgToSave);
+        return updated;
+      });
 
       toast.success(`${data.count} transaction${data.count !== 1 ? 's' : ''} saved!`);
       setPendingTxs([]);
@@ -234,14 +292,23 @@ export default function AIAssistantPage() {
 
       {/* Info banner */}
       <motion.div
-        className="rounded-xl border border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-950/30 p-3 mb-4 flex items-start gap-3"
+        className="rounded-xl border border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-950/30 p-3 mb-4 flex flex-col sm:flex-row sm:items-start gap-3 justify-between"
         initial={{ opacity: 0, y: -10 }}
         animate={{ opacity: 1, y: 0 }}
       >
-        <Info className="w-4 h-4 text-blue-600 mt-0.5 shrink-0" />
-        <p className="text-xs text-blue-700 dark:text-blue-400">
-          <strong>How it works:</strong> Describe your spending naturally → AI parses amounts, categories & dates → <strong>you review & confirm</strong> → saved to your account.
-        </p>
+        <div className="flex items-start gap-3">
+          <Info className="w-4 h-4 text-blue-600 mt-0.5 shrink-0" />
+          <p className="text-xs text-blue-700 dark:text-blue-400">
+            <strong>How it works:</strong> Describe your spending naturally → AI parses amounts, categories & dates → <strong>you review & confirm</strong> → saved to your account.
+          </p>
+        </div>
+        {!isPro && !loadingHistory && (
+          <div className="shrink-0">
+            <span className="text-[10px] font-semibold bg-blue-200/50 dark:bg-blue-900/50 text-blue-800 dark:text-blue-300 px-2 py-1 rounded-full">
+              Ephemeral Chat (Pro to Save)
+            </span>
+          </div>
+        )}
       </motion.div>
 
       {/* Messages */}

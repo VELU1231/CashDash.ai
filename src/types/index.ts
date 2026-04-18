@@ -29,6 +29,9 @@ export interface Profile {
   monthly_budget: number | null;
   created_at: string;
   updated_at: string;
+  subscription_tier?: string;
+  lemonsqueezy_customer_id?: string;
+  lemonsqueezy_subscription_id?: string;
 }
 
 export interface Account {
@@ -328,6 +331,7 @@ export interface TransactionFormData {
   dest_account_id: string;
   transaction_date: string;
   tag_ids: string[];
+  attachment?: File | null;
 }
 
 export interface AccountFormData {

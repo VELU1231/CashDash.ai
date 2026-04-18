@@ -26,6 +26,13 @@ export default function SettingsPage() {
   const { theme, setTheme } = useTheme();
   const [activeSection, setActiveSection] = useState('profile');
   const [loading, setLoading] = useState(false);
+  const [pinInput, setPinInput] = useState('');
+  const [hasPin, setHasPin] = useState(false);
+
+  useEffect(() => {
+    setHasPin(!!localStorage.getItem('app_pin'));
+    fetchProfile();
+  }, []);
   const [profile, setProfile] = useState({
     display_name: '',
     default_currency: 'USD',
@@ -96,6 +103,20 @@ export default function SettingsPage() {
     } catch {
       toast.error('Export failed');
     }
+  };
+
+  const savePin = () => {
+    if (pinInput.length !== 4) return toast.error('PIN must be 4 digits');
+    localStorage.setItem('app_pin', pinInput);
+    setHasPin(true);
+    setPinInput('');
+    toast.success('App Lock PIN saved');
+  };
+
+  const removePin = () => {
+    localStorage.removeItem('app_pin');
+    setHasPin(false);
+    toast.success('App Lock PIN removed');
   };
 
   const toggle = (key: string) => setProfile(p => ({ ...p, [key]: !(p as Record<string, unknown>)[key] }));
@@ -289,6 +310,27 @@ export default function SettingsPage() {
                 <>
                   <SectionHeader icon={Shield} title="Security" desc="Protect your account" />
                   <div className="space-y-4">
+                    <div className="p-4 rounded-xl border border-border bg-muted/30">
+                      <h4 className="text-sm font-semibold mb-1">App Lock (PIN)</h4>
+                      <p className="text-xs text-muted-foreground mb-3">Require a 4-digit PIN when you return to the app.</p>
+                      {hasPin ? (
+                        <div className="flex items-center justify-between p-3 rounded-lg bg-emerald-500/10 border border-emerald-500/20">
+                          <span className="text-sm font-medium text-emerald-600 flex items-center gap-2">
+                            <Shield className="w-4 h-4" /> PIN Protection Active
+                          </span>
+                          <button onClick={removePin} className="text-xs text-destructive hover:underline">Remove</button>
+                        </div>
+                      ) : (
+                        <div className="flex gap-2">
+                          <input type="password" maxLength={4} placeholder="0000" value={pinInput} onChange={e => setPinInput(e.target.value.replace(/\D/g, ''))}
+                            className="w-24 px-3 py-2 text-center tracking-[0.5em] rounded-lg border border-input bg-background focus:outline-none focus:ring-2 focus:ring-primary/20" />
+                          <button onClick={savePin} className="px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90">
+                            Set PIN
+                          </button>
+                        </div>
+                      )}
+                    </div>
+
                     <div className="p-4 rounded-xl border border-border bg-muted/30">
                       <h4 className="text-sm font-semibold mb-1">Change Password</h4>
                       <p className="text-xs text-muted-foreground mb-3">Password is managed through Supabase Auth</p>
