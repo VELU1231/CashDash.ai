@@ -1,7 +1,7 @@
 // ────────────────────────────────────────────────────────────────────────────────
 // CashDash.ai - AI Financial Parser (Vercel AI SDK)
 // Uses: generateText + Output.object() with Zod schemas
-// Supports: OpenAI, Google Gemini (via Vercel AI SDK providers)
+// Supports: OpenAI, Google Gemini, Ollama (local + cloud)
 // Falls back to rule-based parser when AI is unavailable
 // ────────────────────────────────────────────────────────────────────────────────
 
@@ -45,6 +45,7 @@ interface LLMConfig {
 function getModel(config: LLMConfig) {
   const provider = config.provider || 'openai';
 
+  // ─── Google Gemini ──────────────────────────────────────────────────
   if (provider === 'gemini' || provider === 'google' as any) {
     const google = createGoogleGenerativeAI({
       apiKey: config.apiKey || process.env.GOOGLE_GENERATIVE_AI_API_KEY || process.env.AI_API_KEY || '',
@@ -52,7 +53,22 @@ function getModel(config: LLMConfig) {
     return google(config.model || 'gemini-2.0-flash');
   }
 
-  // OpenAI (also works with OpenRouter, Ollama via OpenAI-compatible API)
+  // ─── Ollama (local or cloud via OpenAI-compatible API) ──────────────
+  // Ollama exposes an OpenAI-compatible endpoint at /v1
+  // Local:  AI_BASE_URL=http://localhost:11434/v1
+  // Cloud:  AI_BASE_URL=https://ollama.com/v1  (requires OLLAMA_API_KEY)
+  if (provider === 'ollama') {
+    const baseURL = config.baseUrl || process.env.AI_BASE_URL || 'http://localhost:11434/v1';
+    // Ensure URL ends with /v1
+    const ollamaURL = baseURL.endsWith('/v1') ? baseURL : baseURL + '/v1';
+    const ollama = createOpenAI({
+      apiKey: process.env.OLLAMA_API_KEY || 'ollama', // Cloud needs real key; local ignores it
+      baseURL: ollamaURL,
+    });
+    return ollama(config.model || 'gemma4:31b-cloud');
+  }
+
+  // ─── OpenAI (also works with OpenRouter, etc.) ──────────────────────
   const openai = createOpenAI({
     apiKey: config.apiKey || process.env.OPENAI_API_KEY || process.env.AI_API_KEY || '',
     baseURL: config.baseUrl || process.env.AI_BASE_URL || undefined,
