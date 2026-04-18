@@ -1,3 +1,5 @@
+'use client';
+
 import { useState, useEffect, useRef } from 'react';
 import { Download, Upload, CheckCircle2, Loader2, FileWarning } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
