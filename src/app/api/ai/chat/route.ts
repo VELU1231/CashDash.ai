@@ -40,7 +40,7 @@ RULES:
             transaction_date: z.string().describe('Date in YYYY-MM-DD format'),
           })).describe('Array of extracted transactions'),
         }),
-        execute: async ({ transactions }) => {
+        execute: async ({ transactions }: any) => {
           // In a real scenario, this returns the extracted data to the frontend, 
           // where the frontend renders a confirmation widget.
           return {
@@ -54,5 +54,5 @@ RULES:
     },
   });
 
-  return result.toDataStreamResponse();
+  return result.toTextStreamResponse();
 }

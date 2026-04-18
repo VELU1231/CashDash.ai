@@ -43,7 +43,7 @@ export function DashboardClient({ transactions, prevTransactions, accounts, tren
       })
       .catch(console.error);
 
-    if (profile?.subscription_tier !== 'free') {
+    if (profile?.subscription_tier !== 'free' || process.env.NODE_ENV === 'development') {
       fetch('/api/ai/insights')
         .then(r => r.json())
         .then(data => {
@@ -165,7 +165,7 @@ export function DashboardClient({ transactions, prevTransactions, accounts, tren
       )}
 
       {/* Proactive AI Insight */}
-      {profile?.subscription_tier !== 'free' && insight && (
+      {(profile?.subscription_tier !== 'free' || process.env.NODE_ENV === 'development') && insight && (
         <motion.div className="rounded-xl border border-primary/20 bg-primary/5 p-4 flex items-start gap-4"
           initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
           <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center shrink-0">

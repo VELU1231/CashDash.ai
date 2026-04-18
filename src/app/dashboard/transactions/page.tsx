@@ -146,6 +146,12 @@ export default function TransactionsPage() {
           <p className="text-sm text-muted-foreground mt-0.5">{total.toLocaleString()} total</p>
         </div>
         <div className="flex items-center gap-2">
+          <Link href="/dashboard/transactions/new">
+            <motion.button className="inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-input text-foreground text-sm font-medium hover:bg-muted"
+              whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+              <Plus className="w-4 h-4" /> Manual Entry
+            </motion.button>
+          </Link>
           <Link href="/dashboard/ai-assistant">
             <motion.button className="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-primary/10 text-primary text-sm font-medium hover:bg-primary/20"
               whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>

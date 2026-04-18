@@ -64,6 +64,7 @@ export interface Category {
   display_order: number;
   is_hidden: boolean;
   children?: Category[];
+  subcategories?: Category[];
   created_at: string;
   updated_at: string;
 }

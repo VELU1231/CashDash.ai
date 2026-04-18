@@ -102,7 +102,7 @@ export default function TemplatesPage() {
 
   return (
     <div className="max-w-5xl mx-auto space-y-6">
-      {profile?.subscription_tier === 'free' ? (
+      {profile?.subscription_tier === 'free' && process.env.NODE_ENV !== 'development' ? (
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="rounded-2xl border border-amber-500/20 bg-amber-500/5 shadow-soft p-12 flex flex-col items-center justify-center text-center">
           <div className="w-16 h-16 rounded-full bg-amber-500/10 flex items-center justify-center mb-4">
             <BookTemplate className="w-8 h-8 text-amber-600" />

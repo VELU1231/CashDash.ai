@@ -34,7 +34,7 @@ export default function NewTransactionPage() {
       setAccounts(accRes.data || []);
       setCategories(catRes.data || []);
       if (accRes.data?.length > 0) {
-        setForm(f => ({ ...f, account_id: accRes.data[0].id, currency: accRes.data[0].currency }));
+        setForm((f: any) => ({ ...f, account_id: accRes.data[0].id, currency: accRes.data[0].currency }));
       }
     });
   }, []);
@@ -71,7 +71,7 @@ export default function NewTransactionPage() {
       // Auto-fill form
       const data = result.data;
       if (data) {
-        setForm(f => ({
+        setForm((f: any) => ({
           ...f,
           amount: data.total ? data.total.toString() : f.amount,
           date: data.date ? data.date : f.date,
