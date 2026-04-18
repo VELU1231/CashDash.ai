@@ -214,7 +214,7 @@ supabase/
 | Styling | Tailwind CSS, shadcn/ui |
 | Animations | Framer Motion |
 | Charts | Recharts |
-| Icons | Lucide React |
+| Icons | Phosphor Icons |
 | Database | Supabase (PostgreSQL) |
 | Auth | Supabase Auth |
 | AI | Ollama / OpenAI / Gemini |

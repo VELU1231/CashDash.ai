@@ -7,7 +7,7 @@ import { format } from 'date-fns';
 // Create an OpenAI provider instance for Ollama cloud
 const ollama = createOpenAI({
   apiKey: process.env.OLLAMA_API_KEY || 'ollama',
-  baseURL: process.env.AI_BASE_URL || 'http://localhost:11434/v1',
+  baseURL: process.env.AI_BASE_URL,
 });
 
 export async function POST(req: NextRequest) {

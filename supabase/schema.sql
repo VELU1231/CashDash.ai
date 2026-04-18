@@ -35,7 +35,7 @@ CREATE TABLE IF NOT EXISTS public.accounts (
   user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
   name TEXT NOT NULL,
   type TEXT NOT NULL DEFAULT 'cash' CHECK (type IN ('cash','checking','savings','credit','investment','loan','other')),
-  icon TEXT DEFAULT '💰',
+  icon TEXT DEFAULT 'Wallet',
   color TEXT DEFAULT '#10b981',
   currency TEXT DEFAULT 'USD',
   balance BIGINT DEFAULT 0,
@@ -55,7 +55,7 @@ CREATE TABLE IF NOT EXISTS public.categories (
   user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
   name TEXT NOT NULL,
   type TEXT NOT NULL CHECK (type IN ('income','expense','transfer')),
-  icon TEXT DEFAULT '📁',
+  icon TEXT DEFAULT 'FolderOpen',
   color TEXT DEFAULT '#6366f1',
   parent_id UUID REFERENCES public.categories(id) ON DELETE SET NULL,
   display_order INT DEFAULT 0,
@@ -230,26 +230,26 @@ BEGIN
   -- Create default accounts
   INSERT INTO public.accounts (user_id, name, type, icon, color, currency, balance, display_order)
   VALUES
-    (NEW.id, 'Cash', 'cash', '💵', '#10b981', 'USD', 0, 1),
-    (NEW.id, 'Bank Account', 'checking', '🏦', '#3b82f6', 'USD', 0, 2);
+    (NEW.id, 'Cash', 'cash', 'Money', '#10b981', 'USD', 0, 1),
+    (NEW.id, 'Bank Account', 'checking', 'Bank', '#3b82f6', 'USD', 0, 2);
 
   -- Create default expense categories
   INSERT INTO public.categories (user_id, name, type, icon, color, display_order)
   VALUES
-    (NEW.id, 'Food & Drinks', 'expense', '🍔', '#f59e0b', 1),
-    (NEW.id, 'Transportation', 'expense', '🚌', '#3b82f6', 2),
-    (NEW.id, 'Shopping', 'expense', '🛍️', '#ec4899', 3),
-    (NEW.id, 'Entertainment', 'expense', '🎬', '#8b5cf6', 4),
-    (NEW.id, 'Health', 'expense', '💊', '#ef4444', 5),
-    (NEW.id, 'Housing', 'expense', '🏠', '#06b6d4', 6),
-    (NEW.id, 'Education', 'expense', '📚', '#84cc16', 7),
-    (NEW.id, 'Utilities', 'expense', '⚡', '#f97316', 8),
-    (NEW.id, 'Other', 'expense', '📦', '#94a3b8', 9),
+    (NEW.id, 'Food & Drinks', 'expense', 'ForkKnife', '#f59e0b', 1),
+    (NEW.id, 'Transportation', 'expense', 'Car', '#3b82f6', 2),
+    (NEW.id, 'Shopping', 'expense', 'ShoppingCart', '#ec4899', 3),
+    (NEW.id, 'Entertainment', 'expense', 'Popcorn', '#8b5cf6', 4),
+    (NEW.id, 'Health', 'expense', 'Heartbeat', '#ef4444', 5),
+    (NEW.id, 'Housing', 'expense', 'House', '#06b6d4', 6),
+    (NEW.id, 'Education', 'expense', 'Book', '#84cc16', 7),
+    (NEW.id, 'Utilities', 'expense', 'Lightning', '#f97316', 8),
+    (NEW.id, 'Other', 'expense', 'FolderOpen', '#94a3b8', 9),
     -- Income categories
-    (NEW.id, 'Salary', 'income', '💼', '#10b981', 1),
-    (NEW.id, 'Freelance', 'income', '💻', '#3b82f6', 2),
-    (NEW.id, 'Investment', 'income', '📈', '#f59e0b', 3),
-    (NEW.id, 'Other Income', 'income', '💰', '#84cc16', 4);
+    (NEW.id, 'Salary', 'income', 'Briefcase', '#10b981', 1),
+    (NEW.id, 'Freelance', 'income', 'Desktop', '#3b82f6', 2),
+    (NEW.id, 'Investment', 'income', 'TrendUp', '#f59e0b', 3),
+    (NEW.id, 'Other Income', 'income', 'PiggyBank', '#84cc16', 4);
 
   RETURN NEW;
 END;
