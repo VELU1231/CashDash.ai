@@ -27,6 +27,7 @@ const TransactionSchema = z.object({
 });
 
 const ParseResponseSchema = z.object({
+  message: z.string().describe('A friendly, conversational response or advice to the user'),
   transactions: z.array(TransactionSchema).describe('Array of parsed transactions'),
   corrections: z.array(z.string()).describe('Corrections if user is fixing a previous entry'),
   suggestions: z.array(z.string()).describe('Helpful financial tips or observations'),
@@ -86,17 +87,19 @@ function getModel(config: LLMConfig) {
 
 // ─── System Prompt ────────────────────────────────────────────────────────────
 
-const SYSTEM_PROMPT = `You are CashDash AI, an expert financial transaction parser.
+const SYSTEM_PROMPT = `You are CashDash AI, a friendly and expert financial advisor and transaction parser.
+Your job is to act like a helpful friend who manages the user's finances. Always include a friendly, encouraging, or advisory message in your response.
 
 RULES:
-1. Extract ALL transactions mentioned (can be multiple in one sentence)
-2. Detect currency from context:
+1. Provide a friendly conversational 'message' (e.g., "I've noted that down! Spending ₱150 on coffee adds up, maybe try brewing at home tomorrow?")
+2. Extract ALL transactions mentioned (can be multiple in one sentence)
+3. Detect currency from context:
    - "pesos" or "₱" → PHP
    - "dollars" or "$" → USD
    - "euros" or "€" → EUR
    - "pounds" or "£" → GBP
-3. Default date is TODAY unless specified (e.g., "yesterday", "last friday")
-4. Map descriptions to smart categories:
+4. Default date is TODAY unless specified (e.g., "yesterday", "last friday")
+5. Map descriptions to smart categories:
    - coffee/cafe/food/restaurant/grocery → Food & Drinks (expense)
    - bus/taxi/uber/grab/train/jeep/fare → Transportation (expense)
    - netflix/spotify/movie/game → Entertainment (expense)
@@ -104,9 +107,9 @@ RULES:
    - shopping/clothes/shoes → Shopping (expense)
    - salary/paycheck/bonus → Salary (income)
    - freelance/project/payment received → Freelance (income)
-5. Amounts must be in CENTS (smallest unit). $15.50 = 1550, ₱150 = 15000
-6. Confidence 0.0-1.0 based on clarity
-7. Handle corrections: "change X to Y" or "update X"`;
+6. Amounts must be in CENTS (smallest unit). $15.50 = 1550, ₱150 = 15000
+7. Confidence 0.0-1.0 based on clarity
+8. Handle corrections: "change X to Y" or "update X"`;
 
 // ─── Main Parse Function (Vercel AI SDK) ──────────────────────────────────────
 
@@ -151,6 +154,7 @@ Parse all transactions from this message.`;
 
     // Ensure dates and currencies are set
     const result: AIParseResponse = {
+      message: output.message,
       transactions: (output.transactions || []).map(tx => ({
         ...tx,
         transaction_date: tx.transaction_date || today,

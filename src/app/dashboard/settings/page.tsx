@@ -214,7 +214,7 @@ export default function SettingsPage() {
                         className="w-full px-3 py-2.5 rounded-lg border border-input bg-background text-sm focus:outline-none">
                         {Object.values(CURRENCIES).map(c => (
                           <option key={c.code} value={c.code}>
-                            {c.flag} {c.code} — {c.name} ({c.symbol})
+                            {c.code} — {c.name} ({c.symbol})
                           </option>
                         ))}
                       </select>
@@ -258,26 +258,10 @@ export default function SettingsPage() {
                     <ToggleRow label="Auto-Categorize" desc="AI automatically assigns categories to transactions" checked={profile.ai_auto_categorize} onChange={() => toggle('ai_auto_categorize')} />
                     <ToggleRow label="Show Suggestions" desc="AI provides spending suggestions and insights" checked={profile.ai_suggestions} onChange={() => toggle('ai_suggestions')} />
 
-                    <div className="p-4 rounded-xl border border-border bg-muted/30 space-y-3">
-                      <h4 className="text-sm font-semibold flex items-center gap-2">
-                        <Key className="w-4 h-4 text-muted-foreground" /> AI Provider Config
-                      </h4>
-                      <p className="text-xs text-muted-foreground">
-                        Set <code className="bg-background px-1 rounded">AI_PROVIDER</code>, <code className="bg-background px-1 rounded">AI_BASE_URL</code>, and <code className="bg-background px-1 rounded">AI_MODEL</code> in your <code className="bg-background px-1 rounded">.env.local</code> file.
+                    <div className="p-4 rounded-xl border border-border bg-muted/30">
+                      <p className="text-sm text-muted-foreground">
+                        Your CashDash AI is currently configured and running smoothly. It will learn your spending habits over time.
                       </p>
-                      <div className="grid grid-cols-3 gap-2 text-xs">
-                        {[
-                          { name: 'Ollama (Free)', desc: 'Local AI', badge: 'Recommended' },
-                          { name: 'OpenAI', desc: 'GPT-4o-mini', badge: 'Paid' },
-                          { name: 'Gemini', desc: 'Flash 1.5', badge: 'Free tier' },
-                        ].map(p => (
-                          <div key={p.name} className="p-2.5 rounded-lg border border-border bg-background">
-                            <div className="font-medium">{p.name}</div>
-                            <div className="text-muted-foreground">{p.desc}</div>
-                            <span className="mt-1 inline-block px-1.5 py-0.5 rounded-full bg-primary/10 text-primary text-[10px] font-medium">{p.badge}</span>
-                          </div>
-                        ))}
-                      </div>
                     </div>
                   </div>
                 </>

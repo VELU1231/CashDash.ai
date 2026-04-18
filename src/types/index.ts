@@ -164,6 +164,7 @@ export interface ParsedTransaction {
 }
 
 export interface AIParseResponse {
+  message?: string;
   transactions: ParsedTransaction[];
   corrections: string[];
   suggestions: string[];

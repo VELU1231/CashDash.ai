@@ -78,11 +78,11 @@ export default function AIAssistantPage() {
       const msgId = crypto.randomUUID();
 
       if (txs.length > 0) {
-        responseContent = `I found **${txs.length} transaction${txs.length > 1 ? 's' : ''}**. Review below and click **Save** when ready:`;
+        responseContent = parsed?.message ? `${parsed.message}\n\nI found **${txs.length} transaction${txs.length > 1 ? 's' : ''}**. Review below and click **Save** when ready:` : `I found **${txs.length} transaction${txs.length > 1 ? 's' : ''}**. Review below and click **Save** when ready:`;
         setPendingTxs(txs);
         setPendingMsgId(msgId);
       } else {
-        responseContent = "I couldn't find any transactions in that message. Try something like: \"I spent ₱100 on coffee\"";
+        responseContent = parsed?.message || "I couldn't find any transactions in that message. Try something like: \"I spent ₱100 on coffee\"";
       }
 
       const assistantMsg: AIChatMessage = {
@@ -217,7 +217,7 @@ export default function AIAssistantPage() {
             className="text-xs px-2.5 py-1.5 rounded-lg border border-input bg-background focus:outline-none focus:ring-2 focus:ring-primary/20"
           >
             {Object.values(CURRENCIES).map(c => (
-              <option key={c.code} value={c.code}>{c.flag} {c.code}</option>
+              <option key={c.code} value={c.code}>{c.symbol} {c.code}</option>
             ))}
           </select>
           <motion.button
