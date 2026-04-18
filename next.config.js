@@ -1,3 +1,5 @@
+const { withWorkflow } = require('workflow/next');
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   images: {
@@ -7,7 +9,6 @@ const nextConfig = {
       { protocol: 'https', hostname: 'lh3.googleusercontent.com' },
     ],
   },
-  // Server Actions are stable in Next.js 15+, no experimental needed
 };
 
-module.exports = nextConfig;
+module.exports = withWorkflow(nextConfig);

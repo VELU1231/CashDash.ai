@@ -9,12 +9,12 @@ export async function POST(request: NextRequest) {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-    const { message, currency = 'USD' } = await request.json();
+    const { message, currency = 'USD', parseOnly = false } = await request.json();
     if (!message?.trim()) {
       return NextResponse.json({ error: 'Message is required' }, { status: 400 });
     }
 
-    // Get user profile for AI config
+    // Get user profile
     const { data: profile } = await supabase
       .from('profiles')
       .select('default_currency, ai_enabled')
@@ -35,7 +35,16 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ parsed, created: [], message: 'No transactions found' });
     }
 
-    // Get or create categories, then create transactions
+    // ─── Parse-only mode: return parsed data for user confirmation ───────
+    if (parseOnly) {
+      return NextResponse.json({
+        parsed,
+        created: [],
+        message: `Found ${parsed.transactions.length} transaction(s). Awaiting confirmation.`,
+      });
+    }
+
+    // ─── Auto-save mode (legacy / direct API calls) ─────────────────────
     const created = [];
 
     for (const tx of parsed.transactions) {
@@ -44,20 +53,17 @@ export async function POST(request: NextRequest) {
         let categoryId: string | null = null;
 
         if (tx.category_name) {
-          // Try to find existing category
           const { data: existingCat } = await supabase
             .from('categories')
             .select('id')
             .eq('user_id', user.id)
             .ilike('name', tx.category_name)
             .eq('type', tx.category_type)
-            .single();
+            .maybeSingle();
 
           if (existingCat) {
             categoryId = existingCat.id;
           } else {
-            // Auto-create category
-
             const { data: newCat } = await supabase
               .from('categories')
               .insert({
@@ -70,12 +76,11 @@ export async function POST(request: NextRequest) {
               })
               .select('id')
               .single();
-
             categoryId = newCat?.id || null;
           }
         }
 
-        // Find default account for this user
+        // Find default account
         const { data: defaultAccount } = await supabase
           .from('accounts')
           .select('id, currency, balance')
@@ -85,82 +90,36 @@ export async function POST(request: NextRequest) {
           .limit(1)
           .single();
 
-        if (!defaultAccount) {
-          // Create a default cash account if none exists
-          const { data: newAccount } = await supabase
-            .from('accounts')
-            .insert({
-              user_id: user.id,
-              name: 'Cash',
-              type: 'cash',
-              icon: '💵',
-              color: '#10b981',
-              currency: defaultCurrency,
-              balance: 0,
-              initial_balance: 0,
-            })
-            .select('id')
-            .single();
+        const accountId = defaultAccount?.id;
+        if (!accountId) continue;
 
-          if (!newAccount) continue;
+        const { data: newTx } = await supabase
+          .from('transactions')
+          .insert({
+            user_id: user.id,
+            type: tx.category_type,
+            category_id: categoryId,
+            account_id: accountId,
+            amount: Math.abs(tx.amount),
+            currency: tx.currency || defaultAccount.currency || defaultCurrency,
+            description: tx.description,
+            transaction_date: tx.transaction_date,
+            is_ai_created: true,
+            ai_confidence: tx.confidence,
+          })
+          .select('*, category:categories(*), account:accounts(*)')
+          .single();
 
-          const { data: newTx } = await supabase
-            .from('transactions')
-            .insert({
-              user_id: user.id,
-              type: tx.category_type,
-              category_id: categoryId,
-              account_id: newAccount.id,
-              amount: Math.abs(tx.amount),
-              currency: tx.currency || defaultCurrency,
-              description: tx.description,
-              transaction_date: tx.transaction_date,
-              is_ai_created: true,
-              ai_confidence: tx.confidence,
-            })
-            .select('*, category:categories(*), account:accounts(*)')
-            .single();
+        if (newTx) created.push(newTx);
 
-          if (newTx) created.push(newTx);
-
-          // Update account balance (non-blocking, ignore errors)
-          const balanceChange = tx.category_type === 'income' ? tx.amount : -tx.amount;
-          try {
-            await supabase.rpc('adjust_account_balance', {
-              p_account_id: newAccount.id,
-              p_delta: balanceChange,
-            });
-          } catch { /* non-blocking */ }
-
-        } else {
-          const { data: newTx } = await supabase
-            .from('transactions')
-            .insert({
-              user_id: user.id,
-              type: tx.category_type,
-              category_id: categoryId,
-              account_id: defaultAccount.id,
-              amount: Math.abs(tx.amount),
-              currency: tx.currency || defaultAccount.currency || defaultCurrency,
-              description: tx.description,
-              transaction_date: tx.transaction_date,
-              is_ai_created: true,
-              ai_confidence: tx.confidence,
-            })
-            .select('*, category:categories(*), account:accounts(*)')
-            .single();
-
-          if (newTx) created.push(newTx);
-
-          // Update account balance (non-blocking)
-          const balanceChange = tx.category_type === 'income' ? tx.amount : -tx.amount;
-          try {
-            await supabase.rpc('adjust_account_balance', {
-              p_account_id: defaultAccount.id,
-              p_delta: balanceChange,
-            });
-          } catch { /* non-blocking */ }
-        }
+        // Update balance
+        const balanceChange = tx.category_type === 'income' ? Math.abs(tx.amount) : -Math.abs(tx.amount);
+        try {
+          await supabase.rpc('adjust_account_balance', {
+            p_account_id: accountId,
+            p_delta: balanceChange,
+          });
+        } catch { /* non-blocking */ }
       } catch (txError) {
         console.error('Error creating transaction:', txError);
       }
@@ -174,10 +133,7 @@ export async function POST(request: NextRequest) {
 
   } catch (error) {
     console.error('AI parse error:', error);
-    return NextResponse.json(
-      { error: 'Failed to process message' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Failed to process message' }, { status: 500 });
   }
 }
 

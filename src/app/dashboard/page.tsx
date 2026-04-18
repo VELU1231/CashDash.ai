@@ -2,14 +2,22 @@ import { createClient } from '@/lib/supabase/server';
 import { redirect } from 'next/navigation';
 import { DashboardClient } from './dashboard-client';
 import { format, startOfMonth, endOfMonth, subMonths } from 'date-fns';
+import { aiAssistantFlag, dailyChartFlag, aiInsightsFlag } from '@/flags';
 import type { Metadata } from 'next';
 
-export const metadata: Metadata = { title: 'Dashboard' };
+export const metadata: Metadata = { title: 'Dashboard | CashDash.ai' };
 
 export default async function DashboardPage() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect('/login');
+
+  // Evaluate feature flags server-side
+  const [showAI, showDailyChart, showInsights] = await Promise.all([
+    aiAssistantFlag(),
+    dailyChartFlag(),
+    aiInsightsFlag(),
+  ]);
 
   const now = new Date();
   const monthStart = format(startOfMonth(now), 'yyyy-MM-dd');
@@ -66,6 +74,7 @@ export default async function DashboardPage() {
       trendData={trendData || []}
       profile={profile}
       currentMonth={format(now, 'MMMM yyyy')}
+      flags={{ showAI, showDailyChart, showInsights }}
     />
   );
 }

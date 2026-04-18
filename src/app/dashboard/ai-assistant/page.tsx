@@ -3,9 +3,9 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  Brain, Send, Loader2, CheckCircle2, XCircle, RefreshCw,
-  Sparkles, ArrowLeftRight, Tag, Calendar, DollarSign,
-  MessageSquare, Trash2, Copy, Info
+  Brain, Send, Loader2, CheckCircle2, XCircle, Sparkles,
+  Calendar, DollarSign, MessageSquare, Trash2, Info,
+  Pencil, Save, X, ChevronDown
 } from 'lucide-react';
 import { formatCurrency, formatDate, CURRENCIES } from '@/lib/utils';
 import { toast } from 'sonner';
@@ -18,7 +18,6 @@ const EXAMPLE_PROMPTS = [
   "Received ₱25,000 salary today",
   "Paid ₱2,500 electric bill",
   "Bus fare ₱25, dinner ₱320, movie ₱280",
-  "Change coffee to ₱80",
 ];
 
 export default function AIAssistantPage() {
@@ -26,20 +25,25 @@ export default function AIAssistantPage() {
     {
       id: 'welcome',
       role: 'assistant',
-      content: "Hi! I'm your CashDash AI assistant. Tell me what you spent today and I'll automatically log your transactions.\n\nTry: **\"Today I spent ₱150 on lunch and ₱50 on bus fare\"**",
+      content: "Hi! I'm your CashDash AI assistant. Tell me what you spent today and I'll log your transactions.\n\nTry: **\"Today I spent ₱150 on lunch and ₱50 on bus fare\"**",
       timestamp: new Date().toISOString(),
     }
   ]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
+  const [saving, setSaving] = useState(false);
   const [currency, setCurrency] = useState('PHP');
+  // Pending transactions awaiting user confirmation
+  const [pendingTxs, setPendingTxs] = useState<ParsedTransaction[]>([]);
+  const [pendingMsgId, setPendingMsgId] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages]);
+  }, [messages, pendingTxs]);
 
+  // ─── Send message → Parse only (no auto-save) ──────────────────────────────
   const sendMessage = useCallback(async (text?: string) => {
     const messageText = text || input.trim();
     if (!messageText || loading) return;
@@ -54,49 +58,47 @@ export default function AIAssistantPage() {
     setMessages(prev => [...prev, userMsg]);
     setInput('');
     setLoading(true);
+    setPendingTxs([]);
+    setPendingMsgId(null);
 
     try {
       const res = await fetch('/api/ai/parse', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message: messageText, currency }),
+        body: JSON.stringify({ message: messageText, currency, parseOnly: true }),
       });
 
       const data = await res.json();
-
       if (!res.ok) throw new Error(data.error || 'Failed to parse');
 
-      const { parsed, created, error: parseError } = data;
+      const { parsed } = data;
+      const txs: ParsedTransaction[] = parsed?.transactions || [];
 
-      let responseContent = '';
-      if (parseError) {
-        responseContent = `I couldn't parse that. Try: "I spent ₱150 on coffee and ₱50 on bus"`;
-      } else if (created?.length > 0) {
-        responseContent = `✅ I logged **${created.length} transaction${created.length > 1 ? 's' : ''}** for you!`;
-        if (parsed?.suggestions?.length > 0) {
-          responseContent += `\n\n💡 ${parsed.suggestions[0]}`;
-        }
-      } else if (parsed?.transactions?.length > 0) {
-        responseContent = `I found ${parsed.transactions.length} transaction(s) but couldn't save them. Please check your accounts are set up.`;
+      let responseContent: string;
+      const msgId = crypto.randomUUID();
+
+      if (txs.length > 0) {
+        responseContent = `I found **${txs.length} transaction${txs.length > 1 ? 's' : ''}**. Review below and click **Save** when ready:`;
+        setPendingTxs(txs);
+        setPendingMsgId(msgId);
       } else {
         responseContent = "I couldn't find any transactions in that message. Try something like: \"I spent ₱100 on coffee\"";
       }
 
       const assistantMsg: AIChatMessage = {
-        id: crypto.randomUUID(),
+        id: msgId,
         role: 'assistant',
         content: responseContent,
         timestamp: new Date().toISOString(),
-        parsed_transactions: parsed?.transactions || [],
-        created_transactions: created || [],
+        parsed_transactions: txs,
       };
 
       setMessages(prev => [...prev, assistantMsg]);
 
-      if (created?.length > 0) {
-        toast.success(`${created.length} transaction${created.length > 1 ? 's' : ''} logged!`);
+      if (parsed?.suggestions?.length > 0) {
+        toast.info(parsed.suggestions[0], { duration: 5000 });
       }
-    } catch (err) {
+    } catch {
       const errorMsg: AIChatMessage = {
         id: crypto.randomUUID(),
         role: 'assistant',
@@ -111,6 +113,72 @@ export default function AIAssistantPage() {
     }
   }, [input, loading, currency]);
 
+  // ─── Confirm & Save pending transactions ──────────────────────────────────
+  const confirmAndSave = async () => {
+    if (pendingTxs.length === 0 || saving) return;
+    setSaving(true);
+
+    try {
+      const payload = pendingTxs.map(tx => ({
+        type: tx.category_type,
+        amount: (tx.amount / 100).toFixed(2), // API expects dollars, not cents
+        currency: tx.currency,
+        description: tx.description,
+        category_name: tx.category_name,
+        transaction_date: tx.transaction_date,
+        confidence: tx.confidence,
+      }));
+
+      const res = await fetch('/api/transactions/bulk', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ transactions: payload }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed to save');
+
+      // Update the assistant message to show success
+      setMessages(prev => prev.map(m =>
+        m.id === pendingMsgId
+          ? { ...m, content: `✅ Saved **${data.count} transaction${data.count !== 1 ? 's' : ''}** successfully!`, created_transactions: data.created }
+          : m
+      ));
+
+      toast.success(`${data.count} transaction${data.count !== 1 ? 's' : ''} saved!`);
+      setPendingTxs([]);
+      setPendingMsgId(null);
+    } catch {
+      toast.error('Failed to save transactions');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  // ─── Discard pending ──────────────────────────────────────────────────────
+  const discardPending = () => {
+    setPendingTxs([]);
+    setPendingMsgId(null);
+    setMessages(prev => prev.map(m =>
+      m.id === pendingMsgId
+        ? { ...m, content: 'Transactions discarded. Tell me what else you spent!' }
+        : m
+    ));
+  };
+
+  // ─── Edit a pending transaction ───────────────────────────────────────────
+  const updatePendingTx = (index: number, field: keyof ParsedTransaction, value: string | number) => {
+    setPendingTxs(prev => prev.map((tx, i) => {
+      if (i !== index) return tx;
+      if (field === 'amount') return { ...tx, amount: Math.round(parseFloat(String(value)) * 100) };
+      return { ...tx, [field]: value };
+    }));
+  };
+
+  const removePendingTx = (index: number) => {
+    setPendingTxs(prev => prev.filter((_, i) => i !== index));
+  };
+
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
@@ -119,6 +187,8 @@ export default function AIAssistantPage() {
   };
 
   const clearChat = () => {
+    setPendingTxs([]);
+    setPendingMsgId(null);
     setMessages([{
       id: 'welcome',
       role: 'assistant',
@@ -137,11 +207,10 @@ export default function AIAssistantPage() {
           </div>
           <div>
             <h1 className="text-xl font-bold">AI Assistant</h1>
-            <p className="text-xs text-muted-foreground">Powered by Ollama · Tell me what you spent</p>
+            <p className="text-xs text-muted-foreground">Tell me what you spent · review before saving</p>
           </div>
         </div>
         <div className="flex items-center gap-2">
-          {/* Currency selector */}
           <select
             value={currency}
             onChange={(e) => setCurrency(e.target.value)}
@@ -171,7 +240,7 @@ export default function AIAssistantPage() {
       >
         <Info className="w-4 h-4 text-blue-600 mt-0.5 shrink-0" />
         <p className="text-xs text-blue-700 dark:text-blue-400">
-          <strong>How it works:</strong> Just describe your spending naturally. The AI extracts amounts, categories, and dates — then saves everything automatically. Works in any language or currency!
+          <strong>How it works:</strong> Describe your spending naturally → AI parses amounts, categories & dates → <strong>you review & confirm</strong> → saved to your account.
         </p>
       </motion.div>
 
@@ -204,7 +273,6 @@ export default function AIAssistantPage() {
                     ? 'bg-primary text-primary-foreground rounded-tr-sm'
                     : 'bg-muted rounded-tl-sm'
                 }`}>
-                  {/* Render markdown-like bold */}
                   {msg.content.split('\n').map((line, i) => (
                     <p key={i} className={i > 0 ? 'mt-2' : ''}>
                       {line.split(/\*\*(.+?)\*\*/).map((part, j) =>
@@ -214,17 +282,17 @@ export default function AIAssistantPage() {
                   ))}
                 </div>
 
-                {/* Parsed transactions preview */}
-                {msg.parsed_transactions && msg.parsed_transactions.length > 0 && (
-                  <motion.div
-                    className="mt-2 space-y-1.5"
-                    initial={{ opacity: 0, y: 5 }}
-                    animate={{ opacity: 1, y: 0 }}
-                  >
-                    {msg.parsed_transactions.map((tx, i) => (
-                      <ParsedTransactionCard key={i} tx={tx} saved={!!msg.created_transactions?.length} />
+                {/* Show saved transactions summary */}
+                {msg.created_transactions && msg.created_transactions.length > 0 && (
+                  <div className="mt-2 space-y-1">
+                    {msg.created_transactions.map((tx: any, i: number) => (
+                      <div key={i} className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-emerald-200 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-950/30 text-xs">
+                        <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
+                        <span className="truncate flex-1">{tx.description}</span>
+                        <span className="font-semibold text-emerald-600">{formatCurrency(tx.amount, tx.currency)}</span>
+                      </div>
                     ))}
-                  </motion.div>
+                  </div>
                 )}
 
                 {msg.role === 'user' && (
@@ -240,15 +308,11 @@ export default function AIAssistantPage() {
         </AnimatePresence>
 
         {loading && (
-          <motion.div
-            className="flex justify-start"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-          >
+          <motion.div className="flex justify-start" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
             <div className="bg-muted rounded-2xl rounded-tl-sm px-4 py-3">
               <div className="flex items-center gap-2">
                 <Loader2 className="w-3.5 h-3.5 animate-spin text-primary" />
-                <span className="text-xs text-muted-foreground">Analyzing...</span>
+                <span className="text-xs text-muted-foreground">Analyzing your spending...</span>
               </div>
             </div>
           </motion.div>
@@ -257,8 +321,65 @@ export default function AIAssistantPage() {
         <div ref={messagesEndRef} />
       </div>
 
+      {/* ─── Pending Transactions Confirmation Panel ─── */}
+      <AnimatePresence>
+        {pendingTxs.length > 0 && (
+          <motion.div
+            className="mb-3 rounded-2xl border border-primary/20 bg-card shadow-lg overflow-hidden"
+            initial={{ opacity: 0, y: 20, height: 0 }}
+            animate={{ opacity: 1, y: 0, height: 'auto' }}
+            exit={{ opacity: 0, y: 20, height: 0 }}
+          >
+            <div className="px-4 py-3 border-b border-border bg-muted/30 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Pencil className="w-4 h-4 text-primary" />
+                <span className="text-sm font-semibold">Review & Confirm ({pendingTxs.length})</span>
+              </div>
+              <button onClick={discardPending} className="text-xs text-muted-foreground hover:text-foreground transition-colors">
+                Discard all
+              </button>
+            </div>
+
+            <div className="divide-y divide-border max-h-60 overflow-y-auto">
+              {pendingTxs.map((tx, i) => (
+                <EditableTransactionRow
+                  key={i}
+                  tx={tx}
+                  index={i}
+                  onUpdate={updatePendingTx}
+                  onRemove={removePendingTx}
+                />
+              ))}
+            </div>
+
+            <div className="px-4 py-3 border-t border-border bg-muted/30 flex items-center justify-between">
+              <div className="text-xs text-muted-foreground">
+                Total: <strong className="text-foreground">
+                  {formatCurrency(pendingTxs.reduce((s, t) => s + t.amount, 0), pendingTxs[0]?.currency || currency)}
+                </strong>
+              </div>
+              <div className="flex items-center gap-2">
+                <button onClick={discardPending}
+                  className="px-3 py-1.5 rounded-lg border border-input text-xs font-medium hover:bg-muted transition-colors">
+                  Cancel
+                </button>
+                <motion.button
+                  onClick={confirmAndSave}
+                  disabled={saving || pendingTxs.length === 0}
+                  className="flex items-center gap-1.5 px-4 py-1.5 rounded-lg bg-primary text-primary-foreground text-xs font-semibold hover:bg-primary/90 disabled:opacity-50 transition-all"
+                  whileTap={{ scale: 0.97 }}
+                >
+                  {saving ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Save className="w-3.5 h-3.5" />}
+                  {saving ? 'Saving...' : `Save ${pendingTxs.length} transaction${pendingTxs.length > 1 ? 's' : ''}`}
+                </motion.button>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* Example prompts */}
-      {messages.length <= 2 && (
+      {messages.length <= 2 && pendingTxs.length === 0 && (
         <div className="mb-3">
           <p className="text-xs text-muted-foreground mb-2 flex items-center gap-1.5">
             <Sparkles className="w-3 h-3" /> Try these examples:
@@ -290,49 +411,112 @@ export default function AIAssistantPage() {
             placeholder="Tell me what you spent... (Enter to send, Shift+Enter for new line)"
             className="flex-1 resize-none bg-transparent text-sm focus:outline-none placeholder:text-muted-foreground max-h-32 scrollbar-thin"
             rows={1}
-            disabled={loading}
+            disabled={loading || saving}
           />
           <motion.button
             onClick={() => sendMessage()}
-            disabled={!input.trim() || loading}
+            disabled={!input.trim() || loading || saving}
             className="shrink-0 w-9 h-9 rounded-xl bg-primary text-primary-foreground flex items-center justify-center disabled:opacity-50 hover:bg-primary/90 transition-colors"
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
           >
-            {loading
-              ? <Loader2 className="w-4 h-4 animate-spin" />
-              : <Send className="w-4 h-4" />}
+            {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
           </motion.button>
         </div>
         <p className="text-[10px] text-muted-foreground mt-1.5 text-center">
-          AI may make mistakes. Review transactions before using for accounting.
+          AI may make mistakes. Always review parsed transactions before saving.
         </p>
       </div>
     </div>
   );
 }
 
-function ParsedTransactionCard({ tx, saved }: { tx: ParsedTransaction; saved: boolean }) {
+// ─── Editable Transaction Row ────────────────────────────────────────────────
+
+function EditableTransactionRow({
+  tx,
+  index,
+  onUpdate,
+  onRemove,
+}: {
+  tx: ParsedTransaction;
+  index: number;
+  onUpdate: (index: number, field: keyof ParsedTransaction, value: string | number) => void;
+  onRemove: (index: number) => void;
+}) {
+  const [editing, setEditing] = useState(false);
+
   return (
     <motion.div
-      className="flex items-center gap-2.5 px-3 py-2 rounded-xl border border-border bg-card text-xs"
+      className="flex items-center gap-3 px-4 py-2.5 hover:bg-muted/20 transition-colors"
       initial={{ opacity: 0, x: -5 }}
       animate={{ opacity: 1, x: 0 }}
+      transition={{ delay: index * 0.05 }}
     >
-      <div className="flex items-center gap-1.5 text-muted-foreground shrink-0">
-        {saved
-          ? <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />
-          : <XCircle className="w-3.5 h-3.5 text-yellow-500" />}
-      </div>
+      {/* Type badge */}
+      <span className={`text-[10px] font-bold uppercase px-1.5 py-0.5 rounded ${
+        tx.category_type === 'income'
+          ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400'
+          : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
+      }`}>
+        {tx.category_type === 'income' ? 'IN' : 'OUT'}
+      </span>
+
+      {/* Description */}
       <div className="flex-1 min-w-0">
-        <span className="font-medium">{tx.description}</span>
-        <span className="text-muted-foreground ml-1.5">→ {tx.category_name}</span>
+        {editing ? (
+          <input
+            value={tx.description}
+            onChange={e => onUpdate(index, 'description', e.target.value)}
+            className="w-full px-2 py-1 rounded border border-input bg-background text-xs focus:outline-none focus:ring-1 focus:ring-primary"
+            autoFocus
+          />
+        ) : (
+          <div className="flex items-center gap-1.5">
+            <span className="text-sm font-medium truncate">{tx.description}</span>
+            <span className="text-xs text-muted-foreground">→ {tx.category_name}</span>
+          </div>
+        )}
       </div>
-      <div className="flex items-center gap-2 shrink-0">
-        <span className={`font-semibold ${tx.category_type === 'income' ? 'text-emerald-600' : 'text-red-500'}`}>
+
+      {/* Amount */}
+      {editing ? (
+        <input
+          type="number"
+          step="0.01"
+          value={(tx.amount / 100).toFixed(2)}
+          onChange={e => onUpdate(index, 'amount', parseFloat(e.target.value) || 0)}
+          className="w-20 px-2 py-1 rounded border border-input bg-background text-xs text-right focus:outline-none focus:ring-1 focus:ring-primary"
+        />
+      ) : (
+        <span className={`text-sm font-semibold shrink-0 ${
+          tx.category_type === 'income' ? 'text-emerald-600' : 'text-red-500'
+        }`}>
           {tx.category_type === 'income' ? '+' : '-'}{formatCurrency(tx.amount, tx.currency)}
         </span>
-        <span className="text-muted-foreground">{formatDate(tx.transaction_date, 'MMM d')}</span>
+      )}
+
+      {/* Date */}
+      <span className="text-[10px] text-muted-foreground shrink-0">
+        {formatDate(tx.transaction_date, 'MMM d')}
+      </span>
+
+      {/* Actions */}
+      <div className="flex items-center gap-0.5 shrink-0">
+        <button
+          onClick={() => setEditing(!editing)}
+          className="p-1 rounded hover:bg-muted transition-colors text-muted-foreground hover:text-foreground"
+          title={editing ? 'Done editing' : 'Edit'}
+        >
+          {editing ? <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" /> : <Pencil className="w-3.5 h-3.5" />}
+        </button>
+        <button
+          onClick={() => onRemove(index)}
+          className="p-1 rounded hover:bg-destructive/10 transition-colors text-muted-foreground hover:text-destructive"
+          title="Remove"
+        >
+          <X className="w-3.5 h-3.5" />
+        </button>
       </div>
     </motion.div>
   );

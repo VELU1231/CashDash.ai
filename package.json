@@ -11,6 +11,8 @@
     "type-check": "tsc --noEmit"
   },
   "dependencies": {
+    "@ai-sdk/google": "^3.0.64",
+    "@ai-sdk/openai": "^3.0.53",
     "@heroicons/react": "^2.2.0",
     "@hookform/resolvers": "^3.10.0",
     "@radix-ui/react-accordion": "^1.2.2",
@@ -37,11 +39,13 @@
     "@radix-ui/react-tooltip": "^1.1.6",
     "@supabase/ssr": "^0.5.2",
     "@supabase/supabase-js": "^2.47.0",
+    "ai": "^6.0.168",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "cmdk": "^1.0.4",
     "date-fns": "^4.1.0",
     "embla-carousel-react": "^8.5.2",
+    "flags": "^4.0.6",
     "framer-motion": "^11.15.0",
     "input-otp": "^1.4.2",
     "lucide-react": "^0.468.0",
@@ -62,6 +66,7 @@
     "tailwind-merge": "^2.5.5",
     "tailwindcss-animate": "^1.0.7",
     "vaul": "^1.1.2",
+    "workflow": "^4.2.4",
     "zod": "^3.24.1",
     "zustand": "^5.0.3"
   },

@@ -15,6 +15,7 @@ import {
 import Link from 'next/link';
 import { format, parseISO } from 'date-fns';
 import { formatCurrency, getChartColor, formatRelativeDate } from '@/lib/utils';
+import { ChartTooltip, EmptyChart, StatCardSkeleton, ChartSkeleton } from '@/components/ui/charts';
 import type { Profile, Transaction, Account } from '@/types';
 
 interface Props {
@@ -24,47 +25,13 @@ interface Props {
   trendData: { type: string; amount: number; transaction_date: string; currency: string }[];
   profile: Profile | null;
   currentMonth: string;
+  flags?: { showAI?: boolean; showDailyChart?: boolean; showInsights?: boolean };
 }
 
 const fadeUp = { initial: { opacity: 0, y: 20 }, animate: { opacity: 1, y: 0 } };
 
-// Shared tooltip component for Recharts
-function ChartTooltip({
-  active, payload, label, currency,
-}: {
-  active?: boolean;
-  payload?: { color: string; name: string; value: number }[];
-  label?: string;
-  currency: string;
-}) {
-  if (!active || !payload?.length) return null;
-  return (
-    <div className="rounded-xl border border-border bg-card p-3 shadow-lg text-xs">
-      <p className="font-semibold text-foreground mb-2">{label}</p>
-      {payload.map((p) => (
-        <div key={p.name} className="flex items-center gap-2 text-muted-foreground">
-          <span className="w-2 h-2 rounded-full" style={{ background: p.color }} />
-          <span>{p.name}:</span>
-          <span className="font-medium text-foreground">{formatCurrency(p.value, currency)}</span>
-        </div>
-      ))}
-    </div>
-  );
-}
-
-function EmptyChart({ message }: { message: string }) {
-  return (
-    <div className="flex flex-col items-center justify-center h-40 text-center">
-      <AlertCircle className="w-8 h-8 text-muted-foreground/40 mb-2" />
-      <p className="text-xs text-muted-foreground">{message}</p>
-    </div>
-  );
-}
-
-export function DashboardClient({ transactions, prevTransactions, accounts, trendData, profile, currentMonth }: Props) {
+export function DashboardClient({ transactions, prevTransactions, accounts, trendData, profile, currentMonth, flags }: Props) {
   const currency = profile?.default_currency || 'USD';
-
-  // ─── Computed Stats ───────────────────────────────────────────────────────
 
   const stats = useMemo(() => {
     const income = transactions.filter(t => t.type === 'income').reduce((s, t) => s + t.amount, 0);
@@ -77,8 +44,6 @@ export function DashboardClient({ transactions, prevTransactions, accounts, tren
     const expensePct = prevExpenses > 0 ? ((expenses - prevExpenses) / prevExpenses) * 100 : 0;
     return { income, expenses, totalBalance, savingsRate, incomePct, expensePct, net: income - expenses };
   }, [transactions, prevTransactions, accounts]);
-
-  // ─── Category Breakdown ───────────────────────────────────────────────────
 
   const categoryData = useMemo(() => {
     const grouped: Record<string, { name: string; icon: string; color: string; total: number; count: number }> = {};
@@ -101,8 +66,6 @@ export function DashboardClient({ transactions, prevTransactions, accounts, tren
       }));
   }, [transactions, stats.expenses]);
 
-  // ─── 6-Month Trend ────────────────────────────────────────────────────────
-
   const trendChartData = useMemo(() => {
     const monthly: Record<string, { month: string; label: string; income: number; expenses: number }> = {};
     trendData.forEach(tx => {
@@ -115,8 +78,6 @@ export function DashboardClient({ transactions, prevTransactions, accounts, tren
     });
     return Object.values(monthly).sort((a, b) => a.month.localeCompare(b.month));
   }, [trendData]);
-
-  // ─── Daily Spending ───────────────────────────────────────────────────────
 
   const dailyData = useMemo(() => {
     const daily: Record<string, number> = {};
@@ -131,54 +92,35 @@ export function DashboardClient({ transactions, prevTransactions, accounts, tren
 
   const recentTransactions = transactions.slice(0, 8);
 
-  // Curry the tooltip to inject currency without breaking Recharts' prop passing
-  const renderTooltip = (props: any) => (
-    <ChartTooltip {...props} currency={currency} />
-  );
+  const renderTooltip = (props: any) => <ChartTooltip {...props} currency={currency} />;
 
   return (
     <div className="space-y-6">
-      {/* ─── Header ─── */}
-      <motion.div
-        className="flex items-center justify-between"
-        {...fadeUp}
-        transition={{ duration: 0.4 }}
-      >
+      {/* Header */}
+      <motion.div className="flex items-center justify-between" {...fadeUp} transition={{ duration: 0.4 }}>
         <div>
           <h1 className="text-2xl font-bold">Dashboard</h1>
           <p className="text-sm text-muted-foreground mt-0.5">{currentMonth} overview</p>
         </div>
         <div className="flex items-center gap-3">
           <Link href="/dashboard/ai-assistant">
-            <motion.button
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-primary/10 text-primary text-sm font-medium hover:bg-primary/20 transition-colors"
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-            >
-              <Sparkles className="w-4 h-4" />
-              Ask AI
+            <motion.button className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-primary/10 text-primary text-sm font-medium hover:bg-primary/20 transition-colors"
+              whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+              <Sparkles className="w-4 h-4" /> Ask AI
             </motion.button>
           </Link>
-          <Link href="/dashboard/transactions/new">
-            <motion.button
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-all hover:shadow-glow"
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-            >
-              <Plus className="w-4 h-4" />
-              Add transaction
+          <Link href="/dashboard/ai-assistant">
+            <motion.button className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-all hover:shadow-glow"
+              whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+              <Plus className="w-4 h-4" /> Add transaction
             </motion.button>
           </Link>
         </div>
       </motion.div>
 
-      {/* ─── Stat Cards ─── */}
-      <motion.div
-        className="grid grid-cols-2 lg:grid-cols-4 gap-4"
-        initial="initial"
-        animate="animate"
-        variants={{ animate: { transition: { staggerChildren: 0.08 } } }}
-      >
+      {/* Stat Cards */}
+      <motion.div className="grid grid-cols-2 lg:grid-cols-4 gap-4" initial="initial" animate="animate"
+        variants={{ animate: { transition: { staggerChildren: 0.08 } } }}>
         {[
           { label: 'Total Balance', value: formatCurrency(stats.totalBalance, currency), icon: Wallet, color: 'text-emerald-600', bg: 'bg-emerald-50 dark:bg-emerald-950/50', change: null, sub: `${accounts.length} accounts` },
           { label: 'Monthly Income', value: formatCurrency(stats.income, currency), icon: TrendingUp, color: 'text-blue-600', bg: 'bg-blue-50 dark:bg-blue-950/50', change: stats.incomePct, sub: 'vs last month' },
@@ -190,9 +132,7 @@ export function DashboardClient({ transactions, prevTransactions, accounts, tren
           return (
             <motion.div key={stat.label} variants={fadeUp} className="stat-card">
               <div className="flex items-start justify-between mb-3">
-                <div className={`p-2 rounded-lg ${stat.bg}`}>
-                  <Icon className={`w-4 h-4 ${stat.color}`} />
-                </div>
+                <div className={`p-2 rounded-lg ${stat.bg}`}><Icon className={`w-4 h-4 ${stat.color}`} /></div>
                 {stat.change !== null && (
                   <span className={`inline-flex items-center gap-0.5 text-xs font-medium ${isPositive ? 'text-emerald-600' : 'text-red-500'}`}>
                     {isPositive ? <ArrowUpRight className="w-3 h-3" /> : <ArrowDownRight className="w-3 h-3" />}
@@ -208,14 +148,11 @@ export function DashboardClient({ transactions, prevTransactions, accounts, tren
         })}
       </motion.div>
 
-      {/* ─── Charts Row ─── */}
+      {/* Charts Row */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-
-        {/* Income vs Expenses Trend */}
-        <motion.div
-          className="lg:col-span-2 rounded-xl border border-border bg-card p-5 shadow-soft"
-          initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}
-        >
+        {/* Income vs Expenses */}
+        <motion.div className="lg:col-span-2 rounded-xl border border-border bg-card p-5 shadow-soft"
+          initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}>
           <div className="flex items-center justify-between mb-4">
             <div>
               <h3 className="font-semibold text-sm">Income vs Expenses</h3>
@@ -254,10 +191,8 @@ export function DashboardClient({ transactions, prevTransactions, accounts, tren
         </motion.div>
 
         {/* Category Pie */}
-        <motion.div
-          className="rounded-xl border border-border bg-card p-5 shadow-soft"
-          initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }}
-        >
+        <motion.div className="rounded-xl border border-border bg-card p-5 shadow-soft"
+          initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }}>
           <div className="mb-4">
             <h3 className="font-semibold text-sm">Spending by Category</h3>
             <p className="text-xs text-muted-foreground">This month</p>
@@ -269,10 +204,8 @@ export function DashboardClient({ transactions, prevTransactions, accounts, tren
                   <Pie data={categoryData} cx="50%" cy="50%" innerRadius={45} outerRadius={70} dataKey="total" paddingAngle={2}>
                     {categoryData.map((entry, i) => <Cell key={i} fill={entry.fill} />)}
                   </Pie>
-                  <Tooltip
-                    formatter={(value: number) => [formatCurrency(value, currency), '']}
-                    contentStyle={{ borderRadius: '12px', border: '1px solid hsl(var(--border))' }}
-                  />
+                  <Tooltip formatter={(value: number) => [formatCurrency(value, currency), '']}
+                    contentStyle={{ borderRadius: '12px', border: '1px solid hsl(var(--border))' }} />
                 </PieChart>
               </ResponsiveContainer>
               <div className="space-y-2 mt-2">
@@ -285,13 +218,9 @@ export function DashboardClient({ transactions, prevTransactions, accounts, tren
                         <span className="text-xs text-muted-foreground">{cat.percentage}%</span>
                       </div>
                       <div className="h-1 bg-muted rounded-full overflow-hidden">
-                        <motion.div
-                          className="h-full rounded-full"
-                          style={{ background: cat.fill }}
-                          initial={{ width: 0 }}
-                          animate={{ width: `${cat.percentage}%` }}
-                          transition={{ delay: 0.5 + i * 0.1, duration: 0.6 }}
-                        />
+                        <motion.div className="h-full rounded-full" style={{ background: cat.fill }}
+                          initial={{ width: 0 }} animate={{ width: `${cat.percentage}%` }}
+                          transition={{ delay: 0.5 + i * 0.1, duration: 0.6 }} />
                       </div>
                     </div>
                   </div>
@@ -304,12 +233,10 @@ export function DashboardClient({ transactions, prevTransactions, accounts, tren
         </motion.div>
       </div>
 
-      {/* ─── Daily Spending Bar Chart ─── */}
+      {/* Daily Spending */}
       {dailyData.length > 0 && (
-        <motion.div
-          className="rounded-xl border border-border bg-card p-5 shadow-soft"
-          initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 }}
-        >
+        <motion.div className="rounded-xl border border-border bg-card p-5 shadow-soft"
+          initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 }}>
           <div className="mb-4">
             <h3 className="font-semibold text-sm">Daily Spending</h3>
             <p className="text-xs text-muted-foreground">Expense breakdown this month</p>
@@ -320,24 +247,19 @@ export function DashboardClient({ transactions, prevTransactions, accounts, tren
               <XAxis dataKey="date" tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} axisLine={false} tickLine={false} />
               <YAxis tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} axisLine={false} tickLine={false}
                 tickFormatter={(v: number) => formatCurrency(v, currency, { compact: true })} />
-              <Tooltip
-                formatter={(v: number) => [formatCurrency(v, currency), 'Spent']}
-                contentStyle={{ borderRadius: '12px', border: '1px solid hsl(var(--border))' }}
-              />
+              <Tooltip formatter={(v: number) => [formatCurrency(v, currency), 'Spent']}
+                contentStyle={{ borderRadius: '12px', border: '1px solid hsl(var(--border))' }} />
               <Bar dataKey="amount" fill="#10b981" radius={[4, 4, 0, 0]} maxBarSize={32} />
             </BarChart>
           </ResponsiveContainer>
         </motion.div>
       )}
 
-      {/* ─── Bottom Row ─── */}
+      {/* Bottom Row */}
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-4">
-
-        {/* Account Balances */}
-        <motion.div
-          className="lg:col-span-2 rounded-xl border border-border bg-card p-5 shadow-soft"
-          initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.55 }}
-        >
+        {/* Accounts */}
+        <motion.div className="lg:col-span-2 rounded-xl border border-border bg-card p-5 shadow-soft"
+          initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.55 }}>
           <div className="flex items-center justify-between mb-4">
             <h3 className="font-semibold text-sm">Accounts</h3>
             <Link href="/dashboard/accounts" className="text-xs text-primary hover:underline">View all</Link>
@@ -345,14 +267,8 @@ export function DashboardClient({ transactions, prevTransactions, accounts, tren
           {accounts.length > 0 ? (
             <div className="space-y-2">
               {accounts.slice(0, 6).map((account) => (
-                <motion.div
-                  key={account.id}
-                  className="flex items-center gap-3 p-2.5 rounded-lg hover:bg-muted/50 transition-colors"
-                  whileHover={{ x: 2 }}
-                >
-                  <div className="w-8 h-8 rounded-lg flex items-center justify-center text-sm shrink-0" style={{ background: `${account.color}20` }}>
-                    {account.icon}
-                  </div>
+                <motion.div key={account.id} className="flex items-center gap-3 p-2.5 rounded-lg hover:bg-muted/50 transition-colors" whileHover={{ x: 2 }}>
+                  <div className="w-8 h-8 rounded-lg flex items-center justify-center text-sm shrink-0" style={{ background: `${account.color}20` }}>{account.icon}</div>
                   <div className="flex-1 min-w-0">
                     <div className="text-sm font-medium truncate">{account.name}</div>
                     <div className="text-xs text-muted-foreground capitalize">{account.type}</div>
@@ -373,10 +289,8 @@ export function DashboardClient({ transactions, prevTransactions, accounts, tren
         </motion.div>
 
         {/* Recent Transactions */}
-        <motion.div
-          className="lg:col-span-3 rounded-xl border border-border bg-card p-5 shadow-soft"
-          initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.6 }}
-        >
+        <motion.div className="lg:col-span-3 rounded-xl border border-border bg-card p-5 shadow-soft"
+          initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.6 }}>
           <div className="flex items-center justify-between mb-4">
             <h3 className="font-semibold text-sm">Recent Transactions</h3>
             <Link href="/dashboard/transactions" className="text-xs text-primary hover:underline">View all</Link>
@@ -384,14 +298,9 @@ export function DashboardClient({ transactions, prevTransactions, accounts, tren
           {recentTransactions.length > 0 ? (
             <div className="space-y-1">
               {recentTransactions.map((tx, i) => (
-                <motion.div
-                  key={tx.id}
-                  className="flex items-center gap-3 p-2.5 rounded-lg hover:bg-muted/50 transition-colors"
-                  initial={{ opacity: 0, x: -10 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: 0.65 + i * 0.04 }}
-                  whileHover={{ x: 2 }}
-                >
+                <motion.div key={tx.id} className="flex items-center gap-3 p-2.5 rounded-lg hover:bg-muted/50 transition-colors"
+                  initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: 0.65 + i * 0.04 }} whileHover={{ x: 2 }}>
                   <div className="w-8 h-8 rounded-lg flex items-center justify-center text-sm shrink-0 bg-muted">
                     {tx.category?.icon || (tx.type === 'income' ? '💰' : tx.type === 'transfer' ? '↔️' : '💸')}
                   </div>
@@ -411,7 +320,7 @@ export function DashboardClient({ transactions, prevTransactions, accounts, tren
               <ArrowLeftRight className="w-8 h-8 text-muted-foreground mx-auto mb-2" />
               <p className="text-sm text-muted-foreground">No transactions this month</p>
               <div className="flex items-center justify-center gap-2 mt-2">
-                <Link href="/dashboard/transactions/new" className="text-xs text-primary hover:underline">Add manually</Link>
+                <Link href="/dashboard/ai-assistant" className="text-xs text-primary hover:underline">Add manually</Link>
                 <span className="text-xs text-muted-foreground">or</span>
                 <Link href="/dashboard/ai-assistant" className="text-xs text-primary hover:underline">use AI</Link>
               </div>
@@ -420,12 +329,10 @@ export function DashboardClient({ transactions, prevTransactions, accounts, tren
         </motion.div>
       </div>
 
-      {/* ─── Welcome Banner (empty state) ─── */}
+      {/* Welcome Banner */}
       {transactions.length === 0 && (
-        <motion.div
-          className="rounded-xl border border-primary/20 bg-primary/5 p-5 flex items-start gap-4"
-          initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.7 }}
-        >
+        <motion.div className="rounded-xl border border-primary/20 bg-primary/5 p-5 flex items-start gap-4"
+          initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.7 }}>
           <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
             <Brain className="w-5 h-5 text-primary" />
           </div>
@@ -434,15 +341,12 @@ export function DashboardClient({ transactions, prevTransactions, accounts, tren
             <p className="text-sm text-muted-foreground">
               Get started by chatting with your AI assistant. Just say something like{' '}
               <em>&ldquo;I spent ₱150 on lunch and ₱50 on jeep fare&rdquo;</em> and CashDash will
-              automatically log your transactions.
+              parse and let you confirm before saving.
             </p>
             <Link href="/dashboard/ai-assistant">
-              <motion.button
-                className="mt-3 inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium"
-                whileTap={{ scale: 0.97 }}
-              >
-                <Brain className="w-4 h-4" />
-                Open AI Assistant
+              <motion.button className="mt-3 inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium"
+                whileTap={{ scale: 0.97 }}>
+                <Brain className="w-4 h-4" /> Open AI Assistant
               </motion.button>
             </Link>
           </div>
