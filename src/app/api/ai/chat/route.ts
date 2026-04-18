@@ -30,7 +30,7 @@ RULES:
     tools: {
       extract_transactions: tool({
         description: 'Extract financial transactions from the user\'s message so they can be logged to the database.',
-        parameters: z.object({
+        inputSchema: z.object({
           transactions: z.array(z.object({
             amount: z.number().describe('Amount in smallest currency unit (cents/centavos). e.g. $15.50 = 1550'),
             currency: z.string().describe('ISO 4217 currency code: USD, PHP, EUR, etc.'),
@@ -40,16 +40,6 @@ RULES:
             transaction_date: z.string().describe('Date in YYYY-MM-DD format'),
           })).describe('Array of extracted transactions'),
         }),
-        execute: async ({ transactions }: any) => {
-          // In a real scenario, this returns the extracted data to the frontend, 
-          // where the frontend renders a confirmation widget.
-          return {
-            success: true,
-            extractedCount: transactions.length,
-            transactions,
-            message: `Extracted ${transactions.length} transaction(s) pending user confirmation.`,
-          };
-        },
       }),
     },
   });

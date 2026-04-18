@@ -6,15 +6,19 @@ import { useState } from 'react';
 import { toast } from 'sonner';
 
 export default function PricingPage() {
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState<string | null>(null);
 
-  const handleUpgrade = async () => {
-    setLoading(true);
+  const handleUpgrade = async (planId: string, variantId?: string) => {
+    if (!variantId) {
+      window.location.href = '/signup';
+      return;
+    }
+    setLoading(planId);
     try {
       const res = await fetch('/api/checkout', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ variantId: process.env.NEXT_PUBLIC_LEMONSQUEEZY_PRO_VARIANT_ID || 'dummy' })
+        body: JSON.stringify({ variantId })
       });
       
       const data = await res.json();
@@ -33,9 +37,77 @@ export default function PricingPage() {
     } catch (err: any) {
       toast.error(err.message || 'Failed to initiate checkout');
     } finally {
-      setLoading(false);
+      setLoading(null);
     }
   };
+
+  const PLANS = [
+    {
+      id: 'free',
+      name: 'Basic',
+      price: '0',
+      desc: 'Perfect for getting started.',
+      variantId: null,
+      features: [
+        { text: 'Up to 5 accounts', included: true },
+        { text: 'Unlimited manual transactions', included: true },
+        { text: 'Basic Charts & Analytics', included: true },
+        { text: 'Multi-currency support', included: false },
+        { text: 'AI Receipt Scanning', included: false },
+        { text: 'Proactive AI Insights', included: false },
+        { text: 'Shared Workspaces', included: false },
+      ]
+    },
+    {
+      id: 'pro',
+      name: 'Pro',
+      price: '5',
+      desc: 'For serious financial control.',
+      popular: true,
+      variantId: process.env.NEXT_PUBLIC_LEMONSQUEEZY_PRO_VARIANT_ID || 'dummy-pro',
+      features: [
+        { text: 'Unlimited accounts & transactions', included: true },
+        { text: 'Persistent AI Chat History', included: true },
+        { text: 'Multi-currency & Live Rates', included: true },
+        { text: 'Scheduled Templates', included: true },
+        { text: 'AI Receipt Scanning (OCR)', included: true },
+        { text: 'Proactive AI Financial Insights', included: true },
+        { text: 'Shared Workspaces', included: false },
+      ]
+    },
+    {
+      id: 'family',
+      name: 'Family',
+      price: '12',
+      desc: 'Manage finances together.',
+      variantId: process.env.NEXT_PUBLIC_LEMONSQUEEZY_FAMILY_VARIANT_ID || 'dummy-family',
+      features: [
+        { text: 'Everything in Pro', included: true },
+        { text: 'Up to 5 Family Members', included: true },
+        { text: 'Shared Workspaces', included: true },
+        { text: 'Granular Permissions', included: true },
+        { text: 'Family Budget Goals', included: true },
+        { text: 'Kids Allowance Tracking', included: true },
+        { text: 'Custom Categories', included: true },
+      ]
+    },
+    {
+      id: 'business',
+      name: 'Business',
+      price: '49',
+      desc: 'For small businesses & freelancers.',
+      variantId: process.env.NEXT_PUBLIC_LEMONSQUEEZY_BUSINESS_VARIANT_ID || 'dummy-biz',
+      features: [
+        { text: 'Everything in Family', included: true },
+        { text: 'Unlimited Team Members', included: true },
+        { text: 'Invoice Generation', included: true },
+        { text: 'Receipt Matching', included: true },
+        { text: 'Tax Prep Export', included: true },
+        { text: 'API Access', included: true },
+        { text: 'Priority Support', included: true },
+      ]
+    }
+  ];
 
   return (
     <div className="min-h-screen bg-background text-foreground flex flex-col font-sans">
@@ -50,49 +122,35 @@ export default function PricingPage() {
           <p className="text-lg text-muted-foreground">Start for free, upgrade when you need more power.</p>
         </div>
 
-        <div className="grid md:grid-cols-2 gap-8 max-w-5xl mx-auto w-full">
-          {/* Free Tier */}
-          <div className="rounded-3xl border border-border bg-card p-8 shadow-sm flex flex-col">
-            <h3 className="text-2xl font-bold mb-2">Basic</h3>
-            <p className="text-muted-foreground mb-6">Perfect for getting started.</p>
-            <div className="text-4xl font-bold mb-6">$0<span className="text-lg text-muted-foreground font-normal">/mo</span></div>
-            <Link href="/signup" className="w-full py-3 rounded-xl border border-input text-center font-medium hover:bg-muted transition-colors mb-8">
-              Start for free
-            </Link>
-            <div className="space-y-4 flex-1">
-              <Feature icon={<Check className="w-5 h-5 text-emerald-500" />} text="Up to 5 accounts" />
-              <Feature icon={<Check className="w-5 h-5 text-emerald-500" />} text="Unlimited manual transactions" />
-              <Feature icon={<Check className="w-5 h-5 text-emerald-500" />} text="Basic Charts & Analytics" />
-              <Feature icon={<X className="w-5 h-5 text-muted-foreground" />} text="Multi-currency support" disabled />
-              <Feature icon={<X className="w-5 h-5 text-muted-foreground" />} text="AI Receipt Scanning" disabled />
-              <Feature icon={<X className="w-5 h-5 text-muted-foreground" />} text="Proactive AI Insights" disabled />
+        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-7xl mx-auto w-full">
+          {PLANS.map(plan => (
+            <div key={plan.id} className={`rounded-3xl border bg-card p-6 shadow-sm flex flex-col relative overflow-hidden transition-all hover:shadow-glow ${plan.popular ? 'border-2 border-primary' : 'border-border'}`}>
+              {plan.popular && (
+                <div className="absolute top-0 right-0 bg-primary text-primary-foreground text-[10px] font-bold px-3 py-1 rounded-bl-lg tracking-wider">
+                  POPULAR
+                </div>
+              )}
+              <h3 className="text-xl font-bold mb-1">{plan.name}</h3>
+              <p className="text-sm text-muted-foreground mb-6 h-10">{plan.desc}</p>
+              <div className="text-4xl font-bold mb-6">${plan.price}<span className="text-lg text-muted-foreground font-normal">/mo</span></div>
+              
+              <button 
+                onClick={() => handleUpgrade(plan.id, plan.variantId || undefined)}
+                disabled={loading === plan.id}
+                className={`w-full py-2.5 flex items-center justify-center gap-2 rounded-xl text-center font-medium transition-all mb-8 disabled:opacity-70 ${
+                  plan.popular ? 'bg-primary text-primary-foreground hover:bg-primary/90' : 'border border-input hover:bg-muted text-foreground'
+                }`}>
+                {loading === plan.id && <Loader2 className="w-4 h-4 animate-spin" />}
+                {loading === plan.id ? 'Processing...' : plan.id === 'free' ? 'Start for free' : `Upgrade to ${plan.name}`}
+              </button>
+              
+              <div className="space-y-3 flex-1">
+                {plan.features.map((f, i) => (
+                  <Feature key={i} icon={f.included ? <Check className="w-4 h-4 text-emerald-500" /> : <X className="w-4 h-4 text-muted-foreground" />} text={f.text} disabled={!f.included} />
+                ))}
+              </div>
             </div>
-          </div>
-
-          {/* Pro Tier */}
-          <div className="rounded-3xl border-2 border-primary bg-card p-8 shadow-glow flex flex-col relative overflow-hidden">
-            <div className="absolute top-0 right-0 bg-primary text-primary-foreground text-xs font-bold px-3 py-1 rounded-bl-lg">
-              POPULAR
-            </div>
-            <h3 className="text-2xl font-bold mb-2">Pro</h3>
-            <p className="text-muted-foreground mb-6">For serious financial control.</p>
-            <div className="text-4xl font-bold mb-6">$5<span className="text-lg text-muted-foreground font-normal">/mo</span></div>
-            <button 
-              onClick={handleUpgrade}
-              disabled={loading}
-              className="w-full py-3 flex items-center justify-center gap-2 rounded-xl bg-primary text-primary-foreground text-center font-medium hover:bg-primary/90 transition-all hover:shadow-glow mb-8 disabled:opacity-70">
-              {loading && <Loader2 className="w-4 h-4 animate-spin" />}
-              {loading ? 'Processing...' : 'Upgrade to Pro'}
-            </button>
-            <div className="space-y-4 flex-1">
-              <Feature icon={<Check className="w-5 h-5 text-emerald-500" />} text="Unlimited accounts & transactions" />
-              <Feature icon={<Check className="w-5 h-5 text-emerald-500" />} text="Persistent AI Chat History" />
-              <Feature icon={<Check className="w-5 h-5 text-emerald-500" />} text="Multi-currency support & Live Rates" />
-              <Feature icon={<Check className="w-5 h-5 text-emerald-500" />} text="Scheduled Transactions (Templates)" />
-              <Feature icon={<Check className="w-5 h-5 text-emerald-500" />} text="AI Receipt Scanning (OCR)" />
-              <Feature icon={<Check className="w-5 h-5 text-emerald-500" />} text="Proactive AI Financial Insights" />
-            </div>
-          </div>
+          ))}
         </div>
       </main>
     </div>
