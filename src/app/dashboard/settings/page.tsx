@@ -17,6 +17,7 @@ const SECTIONS = [
   { id: 'appearance', icon: Palette, label: 'Appearance' },
   { id: 'currency', icon: DollarSign, label: 'Currency & Locale' },
   { id: 'ai', icon: Brain, label: 'AI Settings' },
+  { id: 'billing', icon: DollarSign, label: 'Billing & Subscriptions' },
   { id: 'notifications', icon: Bell, label: 'Notifications' },
   { id: 'security', icon: Shield, label: 'Security' },
   { id: 'data', icon: Database, label: 'Data & Export' },
@@ -61,6 +62,7 @@ export default function SettingsPage() {
           ...data.data,
           monthly_budget: data.data.monthly_budget ? (data.data.monthly_budget / 100).toString() : '',
           weekly_budget: data.data.weekly_budget ? (data.data.weekly_budget / 100).toString() : '',
+          subscription_tier: data.data.subscription_tier || 'free',
         }));
       }
     } catch {}
@@ -102,6 +104,22 @@ export default function SettingsPage() {
       toast.success('Export started!');
     } catch {
       toast.error('Export failed');
+    }
+  };
+
+  const handleManageBilling = async () => {
+    setLoading(true);
+    try {
+      const res = await fetch('/api/portal', { method: 'POST' });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error);
+      if (data.url) {
+        window.location.href = data.url;
+      }
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to open customer portal');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -283,6 +301,36 @@ export default function SettingsPage() {
                       <p className="text-sm text-muted-foreground">
                         Your CashDash AI is currently configured and running smoothly. It will learn your spending habits over time.
                       </p>
+                    </div>
+                  </div>
+                </>
+              )}
+
+              {/* Billing & Subscriptions */}
+              {activeSection === 'billing' && (
+                <>
+                  <SectionHeader icon={DollarSign} title="Billing & Subscriptions" desc="Manage your SaaS subscription plan" />
+                  <div className="space-y-4">
+                    <div className="p-4 rounded-xl border border-border bg-muted/30">
+                      <h4 className="text-sm font-semibold mb-1">Current Plan: <span className="capitalize text-primary">{(profile as any).subscription_tier || 'free'}</span></h4>
+                      <p className="text-xs text-muted-foreground mb-4">
+                        {(profile as any).subscription_tier === 'free' 
+                          ? 'You are currently on the Free tier. Upgrade to unlock AI features, unlimited accounts, and more.' 
+                          : 'Thank you for being a Pro user! You can manage your payment methods or cancel your subscription through the customer portal.'}
+                      </p>
+                      
+                      {(profile as any).subscription_tier === 'free' ? (
+                        <button onClick={() => window.location.href = '/pricing'}
+                          className="px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90">
+                          Upgrade Plan
+                        </button>
+                      ) : (
+                        <button onClick={handleManageBilling} disabled={loading}
+                          className="px-4 py-2 flex items-center gap-2 rounded-lg border border-input bg-background text-sm font-medium hover:bg-muted disabled:opacity-50">
+                          {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
+                          Manage Billing Portal
+                        </button>
+                      )}
                     </div>
                   </div>
                 </>

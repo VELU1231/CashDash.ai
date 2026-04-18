@@ -1,9 +1,42 @@
-import Link from 'next/link';
-import { Check, X, ArrowLeft } from 'lucide-react';
+'use client';
 
-export const metadata = { title: 'Pricing | CashDash.ai' };
+import Link from 'next/link';
+import { Check, X, ArrowLeft, Loader2 } from 'lucide-react';
+import { useState } from 'react';
+import { toast } from 'sonner';
 
 export default function PricingPage() {
+  const [loading, setLoading] = useState(false);
+
+  const handleUpgrade = async () => {
+    setLoading(true);
+    try {
+      const res = await fetch('/api/checkout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ variantId: process.env.NEXT_PUBLIC_LEMONSQUEEZY_PRO_VARIANT_ID || 'dummy' })
+      });
+      
+      const data = await res.json();
+      
+      if (res.status === 401) {
+        toast.error('Please log in first to upgrade.');
+        window.location.href = '/login?next=/pricing';
+        return;
+      }
+      
+      if (!res.ok) throw new Error(data.error);
+      
+      if (data.url) {
+        window.location.href = data.url;
+      }
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to initiate checkout');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-background text-foreground flex flex-col font-sans">
       <nav className="p-4">
@@ -44,9 +77,13 @@ export default function PricingPage() {
             <h3 className="text-2xl font-bold mb-2">Pro</h3>
             <p className="text-muted-foreground mb-6">For serious financial control.</p>
             <div className="text-4xl font-bold mb-6">$5<span className="text-lg text-muted-foreground font-normal">/mo</span></div>
-            <a href={process.env.NEXT_PUBLIC_LEMONSQUEEZY_CHECKOUT_URL || '#'} className="w-full py-3 rounded-xl bg-primary text-primary-foreground text-center font-medium hover:bg-primary/90 transition-all hover:shadow-glow mb-8">
-              Upgrade to Pro
-            </a>
+            <button 
+              onClick={handleUpgrade}
+              disabled={loading}
+              className="w-full py-3 flex items-center justify-center gap-2 rounded-xl bg-primary text-primary-foreground text-center font-medium hover:bg-primary/90 transition-all hover:shadow-glow mb-8 disabled:opacity-70">
+              {loading && <Loader2 className="w-4 h-4 animate-spin" />}
+              {loading ? 'Processing...' : 'Upgrade to Pro'}
+            </button>
             <div className="space-y-4 flex-1">
               <Feature icon={<Check className="w-5 h-5 text-emerald-500" />} text="Unlimited accounts & transactions" />
               <Feature icon={<Check className="w-5 h-5 text-emerald-500" />} text="Persistent AI Chat History" />
