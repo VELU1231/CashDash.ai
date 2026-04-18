@@ -190,8 +190,8 @@ export function getAmountDisplay(amount: number, type: TransactionType, currency
 // ─── Account Helpers ──────────────────────────────────────────────────────────
 
 export const ACCOUNT_ICONS: Record<string, string> = {
-  cash: '💵', checking: '🏦', savings: '🏧', credit: '💳',
-  investment: '📈', loan: '📋', other: '💰',
+  cash: 'Money', checking: 'Bank', savings: 'PiggyBank', credit: 'CreditCard',
+  investment: 'TrendUp', loan: 'Receipt', other: 'Wallet',
 };
 
 export const ACCOUNT_COLORS = [

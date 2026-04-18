@@ -10,15 +10,16 @@ import {
 import { formatCurrency, ACCOUNT_COLORS, ACCOUNT_ICONS } from '@/lib/utils';
 import { toast } from 'sonner';
 import type { Account, AccountFormData, AccountType } from '@/types';
+import { IconDisplay } from '@/components/ui/icon-picker';
 
 const ACCOUNT_TYPES: { value: AccountType; label: string; icon: string }[] = [
-  { value: 'cash', label: 'Cash', icon: '💵' },
-  { value: 'checking', label: 'Checking', icon: '🏦' },
-  { value: 'savings', label: 'Savings', icon: '🏧' },
-  { value: 'credit', label: 'Credit Card', icon: '💳' },
-  { value: 'investment', label: 'Investment', icon: '📈' },
-  { value: 'loan', label: 'Loan', icon: '📋' },
-  { value: 'other', label: 'Other', icon: '💰' },
+  { value: 'cash', label: 'Cash', icon: 'Money' },
+  { value: 'checking', label: 'Checking', icon: 'Bank' },
+  { value: 'savings', label: 'Savings', icon: 'PiggyBank' },
+  { value: 'credit', label: 'Credit Card', icon: 'CreditCard' },
+  { value: 'investment', label: 'Investment', icon: 'TrendUp' },
+  { value: 'loan', label: 'Loan', icon: 'Receipt' },
+  { value: 'other', label: 'Other', icon: 'Wallet' },
 ];
 
 export default function AccountsPage() {
@@ -174,8 +175,8 @@ export default function AccountsPage() {
                     <div className="flex items-start justify-between mb-4">
                       <div className="flex items-center gap-2.5">
                         <div className="w-11 h-11 rounded-xl flex items-center justify-center text-xl"
-                          style={{ background: `${account.color}15` }}>
-                          {account.icon}
+                          style={{ background: `${account.color}15`, color: account.color }}>
+                          <IconDisplay name={account.icon} className="w-5 h-5" />
                         </div>
                         <div>
                           <div className="font-semibold text-sm">{account.name}</div>
@@ -229,8 +230,8 @@ export default function AccountsPage() {
                       {account.subaccounts.map(sub => (
                         <div key={sub.id} className="flex items-center justify-between group/sub">
                           <div className="flex items-center gap-2">
-                            <div className="w-6 h-6 rounded-lg flex items-center justify-center text-xs" style={{ background: `${sub.color}15` }}>
-                              {sub.icon}
+                            <div className="w-6 h-6 rounded-lg flex items-center justify-center text-xs" style={{ background: `${sub.color}15`, color: sub.color }}>
+                              <IconDisplay name={sub.icon} className="w-3.5 h-3.5" />
                             </div>
                             <span className="text-xs font-medium">{sub.name}</span>
                           </div>
@@ -289,7 +290,7 @@ export default function AccountsPage() {
                         form.type === t.value ? 'bg-emerald-500/10 text-emerald-500' : 'text-muted-foreground hover:bg-foreground/[0.03]'
                       }`}
                       style={{ border: `1px solid ${form.type === t.value ? 'hsl(var(--primary) / 0.2)' : 'hsl(var(--foreground) / 0.04)'}` }}>
-                      <span className="text-lg">{t.icon}</span>
+                      <span className="text-lg flex justify-center mb-1"><IconDisplay name={t.icon} className="w-5 h-5" /></span>
                       <span>{t.label}</span>
                     </button>
                   ))}
@@ -323,7 +324,7 @@ export default function AccountsPage() {
                   style={{ border: '1px solid hsl(var(--foreground) / 0.06)', background: 'hsl(var(--foreground) / 0.02)' }}>
                   <option value="">None (Top-Level)</option>
                   {accounts.filter(a => a.id !== editingAccount?.id).map(a => (
-                    <option key={a.id} value={a.id}>{a.icon} {a.name}</option>
+                    <option key={a.id} value={a.id}>{a.name}</option>
                   ))}
                 </select>
               </div>

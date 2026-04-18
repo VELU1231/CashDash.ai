@@ -23,9 +23,7 @@ export async function GET(request: NextRequest) {
       .select(`
         *,
         category:categories(id, name, icon, color, type),
-        account:accounts(id, name, icon, color, currency),
-        dest_account:accounts!dest_account_id(id, name, icon, color, currency),
-        attachments:transaction_attachments(*)
+        account:accounts(id, name, icon, color, currency)
       `, { count: 'exact' })
       .eq('user_id', user.id)
       .order('transaction_date', { ascending: false })
