@@ -1,12 +1,15 @@
 import { streamText, tool } from 'ai';
-import { createOllama } from 'ollama-ai-provider';
+import { createOpenAI } from '@ai-sdk/openai';
 import { z } from 'zod';
 import { NextRequest } from 'next/server';
 import { format } from 'date-fns';
 
-// Create an Ollama provider instance for native Ollama cloud
-const ollama = createOllama({
-  baseURL: process.env.AI_BASE_URL || 'https://ollama.com/api',
+// Use Ollama's OpenAI-compatible API endpoint
+const baseURL = process.env.AI_BASE_URL || 'https://ollama.com/api';
+const ollamaBaseURL = baseURL.endsWith('/v1') ? baseURL : baseURL + '/v1';
+const ollama = createOpenAI({
+  apiKey: process.env.OLLAMA_API_KEY || 'ollama',
+  baseURL: ollamaBaseURL,
 });
 
 export async function POST(req: NextRequest) {
@@ -14,7 +17,7 @@ export async function POST(req: NextRequest) {
   const today = format(new Date(), 'yyyy-MM-dd');
 
   const result = await streamText({
-    model: ollama('gemma4:31b-cloud'),
+    model: ollama(process.env.AI_MODEL || 'gemma4:31b-cloud'),
     messages,
     system: `You are CashDash AI, a friendly, human-like, and proactive financial advisor and assistant.
 Your goal is to help the user track their expenses, give financial advice, and suggest better spending habits.
