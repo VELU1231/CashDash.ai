@@ -2,11 +2,19 @@ import { createServerClient } from '@supabase/ssr';
 import { NextResponse, type NextRequest } from 'next/server';
 
 export async function updateSession(request: NextRequest) {
+  // If Supabase env vars are not set, skip auth check and let the page render
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+  if (!supabaseUrl || !supabaseAnonKey) {
+    return NextResponse.next({ request });
+  }
+
   let supabaseResponse = NextResponse.next({ request });
 
   const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    supabaseUrl,
+    supabaseAnonKey,
     {
       cookies: {
         getAll() {
@@ -25,22 +33,27 @@ export async function updateSession(request: NextRequest) {
     }
   );
 
-  const { data: { user } } = await supabase.auth.getUser();
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
 
-  const url = request.nextUrl.clone();
-  const isAuthRoute = url.pathname.startsWith('/login') ||
-    url.pathname.startsWith('/register') ||
-    url.pathname.startsWith('/forgot-password') ||
-    url.pathname === '/';
+    const url = request.nextUrl.clone();
+    const isAuthRoute = url.pathname.startsWith('/login') ||
+      url.pathname.startsWith('/register') ||
+      url.pathname.startsWith('/forgot-password') ||
+      url.pathname === '/';
 
-  if (!user && !isAuthRoute) {
-    url.pathname = '/login';
-    return NextResponse.redirect(url);
-  }
+    if (!user && !isAuthRoute) {
+      url.pathname = '/login';
+      return NextResponse.redirect(url);
+    }
 
-  if (user && isAuthRoute && url.pathname !== '/') {
-    url.pathname = '/dashboard';
-    return NextResponse.redirect(url);
+    if (user && isAuthRoute && url.pathname !== '/') {
+      url.pathname = '/dashboard';
+      return NextResponse.redirect(url);
+    }
+  } catch {
+    // If Supabase auth check fails, let the request through
+    return supabaseResponse;
   }
 
   return supabaseResponse;
