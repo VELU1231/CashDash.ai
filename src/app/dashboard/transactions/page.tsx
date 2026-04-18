@@ -3,9 +3,9 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  Plus, Search, Filter, X, ArrowLeftRight, TrendingUp, TrendingDown, Brain,
-  Trash2, Edit3, CheckCircle2, Loader2, Save, Paperclip
-} from 'lucide-react';
+  Plus, MagnifyingGlass, Funnel, X, ArrowsLeftRight, TrendUp, TrendDown, Brain,
+  TrashSimple, PencilSimple, CheckCircle, CircleNotch, FloppyDisk, Paperclip
+} from '@phosphor-icons/react';
 import { formatCurrency, formatRelativeDate, formatDate, groupTransactionsByDate } from '@/lib/utils';
 import { toast } from 'sonner';
 import Link from 'next/link';
@@ -94,7 +94,7 @@ export default function TransactionsPage() {
   const toggleSelect = (id: string) => {
     setSelectedIds(prev => {
       const next = new Set(prev);
-      next.has(id) ? next.delete(id) : next.add(id);
+      if (next.has(id)) { next.delete(id); } else { next.add(id); }
       return next;
     });
   };
@@ -139,50 +139,57 @@ export default function TransactionsPage() {
 
   return (
     <div className="space-y-5">
-      {/* Header */}
-      <div className="flex items-center justify-between">
+      {/* Header — Editorial */}
+      <div className="flex items-end justify-between">
         <div>
-          <h1 className="text-2xl font-bold">Transactions</h1>
-          <p className="text-sm text-muted-foreground mt-0.5">{total.toLocaleString()} total</p>
+          <h1 className="text-3xl font-serif font-bold tracking-tight">Transactions</h1>
+          <p className="text-sm text-muted-foreground mt-1 font-mono">{total.toLocaleString()} total</p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2.5">
           <Link href="/dashboard/transactions/new">
-            <motion.button className="inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-input text-foreground text-sm font-medium hover:bg-muted"
+            <motion.button className="btn-secondary !rounded-xl !text-[13px]"
               whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
-              <Plus className="w-4 h-4" /> Manual Entry
+              <Plus className="w-4 h-4" weight="regular" /> Manual Entry
             </motion.button>
           </Link>
           <Link href="/dashboard/ai-assistant">
-            <motion.button className="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-primary/10 text-primary text-sm font-medium hover:bg-primary/20"
+            <motion.button className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-sm font-medium transition-all duration-200"
+              style={{ background: 'hsl(var(--primary) / 0.08)', color: 'hsl(var(--primary))' }}
               whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
-              <Brain className="w-4 h-4" /> AI Entry
+              <Brain className="w-4 h-4" weight="duotone" /> AI Entry
             </motion.button>
           </Link>
         </div>
       </div>
 
       {/* Search + Filter bar */}
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-2.5">
         <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+          <MagnifyingGlass className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" weight="light" />
           <input
             value={search}
             onChange={e => setSearch(e.target.value)}
             placeholder="Search transactions..."
-            className="w-full pl-9 pr-4 py-2 rounded-lg border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
+            className="w-full pl-9 pr-4 py-2.5 rounded-xl text-sm focus:outline-none input-animated"
+            style={{
+              border: '1px solid hsl(var(--foreground) / 0.06)',
+              background: 'hsl(var(--card) / 0.5)',
+              backdropFilter: 'blur(8px)',
+            }}
           />
           {search && (
             <button onClick={() => setSearch('')} className="absolute right-3 top-1/2 -translate-y-1/2">
-              <X className="w-3.5 h-3.5 text-muted-foreground" />
+              <X className="w-3.5 h-3.5 text-muted-foreground" weight="light" />
             </button>
           )}
         </div>
 
-        <div className="hidden sm:flex items-center gap-1 p-1 rounded-lg border border-input bg-background">
+        <div className="hidden sm:flex items-center gap-1 p-1 rounded-xl"
+          style={{ border: '1px solid hsl(var(--foreground) / 0.06)', background: 'hsl(var(--card) / 0.4)' }}>
           {(['all', 'income', 'expense', 'transfer'] as const).map(type => (
             <button key={type} onClick={() => setFilters(f => ({ ...f, type }))}
-              className={`px-3 py-1 rounded-md text-xs font-medium transition-all ${
-                filters.type === type ? 'bg-primary text-primary-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'
+              className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all duration-200 ${
+                filters.type === type ? 'bg-emerald-500 text-white shadow-sm' : 'text-muted-foreground hover:text-foreground'
               }`}>
               {type === 'all' ? 'All' : type.charAt(0).toUpperCase() + type.slice(1)}
             </button>
@@ -190,30 +197,34 @@ export default function TransactionsPage() {
         </div>
 
         <motion.button onClick={() => setShowFilters(!showFilters)}
-          className={`flex items-center gap-1.5 px-3 py-2 rounded-lg border text-sm ${showFilters ? 'border-primary text-primary bg-primary/5' : 'border-input text-muted-foreground hover:text-foreground'}`}
+          className={`flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl text-sm transition-all duration-200 ${showFilters ? 'text-emerald-500' : 'text-muted-foreground hover:text-foreground'}`}
+          style={{ border: `1px solid ${showFilters ? 'hsl(var(--primary) / 0.2)' : 'hsl(var(--foreground) / 0.06)'}`, background: showFilters ? 'hsl(var(--primary) / 0.05)' : 'transparent' }}
           whileTap={{ scale: 0.97 }}>
-          <Filter className="w-3.5 h-3.5" /> Filters
+          <Funnel className="w-3.5 h-3.5" weight="light" /> Filters
         </motion.button>
       </div>
 
       {/* Extended filters */}
       <AnimatePresence>
         {showFilters && (
-          <motion.div className="grid grid-cols-2 sm:grid-cols-4 gap-3 p-4 rounded-xl border border-border bg-muted/30"
+          <motion.div className="grid grid-cols-2 sm:grid-cols-4 gap-3 p-4 glass-card"
             initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }}>
             <div>
-              <label className="text-xs font-medium text-muted-foreground mb-1 block">From date</label>
+              <label className="text-xs font-medium text-muted-foreground mb-1.5 block">From date</label>
               <input type="date" value={filters.date_from || ''} onChange={e => setFilters(f => ({ ...f, date_from: e.target.value }))}
-                className="w-full px-3 py-1.5 rounded-lg border border-input bg-background text-xs focus:outline-none" />
+                className="w-full px-3 py-2 rounded-xl text-xs focus:outline-none input-animated"
+                style={{ border: '1px solid hsl(var(--foreground) / 0.06)', background: 'hsl(var(--foreground) / 0.02)' }} />
             </div>
             <div>
-              <label className="text-xs font-medium text-muted-foreground mb-1 block">To date</label>
+              <label className="text-xs font-medium text-muted-foreground mb-1.5 block">To date</label>
               <input type="date" value={filters.date_to || ''} onChange={e => setFilters(f => ({ ...f, date_to: e.target.value }))}
-                className="w-full px-3 py-1.5 rounded-lg border border-input bg-background text-xs focus:outline-none" />
+                className="w-full px-3 py-2 rounded-xl text-xs focus:outline-none input-animated"
+                style={{ border: '1px solid hsl(var(--foreground) / 0.06)', background: 'hsl(var(--foreground) / 0.02)' }} />
             </div>
             <div className="flex items-end">
               <button onClick={() => { setFilters({ type: 'all' }); setSearch(''); }}
-                className="px-3 py-1.5 rounded-lg border border-input text-xs text-muted-foreground hover:text-foreground w-full">
+                className="px-3 py-2 rounded-xl text-xs text-muted-foreground hover:text-foreground w-full transition-all duration-200"
+                style={{ border: '1px solid hsl(var(--foreground) / 0.06)' }}>
                 Clear all
               </button>
             </div>
@@ -224,12 +235,13 @@ export default function TransactionsPage() {
       {/* Bulk actions */}
       <AnimatePresence>
         {selectedIds.size > 0 && (
-          <motion.div className="flex items-center justify-between px-4 py-2 rounded-xl bg-primary/5 border border-primary/20"
+          <motion.div className="flex items-center justify-between px-4 py-2.5 glass-card"
+            style={{ borderColor: 'hsl(var(--primary) / 0.15)' }}
             initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}>
-            <span className="text-sm font-medium text-primary">{selectedIds.size} selected</span>
+            <span className="text-sm font-medium text-emerald-500">{selectedIds.size} selected</span>
             <button onClick={bulkDelete}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-destructive text-destructive-foreground text-xs font-medium">
-              <Trash2 className="w-3 h-3" /> Delete selected
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-red-500/10 text-red-400 text-xs font-medium hover:bg-red-500/20 transition-colors">
+              <TrashSimple className="w-3 h-3" weight="regular" /> Delete selected
             </button>
           </motion.div>
         )}
@@ -241,15 +253,15 @@ export default function TransactionsPage() {
       ) : transactions.length === 0 ? (
         <EmptyState />
       ) : (
-        <div className="space-y-4">
+        <div className="space-y-5">
           {Object.entries(grouped)
             .sort(([a], [b]) => b.localeCompare(a))
             .map(([date, txs]) => (
               <div key={date}>
-                <div className="flex items-center gap-3 mb-2">
+                <div className="flex items-center gap-3 mb-2.5">
                   <span className="text-xs font-semibold text-muted-foreground">{formatDate(date, 'EEEE, MMMM d')}</span>
-                  <div className="flex-1 h-px bg-border" />
-                  <span className="text-xs text-muted-foreground">
+                  <div className="flex-1 h-px" style={{ background: 'hsl(var(--foreground) / 0.04)' }} />
+                  <span className="text-xs text-muted-foreground font-mono">
                     {formatCurrency(
                       txs.reduce((s, t) => s + (t.type === 'income' ? t.amount : t.type === 'expense' ? -t.amount : 0), 0),
                       txs[0]?.currency || 'USD', { showSign: true }
@@ -257,19 +269,21 @@ export default function TransactionsPage() {
                   </span>
                 </div>
 
-                <div className="rounded-xl border border-border bg-card overflow-hidden divide-y divide-border">
+                <div className="glass-card overflow-hidden"
+                  style={{ borderRadius: '16px' }}>
                   {txs.map((tx, i) => (
                     <motion.div key={tx.id}
-                      className={`flex items-center gap-3 px-4 py-3 hover:bg-muted/30 transition-colors ${selectedIds.has(tx.id) ? 'bg-primary/5' : ''}`}
+                      className={`flex items-center gap-3 px-4 py-3.5 transition-all duration-200 ${selectedIds.has(tx.id) ? 'bg-emerald-500/[0.04]' : 'hover:bg-foreground/[0.02]'}`}
+                      style={i < txs.length - 1 ? { borderBottom: '1px solid hsl(var(--foreground) / 0.03)' } : {}}
                       initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.02 }}>
                       <button onClick={() => toggleSelect(tx.id)}
-                        className={`shrink-0 w-4 h-4 rounded border-2 flex items-center justify-center transition-colors ${
-                          selectedIds.has(tx.id) ? 'bg-primary border-primary' : 'border-muted-foreground/30 hover:border-primary'
+                        className={`shrink-0 w-4 h-4 rounded flex items-center justify-center transition-all duration-200 ${
+                          selectedIds.has(tx.id) ? 'bg-emerald-500' : 'border border-muted-foreground/20 hover:border-emerald-500/50'
                         }`}>
-                        {selectedIds.has(tx.id) && <CheckCircle2 className="w-3 h-3 text-primary-foreground" />}
+                        {selectedIds.has(tx.id) && <CheckCircle className="w-3 h-3 text-white" weight="fill" />}
                       </button>
 
-                      <div className="w-9 h-9 rounded-lg flex items-center justify-center text-base shrink-0 bg-muted">
+                      <div className="w-9 h-9 rounded-xl flex items-center justify-center text-base shrink-0" style={{ background: 'hsl(var(--foreground) / 0.04)' }}>
                         {tx.category?.icon || (tx.type === 'income' ? '💰' : tx.type === 'transfer' ? '↔️' : '💸')}
                       </div>
 
@@ -277,37 +291,38 @@ export default function TransactionsPage() {
                         <div className="flex items-center gap-2">
                           <span className="text-sm font-medium truncate">{tx.description || tx.category?.name || 'Transaction'}</span>
                           {tx.is_ai_created && (
-                            <span className="px-1.5 py-0.5 rounded-full bg-primary/10 text-primary text-[9px] font-semibold">AI</span>
+                            <span className="px-1.5 py-0.5 rounded-md text-[9px] font-semibold"
+                              style={{ background: 'hsl(var(--primary) / 0.1)', color: 'hsl(var(--primary))' }}>AI</span>
                           )}
                         </div>
                         <div className="flex items-center gap-2 mt-0.5">
                           {tx.category && <span className="text-xs text-muted-foreground">{tx.category.name}</span>}
-                          <span className="text-xs text-muted-foreground">·</span>
+                          <span className="text-xs text-muted-foreground/40">·</span>
                           <span className="text-xs text-muted-foreground">{tx.account?.name}</span>
                           {tx.attachments && tx.attachments.length > 0 && (
                             <>
-                              <span className="text-xs text-muted-foreground">·</span>
-                              <Paperclip className="w-3 h-3 text-muted-foreground" />
+                              <span className="text-xs text-muted-foreground/40">·</span>
+                              <Paperclip className="w-3 h-3 text-muted-foreground" weight="light" />
                             </>
                           )}
                         </div>
                       </div>
 
-                      <div className={`text-sm font-semibold shrink-0 ${
-                        tx.type === 'income' ? 'text-emerald-600' : tx.type === 'expense' ? 'text-red-500' : 'text-blue-500'
+                      <div className={`text-sm font-serif font-semibold editorial-number shrink-0 ${
+                        tx.type === 'income' ? 'text-emerald-500' : tx.type === 'expense' ? 'text-red-400' : 'text-blue-400'
                       }`}>
                         {tx.type === 'income' ? '+' : tx.type === 'expense' ? '-' : ''}
                         {formatCurrency(tx.amount, tx.currency)}
                       </div>
 
-                      <div className="flex items-center gap-1 shrink-0">
+                      <div className="flex items-center gap-0.5 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
                         <button onClick={() => openEdit(tx)}
-                          className="p-1.5 rounded-lg hover:bg-muted transition-colors text-muted-foreground hover:text-foreground">
-                          <Edit3 className="w-3.5 h-3.5" />
+                          className="p-1.5 rounded-lg hover:bg-foreground/[0.04] transition-colors text-muted-foreground hover:text-foreground">
+                          <PencilSimple className="w-3.5 h-3.5" weight="light" />
                         </button>
                         <button onClick={() => deleteTransaction(tx.id)}
-                          className="p-1.5 rounded-lg hover:bg-destructive/10 transition-colors text-muted-foreground hover:text-destructive">
-                          <Trash2 className="w-3.5 h-3.5" />
+                          className="p-1.5 rounded-lg hover:bg-red-500/10 transition-colors text-muted-foreground hover:text-red-400">
+                          <TrashSimple className="w-3.5 h-3.5" weight="light" />
                         </button>
                       </div>
                     </motion.div>
@@ -319,7 +334,7 @@ export default function TransactionsPage() {
           {hasMore && (
             <div className="flex justify-center pt-2">
               <motion.button onClick={() => { setPage(p => p + 1); fetchTransactions(); }}
-                className="px-4 py-2 rounded-lg border border-input text-sm text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+                className="btn-secondary !rounded-xl"
                 whileTap={{ scale: 0.97 }}>
                 Load more
               </motion.button>
@@ -328,52 +343,59 @@ export default function TransactionsPage() {
         </div>
       )}
 
-      {/* ─── Edit Transaction Modal ─── */}
+      {/* ─── Edit Transaction Modal — Glass ─── */}
       <AnimatePresence>
         {editingTx && (
-          <motion.div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm"
+          <motion.div className="fixed inset-0 z-50 flex items-center justify-center"
+            style={{ background: 'hsl(var(--background) / 0.6)', backdropFilter: 'blur(16px)' }}
             initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
             onClick={() => setEditingTx(null)}>
-            <motion.div className="bg-card border border-border rounded-2xl shadow-2xl w-full max-w-md mx-4 p-6"
-              initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }}
+            <motion.div className="float-panel w-full max-w-md mx-4 p-6"
+              initial={{ scale: 0.95, opacity: 0, y: 10 }} animate={{ scale: 1, opacity: 1, y: 0 }} exit={{ scale: 0.95, opacity: 0, y: 10 }}
+              transition={{ duration: 0.25, ease: [0.4, 0, 0.2, 1] }}
               onClick={e => e.stopPropagation()}>
-              <div className="flex items-center justify-between mb-5">
-                <h3 className="text-lg font-semibold">Edit Transaction</h3>
-                <button onClick={() => setEditingTx(null)} className="p-1 rounded-lg hover:bg-muted"><X className="w-4 h-4" /></button>
+              <div className="flex items-center justify-between mb-6">
+                <h3 className="text-lg font-serif font-semibold">Edit Transaction</h3>
+                <button onClick={() => setEditingTx(null)} className="p-1.5 rounded-lg hover:bg-foreground/[0.04] transition-colors">
+                  <X className="w-4 h-4" weight="light" />
+                </button>
               </div>
 
               <div className="space-y-4">
                 <div>
                   <label className="text-sm font-medium mb-1.5 block">Description</label>
                   <input value={editForm.description} onChange={e => setEditForm(f => ({ ...f, description: e.target.value }))}
-                    className="w-full px-3 py-2.5 rounded-lg border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/20" />
+                    className="w-full px-3.5 py-2.5 rounded-xl text-sm focus:outline-none input-animated"
+                    style={{ border: '1px solid hsl(var(--foreground) / 0.06)', background: 'hsl(var(--foreground) / 0.02)' }} />
                 </div>
                 <div className="grid grid-cols-2 gap-3">
                   <div>
                     <label className="text-sm font-medium mb-1.5 block">Amount</label>
                     <input type="number" step="0.01" value={editForm.amount}
                       onChange={e => setEditForm(f => ({ ...f, amount: e.target.value }))}
-                      className="w-full px-3 py-2.5 rounded-lg border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/20" />
+                      className="w-full px-3.5 py-2.5 rounded-xl text-sm focus:outline-none input-animated font-mono"
+                      style={{ border: '1px solid hsl(var(--foreground) / 0.06)', background: 'hsl(var(--foreground) / 0.02)' }} />
                   </div>
                   <div>
                     <label className="text-sm font-medium mb-1.5 block">Type</label>
                     <select value={editForm.type} onChange={e => setEditForm(f => ({ ...f, type: e.target.value }))}
-                      className="w-full px-3 py-2.5 rounded-lg border border-input bg-background text-sm focus:outline-none">
+                      className="w-full px-3.5 py-2.5 rounded-xl text-sm focus:outline-none"
+                      style={{ border: '1px solid hsl(var(--foreground) / 0.06)', background: 'hsl(var(--foreground) / 0.02)' }}>
                       <option value="expense">Expense</option>
                       <option value="income">Income</option>
                       <option value="transfer">Transfer</option>
                     </select>
                   </div>
                 </div>
-                <div className="flex gap-2 pt-2">
+                <div className="flex gap-2.5 pt-2">
                   <button onClick={() => setEditingTx(null)}
-                    className="flex-1 px-4 py-2.5 rounded-xl border border-input text-sm font-medium hover:bg-muted transition-colors">
+                    className="btn-secondary flex-1 !rounded-xl">
                     Cancel
                   </button>
                   <motion.button onClick={saveEdit} disabled={editSaving}
-                    className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-primary text-primary-foreground text-sm font-medium disabled:opacity-50 hover:bg-primary/90"
+                    className="btn-primary flex-1 !rounded-xl disabled:opacity-50"
                     whileTap={{ scale: 0.97 }}>
-                    {editSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+                    {editSaving ? <CircleNotch className="w-4 h-4 animate-spin" weight="regular" /> : <FloppyDisk className="w-4 h-4" weight="regular" />}
                     {editSaving ? 'Saving...' : 'Save'}
                   </motion.button>
                 </div>
@@ -390,8 +412,8 @@ function TransactionSkeleton() {
   return (
     <div className="space-y-3">
       {[...Array(6)].map((_, i) => (
-        <div key={i} className="rounded-xl border border-border bg-card p-4 flex items-center gap-3">
-          <div className="w-9 h-9 rounded-lg shimmer-bg" />
+        <div key={i} className="glass-card p-4 flex items-center gap-3">
+          <div className="w-9 h-9 rounded-xl shimmer-bg" />
           <div className="flex-1 space-y-2">
             <div className="h-3.5 rounded shimmer-bg w-40" />
             <div className="h-2.5 rounded shimmer-bg w-24" />
@@ -405,15 +427,22 @@ function TransactionSkeleton() {
 
 function EmptyState() {
   return (
-    <motion.div className="text-center py-16" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-      <div className="w-16 h-16 rounded-2xl bg-muted flex items-center justify-center mx-auto mb-4">
-        <ArrowLeftRight className="w-7 h-7 text-muted-foreground" />
+    <motion.div className="text-center py-20" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+      <div className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-5" style={{ background: 'hsl(var(--foreground) / 0.04)' }}>
+        <ArrowsLeftRight className="w-7 h-7 text-muted-foreground" weight="light" />
       </div>
-      <h3 className="font-semibold mb-1">No transactions found</h3>
-      <p className="text-sm text-muted-foreground mb-4">Add your first transaction manually or use the AI assistant</p>
+      <h3 className="font-serif font-semibold text-lg mb-1.5">No transactions found</h3>
+      <p className="text-sm text-muted-foreground mb-5">Add your first transaction manually or use the AI assistant</p>
       <div className="flex items-center justify-center gap-3">
+        <Link href="/dashboard/transactions/new">
+          <motion.button className="btn-secondary !rounded-xl" whileTap={{ scale: 0.97 }}>
+            <Plus className="w-4 h-4" weight="regular" /> Manual Entry
+          </motion.button>
+        </Link>
         <Link href="/dashboard/ai-assistant">
-          <button className="px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium">Add with AI</button>
+          <motion.button className="btn-primary !rounded-xl" whileTap={{ scale: 0.97 }}>
+            <Brain className="w-4 h-4" weight="duotone" /> Add with AI
+          </motion.button>
         </Link>
       </div>
     </motion.div>

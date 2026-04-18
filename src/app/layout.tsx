@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from 'next';
-import { Inter } from 'next/font/google';
+import { Inter, Fraunces, JetBrains_Mono } from 'next/font/google';
 import './globals.css';
 import { Providers } from '@/components/providers';
 import { I18nProvider } from '@/lib/i18n';
@@ -8,6 +8,19 @@ import { Toaster } from 'sonner';
 const inter = Inter({
   subsets: ['latin'],
   variable: '--font-inter',
+  display: 'swap',
+});
+
+const fraunces = Fraunces({
+  subsets: ['latin'],
+  variable: '--font-serif',
+  display: 'swap',
+  axes: ['SOFT', 'WONK', 'opsz'],
+});
+
+const jetbrainsMono = JetBrains_Mono({
+  subsets: ['latin'],
+  variable: '--font-mono',
   display: 'swap',
 });
 
@@ -38,15 +51,15 @@ export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
   themeColor: [
-    { media: '(prefers-color-scheme: light)', color: '#ffffff' },
-    { media: '(prefers-color-scheme: dark)', color: '#0f172a' },
+    { media: '(prefers-color-scheme: light)', color: '#F1EAD6' },
+    { media: '(prefers-color-scheme: dark)', color: '#14110E' },
   ],
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={`${inter.variable} font-sans antialiased`}>
+      <body className={`${inter.variable} ${fraunces.variable} ${jetbrainsMono.variable} font-sans antialiased grain-overlay`}>
         <I18nProvider>
           <Providers>
             {children}
@@ -56,7 +69,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               closeButton
               toastOptions={{
                 classNames: {
-                  toast: 'rounded-xl border shadow-lg font-sans',
+                  toast: 'rounded-xl border shadow-glass font-sans backdrop-blur-sm',
                   title: 'font-semibold text-sm',
                   description: 'text-xs text-muted-foreground',
                 },

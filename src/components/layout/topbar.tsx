@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Bell, Search, Plus, Command, X, Brain } from 'lucide-react';
+import { MagnifyingGlass, Plus, X, Brain, Command, Sparkle } from '@phosphor-icons/react';
 import Link from 'next/link';
 import type { Profile } from '@/types';
 
@@ -12,20 +12,36 @@ export function DashboardTopbar({ profile }: TopbarProps) {
   const [showSearch, setShowSearch] = useState(false);
 
   return (
-    <header className="h-16 border-b border-border bg-card/80 backdrop-blur-sm flex items-center px-4 sm:px-6 gap-4 shrink-0">
+    <header
+      className="h-16 flex items-center px-4 sm:px-6 gap-4 shrink-0"
+      style={{
+        background: 'hsl(var(--card) / 0.4)',
+        backdropFilter: 'blur(20px) saturate(1.5)',
+        WebkitBackdropFilter: 'blur(20px) saturate(1.5)',
+        borderBottom: '1px solid hsl(var(--foreground) / 0.04)',
+      }}
+    >
       {/* Breadcrumb / Title - empty; child pages set their own */}
       <div className="flex-1" />
 
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-2.5">
         {/* Search trigger */}
         <motion.button
           onClick={() => setShowSearch(true)}
-          className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-lg border border-input bg-muted/30 text-sm text-muted-foreground hover:bg-muted transition-colors"
-          whileHover={{ scale: 1.01 }}
+          className="hidden sm:flex items-center gap-2 px-3.5 py-1.5 rounded-xl text-sm text-muted-foreground transition-all duration-200"
+          style={{
+            border: '1px solid hsl(var(--foreground) / 0.06)',
+            background: 'hsl(var(--foreground) / 0.02)',
+          }}
+          whileHover={{ scale: 1.01, borderColor: 'hsl(var(--primary) / 0.2)' }}
         >
-          <Search className="w-3.5 h-3.5" />
-          <span>Search...</span>
-          <kbd className="ml-4 px-1.5 py-0.5 rounded text-[10px] bg-background border border-border font-mono">
+          <MagnifyingGlass className="w-3.5 h-3.5" weight="light" />
+          <span className="text-[13px]">Search...</span>
+          <kbd className="ml-4 px-1.5 py-0.5 rounded-md text-[10px] font-mono text-muted-foreground/60"
+            style={{
+              background: 'hsl(var(--foreground) / 0.03)',
+              border: '1px solid hsl(var(--foreground) / 0.06)',
+            }}>
             ⌘K
           </kbd>
         </motion.button>
@@ -33,23 +49,27 @@ export function DashboardTopbar({ profile }: TopbarProps) {
         {/* AI assistant quick link */}
         <Link href="/dashboard/ai-assistant">
           <motion.button
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-primary/10 text-primary text-sm font-medium hover:bg-primary/20 transition-colors"
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-sm font-medium transition-all duration-200"
+            style={{
+              background: 'hsl(var(--primary) / 0.08)',
+              color: 'hsl(var(--primary))',
+            }}
+            whileHover={{ scale: 1.03, boxShadow: '0 0 16px hsl(160 84% 39% / 0.15)' }}
+            whileTap={{ scale: 0.97 }}
           >
-            <Brain className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline">AI</span>
+            <Sparkle className="w-3.5 h-3.5" weight="duotone" />
+            <span className="hidden sm:inline text-[13px]">AI</span>
           </motion.button>
         </Link>
 
         {/* Add transaction */}
         <Link href="/dashboard/transactions/new">
           <motion.button
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-all hover:shadow-glow"
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
+            className="btn-primary !py-1.5 !px-3.5 !rounded-xl !text-[13px]"
+            whileHover={{ scale: 1.03 }}
+            whileTap={{ scale: 0.97 }}
           >
-            <Plus className="w-3.5 h-3.5" />
+            <Plus className="w-3.5 h-3.5" weight="bold" />
             <span className="hidden sm:inline">Add</span>
           </motion.button>
         </Link>
@@ -59,33 +79,38 @@ export function DashboardTopbar({ profile }: TopbarProps) {
       <AnimatePresence>
         {showSearch && (
           <motion.div
-            className="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm flex items-start justify-center pt-20 px-4"
+            className="fixed inset-0 z-50 flex items-start justify-center pt-20 px-4"
+            style={{
+              background: 'hsl(var(--background) / 0.75)',
+              backdropFilter: 'blur(12px)',
+            }}
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={() => setShowSearch(false)}
           >
             <motion.div
-              className="w-full max-w-lg rounded-2xl border border-border bg-card shadow-xl overflow-hidden"
-              initial={{ opacity: 0, y: -20, scale: 0.95 }}
+              className="w-full max-w-lg float-panel overflow-hidden"
+              initial={{ opacity: 0, y: -20, scale: 0.96 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, y: -20, scale: 0.95 }}
+              exit={{ opacity: 0, y: -20, scale: 0.96 }}
+              transition={{ duration: 0.25, ease: [0.4, 0, 0.2, 1] }}
               onClick={(e) => e.stopPropagation()}
             >
-              <div className="flex items-center gap-3 px-4 py-3 border-b border-border">
-                <Search className="w-4 h-4 text-muted-foreground" />
+              <div className="flex items-center gap-3 px-4 py-3.5" style={{ borderBottom: '1px solid hsl(var(--foreground) / 0.04)' }}>
+                <MagnifyingGlass className="w-4 h-4 text-muted-foreground" weight="light" />
                 <input
                   autoFocus
-                  className="flex-1 bg-transparent text-sm focus:outline-none placeholder:text-muted-foreground"
+                  className="flex-1 bg-transparent text-sm focus:outline-none placeholder:text-muted-foreground/60"
                   placeholder="Search transactions, accounts, categories..."
                 />
                 <button onClick={() => setShowSearch(false)}>
-                  <X className="w-4 h-4 text-muted-foreground" />
+                  <X className="w-4 h-4 text-muted-foreground" weight="light" />
                 </button>
               </div>
-              <div className="px-4 py-6 text-center">
+              <div className="px-4 py-8 text-center">
                 <p className="text-sm text-muted-foreground">
-                  Or use the <span className="text-primary font-medium">AI Assistant</span> to search with natural language
+                  Or use the <span className="text-emerald-500 font-medium">AI Assistant</span> to search with natural language
                 </p>
               </div>
             </motion.div>
