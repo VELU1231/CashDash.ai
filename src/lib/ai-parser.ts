@@ -36,16 +36,28 @@ const ParseResponseSchema = z.object({
 // ─── Provider Factory ─────────────────────────────────────────────────────────
 
 interface LLMConfig {
-  provider: 'openai' | 'ollama' | 'gemini';
+  provider: 'gateway' | 'openai' | 'ollama' | 'gemini';
   apiKey?: string;
   baseUrl?: string;
   model?: string;
 }
 
 function getModel(config: LLMConfig) {
-  const provider = config.provider || 'openai';
+  const provider = config.provider || 'gateway';
 
-  // ─── Google Gemini ──────────────────────────────────────────────────
+  // ─── Vercel AI Gateway (RECOMMENDED) ────────────────────────────────
+  // One API key → hundreds of models. Set AI_PROVIDER=gateway
+  // Model format: "provider/model" e.g. "google/gemma-4-31b-it", "openai/gpt-4o-mini"
+  // Get key from: Vercel Dashboard → AI Gateway → Create API Key
+  if (provider === 'gateway') {
+    const gateway = createOpenAI({
+      apiKey: process.env.AI_GATEWAY_API_KEY || process.env.AI_API_KEY || '',
+      baseURL: 'https://ai-gateway.vercel.sh/v1',
+    });
+    return gateway(config.model || process.env.AI_MODEL || 'google/gemma-4-31b-it');
+  }
+
+  // ─── Google Gemini (direct) ─────────────────────────────────────────
   if (provider === 'gemini' || provider === 'google' as any) {
     const google = createGoogleGenerativeAI({
       apiKey: config.apiKey || process.env.GOOGLE_GENERATIVE_AI_API_KEY || process.env.AI_API_KEY || '',
@@ -54,21 +66,17 @@ function getModel(config: LLMConfig) {
   }
 
   // ─── Ollama (local or cloud via OpenAI-compatible API) ──────────────
-  // Ollama exposes an OpenAI-compatible endpoint at /v1
-  // Local:  AI_BASE_URL=http://localhost:11434/v1
-  // Cloud:  AI_BASE_URL=https://ollama.com/v1  (requires OLLAMA_API_KEY)
   if (provider === 'ollama') {
     const baseURL = config.baseUrl || process.env.AI_BASE_URL || 'http://localhost:11434/v1';
-    // Ensure URL ends with /v1
     const ollamaURL = baseURL.endsWith('/v1') ? baseURL : baseURL + '/v1';
     const ollama = createOpenAI({
-      apiKey: process.env.OLLAMA_API_KEY || 'ollama', // Cloud needs real key; local ignores it
+      apiKey: process.env.OLLAMA_API_KEY || 'ollama',
       baseURL: ollamaURL,
     });
     return ollama(config.model || 'gemma4:31b-cloud');
   }
 
-  // ─── OpenAI (also works with OpenRouter, etc.) ──────────────────────
+  // ─── OpenAI (direct) ───────────────────────────────────────────────
   const openai = createOpenAI({
     apiKey: config.apiKey || process.env.OPENAI_API_KEY || process.env.AI_API_KEY || '',
     baseURL: config.baseUrl || process.env.AI_BASE_URL || undefined,
@@ -110,7 +118,7 @@ export async function parseFinancialText(
   const today = format(new Date(), 'yyyy-MM-dd');
 
   const llmConfig: LLMConfig = {
-    provider: (config?.provider || process.env.AI_PROVIDER || 'openai') as LLMConfig['provider'],
+    provider: (config?.provider || process.env.AI_PROVIDER || 'gateway') as LLMConfig['provider'],
     apiKey: config?.apiKey || process.env.AI_API_KEY || '',
     baseUrl: config?.baseUrl || process.env.AI_BASE_URL || '',
     model: config?.model || process.env.AI_MODEL || '',
