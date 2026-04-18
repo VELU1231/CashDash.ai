@@ -3,10 +3,10 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  Brain, Send, Loader2, CheckCircle2, XCircle, Sparkles,
-  Calendar, DollarSign, MessageSquare, Trash2, Info,
-  Pencil, Save, X, ChevronDown
-} from 'lucide-react';
+  Brain, PaperPlaneRight, CircleNotch, CheckCircle, XCircle, Sparkle,
+  Calendar, CurrencyDollar, ChatCircle, Trash, Info,
+  PencilSimple, FloppyDisk, X, CaretDown
+} from '@phosphor-icons/react';
 import { formatCurrency, formatDate, CURRENCIES } from '@/lib/utils';
 import { toast } from 'sonner';
 import type { AIChatMessage, ParsedTransaction } from '@/types';
@@ -285,7 +285,7 @@ export default function AIAssistantPage() {
             whileTap={{ scale: 0.95 }}
             title="Clear chat"
           >
-            <Trash2 className="w-4 h-4" />
+            <Trash className="w-3.5 h-3.5" />
           </motion.button>
         </div>
       </div>
@@ -326,7 +326,7 @@ export default function AIAssistantPage() {
                 {msg.role === 'assistant' && (
                   <div className="flex items-center gap-1.5 mb-1.5">
                     <div className="w-5 h-5 rounded-full bg-primary/20 flex items-center justify-center">
-                      <Brain className="w-3 h-3 text-primary" />
+                      <Sparkle className="w-5 h-5 text-primary" weight="duotone" />
                     </div>
                     <span className="text-xs font-medium text-muted-foreground">CashDash AI</span>
                     <span className="text-[10px] text-muted-foreground/50">
@@ -354,7 +354,7 @@ export default function AIAssistantPage() {
                   <div className="mt-2 space-y-1">
                     {msg.created_transactions.map((tx: any, i: number) => (
                       <div key={i} className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-emerald-200 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-950/30 text-xs">
-                        <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
+                        <CheckCircle className="w-3.5 h-3.5 text-emerald-500 mt-0.5 shrink-0" weight="fill" />
                         <span className="truncate flex-1">{tx.description}</span>
                         <span className="font-semibold text-emerald-600">{formatCurrency(tx.amount, tx.currency)}</span>
                       </div>
@@ -378,7 +378,7 @@ export default function AIAssistantPage() {
           <motion.div className="flex justify-start" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
             <div className="bg-muted rounded-2xl rounded-tl-sm px-4 py-3">
               <div className="flex items-center gap-2">
-                <Loader2 className="w-3.5 h-3.5 animate-spin text-primary" />
+                <CircleNotch className="w-5 h-5 animate-spin" />
                 <span className="text-xs text-muted-foreground">Analyzing your spending...</span>
               </div>
             </div>
@@ -392,14 +392,14 @@ export default function AIAssistantPage() {
       <AnimatePresence>
         {pendingTxs.length > 0 && (
           <motion.div
-            className="mb-3 rounded-2xl border border-primary/20 bg-card shadow-lg overflow-hidden"
+            className="mb-3 rounded-2xl border border-primary/20 glass-card shadow-lg overflow-hidden"
             initial={{ opacity: 0, y: 20, height: 0 }}
             animate={{ opacity: 1, y: 0, height: 'auto' }}
             exit={{ opacity: 0, y: 20, height: 0 }}
           >
             <div className="px-4 py-3 border-b border-border bg-muted/30 flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <Pencil className="w-4 h-4 text-primary" />
+                <PencilSimple className="w-4 h-4 text-primary" />
                 <span className="text-sm font-semibold">Review & Confirm ({pendingTxs.length})</span>
               </div>
               <button onClick={discardPending} className="text-xs text-muted-foreground hover:text-foreground transition-colors">
@@ -436,7 +436,7 @@ export default function AIAssistantPage() {
                   className="flex items-center gap-1.5 px-4 py-1.5 rounded-lg bg-primary text-primary-foreground text-xs font-semibold hover:bg-primary/90 disabled:opacity-50 transition-all"
                   whileTap={{ scale: 0.97 }}
                 >
-                  {saving ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Save className="w-3.5 h-3.5" />}
+                  {saving ? <CircleNotch className="w-3.5 h-3.5 animate-spin" /> : <FloppyDisk className="w-3.5 h-3.5" />}
                   {saving ? 'Saving...' : `Save ${pendingTxs.length} transaction${pendingTxs.length > 1 ? 's' : ''}`}
                 </motion.button>
               </div>
@@ -449,7 +449,7 @@ export default function AIAssistantPage() {
       {messages.length <= 2 && pendingTxs.length === 0 && (
         <div className="mb-3">
           <p className="text-xs text-muted-foreground mb-2 flex items-center gap-1.5">
-            <Sparkles className="w-3 h-3" /> Try these examples:
+            <Sparkle className="w-3 h-3" /> Try these examples:
           </p>
           <div className="flex flex-wrap gap-2">
             {EXAMPLE_PROMPTS.map((prompt) => (
@@ -469,7 +469,7 @@ export default function AIAssistantPage() {
 
       {/* Input area */}
       <div className="relative">
-        <div className="flex items-end gap-2 p-3 rounded-2xl border border-input bg-background shadow-soft focus-within:ring-2 focus-within:ring-primary/20 focus-within:border-primary transition-all">
+        <div className="flex items-end gap-2 p-3 glass-card focus-within:ring-2 focus-within:ring-primary/20 focus-within:border-primary transition-all">
           <textarea
             ref={inputRef}
             value={input}
@@ -487,7 +487,7 @@ export default function AIAssistantPage() {
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
           >
-            {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+            {loading ? <CircleNotch className="w-4 h-4 animate-spin" /> : <PaperPlaneRight className="w-4 h-4" weight="fill" />}
           </motion.button>
         </div>
         <p className="text-[10px] text-muted-foreground mt-1.5 text-center">
@@ -575,7 +575,7 @@ function EditableTransactionRow({
           className="p-1 rounded hover:bg-muted transition-colors text-muted-foreground hover:text-foreground"
           title={editing ? 'Done editing' : 'Edit'}
         >
-          {editing ? <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" /> : <Pencil className="w-3.5 h-3.5" />}
+          {editing ? <CheckCircle className="w-3.5 h-3.5 text-emerald-500" /> : <PencilSimple className="w-3.5 h-3.5" />}
         </button>
         <button
           onClick={() => onRemove(index)}

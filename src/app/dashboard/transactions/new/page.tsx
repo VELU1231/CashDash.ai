@@ -1,6 +1,6 @@
 'use client';
 
-import { Plus, ArrowLeft, ScanLine, Loader2 } from 'lucide-react';
+import { Plus, ArrowLeft, Scan, CircleNotch, Image as ImageIcon, X } from '@phosphor-icons/react';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
 import { useState, useEffect } from 'react';
@@ -128,11 +128,13 @@ export default function NewTransactionPage() {
         }
       }
 
+      // Exclude the File object — it can't be JSON-serialized
+      const { attachment: _file, ...formData } = form;
       const res = await fetch('/api/transactions', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          ...form,
+          ...formData,
           attachment_path,
           attachment_name,
           attachment_size,
@@ -157,8 +159,8 @@ export default function NewTransactionPage() {
   return (
     <div className="max-w-3xl mx-auto space-y-6">
       <div className="flex items-center gap-4">
-        <Link href="/dashboard/transactions" className="p-2 rounded-lg hover:bg-muted transition-colors">
-          <ArrowLeft className="w-5 h-5 text-muted-foreground" />
+        <Link href="/dashboard/transactions" className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors mb-6 font-medium">
+          <ArrowLeft className="w-4 h-4" /> Back to transactions
         </Link>
         <div>
           <h1 className="text-2xl font-bold">New Transaction</h1>
@@ -170,7 +172,7 @@ export default function NewTransactionPage() {
         onSubmit={handleSubmit}
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="rounded-2xl border border-border bg-card shadow-soft p-6 space-y-6"
+        className="glass-card p-6 space-y-6"
       >
         {/* Type Selector */}
         <div className="flex bg-muted/50 p-1 rounded-xl">
@@ -263,7 +265,7 @@ export default function NewTransactionPage() {
               {form.attachment && form.attachment.type.startsWith('image/') && (
                 <button type="button" onClick={handleScanReceipt} disabled={scanning}
                   className="mt-2 w-full flex items-center justify-center gap-2 py-2 text-xs font-semibold rounded-lg bg-emerald-500/10 text-emerald-600 hover:bg-emerald-500/20 transition-colors disabled:opacity-50">
-                  {scanning ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <ScanLine className="w-3.5 h-3.5" />}
+                  {scanning ? <CircleNotch className="w-4 h-4 animate-spin" /> : <Scan className="w-4 h-4" />}
                   {scanning ? 'Scanning Receipt...' : 'Auto-fill with AI Scanner (Pro)'}
                 </button>
               )}

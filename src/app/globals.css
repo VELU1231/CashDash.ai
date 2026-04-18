@@ -28,7 +28,7 @@
     --muted: 38 20% 86%;
     --muted-foreground: 25 14% 46%;
 
-    --accent: 24 68% 51%;            /* #D9722A — warm orange */
+    --accent: 28 30% 54%;            /* #B8845A — warm tan */
     --accent-foreground: 0 0% 100%;
 
     --destructive: 0 72% 51%;
@@ -41,12 +41,12 @@
     --radius: 0.75rem;
 
     /* Warm accent tokens */
-    --warm: 24 68% 51%;              /* D9722A */
+    --warm: 28 30% 54%;              /* B8845A — warm tan */
     --warm-foreground: 0 0% 100%;
 
     /* Chart palette */
     --chart-1: 160 84% 39%;          /* emerald */
-    --chart-2: 24 68% 51%;           /* warm orange */
+    --chart-2: 28 30% 54%;           /* warm tan */
     --chart-3: 34 75% 63%;           /* amber */
     --chart-4: 280 45% 55%;          /* soft purple */
     --chart-5: 4 68% 56%;            /* coral */
@@ -72,7 +72,7 @@
     --muted: 25 10% 14%;
     --muted-foreground: 30 12% 52%;
 
-    --accent: 34 75% 63%;            /* #E8A95B — warm amber */
+    --accent: 32 32% 64%;            /* #C9A87C — dusty gold */
     --accent-foreground: 22 33% 7%;
 
     --destructive: 0 62% 50%;
@@ -83,13 +83,13 @@
     --ring: 160 84% 39%;
 
     /* Warm accent tokens */
-    --warm: 34 75% 63%;              /* E8A95B */
+    --warm: 32 32% 64%;              /* C9A87C — dusty gold */
     --warm-foreground: 22 33% 7%;
 
     /* Chart palette */
     --chart-1: 160 84% 45%;
-    --chart-2: 34 75% 63%;
-    --chart-3: 24 68% 55%;
+    --chart-2: 32 32% 64%;           /* dusty gold */
+    --chart-3: 28 30% 54%;           /* warm tan */
     --chart-4: 280 45% 60%;
     --chart-5: 4 68% 60%;
   }

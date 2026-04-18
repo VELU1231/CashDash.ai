@@ -27,9 +27,21 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
   const body = await req.json();
   const amountCents = body.amount ? Math.round(parseFloat(body.amount) * 100) : undefined;
 
+  // Whitelist only valid transaction columns to prevent Supabase column-not-found errors
+  const allowedFields: Record<string, unknown> = {};
+  const ALLOWED_KEYS = [
+    'type', 'currency', 'description', 'note',
+    'category_id', 'account_id', 'dest_account_id', 'transaction_date',
+  ];
+  for (const key of ALLOWED_KEYS) {
+    if (body[key] !== undefined) allowedFields[key] = body[key];
+  }
+  if (amountCents !== undefined) allowedFields.amount = amountCents;
+  allowedFields.updated_at = new Date().toISOString();
+
   const { data, error } = await supabase
     .from('transactions')
-    .update({ ...body, ...(amountCents ? { amount: amountCents } : {}), updated_at: new Date().toISOString() })
+    .update(allowedFields)
     .eq('id', id)
     .eq('user_id', user.id)
     .select('*, category:categories(*), account:accounts(*)')

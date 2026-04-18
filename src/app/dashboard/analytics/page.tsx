@@ -8,10 +8,10 @@ import {
   RadarChart, Radar, PolarGrid, PolarAngleAxis, Treemap
 } from 'recharts';
 import {
-  TrendingUp, TrendingDown, BarChart3, PieChart as PieIcon,
-  Calendar, Target, Brain, Download, ArrowUpRight, ArrowDownRight,
-  Filter, Sparkles
-} from 'lucide-react';
+  TrendUp, TrendDown, ChartBar, ChartPieSlice,
+  Calendar, Target, Brain, DownloadSimple, ArrowUpRight, ArrowDownRight,
+  Funnel, Sparkle
+} from '@phosphor-icons/react';
 import { formatCurrency, getChartColor, CHART_COLORS, formatDate } from '@/lib/utils';
 import { format, subMonths, startOfMonth, endOfMonth, eachDayOfInterval, parseISO } from 'date-fns';
 
@@ -107,7 +107,7 @@ export default function AnalyticsPage() {
           className="rounded-xl border border-primary/20 bg-primary/5 p-4 flex items-start gap-3"
           initial={{ opacity: 0 }} animate={{ opacity: 1 }}
         >
-          <Sparkles className="w-4 h-4 text-primary shrink-0 mt-0.5" />
+          <Sparkle className="w-4 h-4 text-primary shrink-0 mt-0.5" weight="duotone" />
           <p className="text-sm text-foreground">{insight}</p>
         </motion.div>
       )}
@@ -121,9 +121,9 @@ export default function AnalyticsPage() {
             const avgMonthly = totalExpenses / Math.max(monthly.length, 1);
             const savingsRate = totalIncome > 0 ? ((totalIncome - totalExpenses) / totalIncome * 100) : 0;
             return [
-              { label: 'Total Income', value: formatCurrency(totalIncome, 'USD'), icon: TrendingUp, color: 'text-emerald-600', bg: 'bg-emerald-50 dark:bg-emerald-950/30' },
-              { label: 'Total Expenses', value: formatCurrency(totalExpenses, 'USD'), icon: TrendingDown, color: 'text-red-500', bg: 'bg-red-50 dark:bg-red-950/30' },
-              { label: 'Avg Monthly Spend', value: formatCurrency(avgMonthly, 'USD'), icon: BarChart3, color: 'text-blue-500', bg: 'bg-blue-50 dark:bg-blue-950/30' },
+              { label: 'Total Income', value: formatCurrency(totalIncome, 'USD'), icon: TrendUp, color: 'text-emerald-600', bg: 'bg-emerald-50 dark:bg-emerald-950/30' },
+              { label: 'Total Expenses', value: formatCurrency(totalExpenses, 'USD'), icon: TrendDown, color: 'text-red-500', bg: 'bg-red-50 dark:bg-red-950/30' },
+              { label: 'Avg Monthly Spend', value: formatCurrency(avgMonthly, 'USD'), icon: ChartBar, color: 'text-blue-500', bg: 'bg-blue-50 dark:bg-blue-950/30' },
               { label: 'Savings Rate', value: `${Math.max(0, savingsRate).toFixed(1)}%`, icon: Target, color: 'text-purple-500', bg: 'bg-purple-50 dark:bg-purple-950/30' },
             ].map((stat) => {
               const Icon = stat.icon;
@@ -145,7 +145,7 @@ export default function AnalyticsPage() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
 
         {/* Income vs Expenses Area Chart */}
-        <motion.div className="rounded-xl border border-border bg-card p-5 shadow-soft lg:col-span-2"
+        <motion.div className="glass-card p-5 lg:col-span-2"
           initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
           <div className="flex items-center justify-between mb-4">
             <div>
@@ -182,7 +182,7 @@ export default function AnalyticsPage() {
         </motion.div>
 
         {/* Monthly Bar Chart */}
-        <motion.div className="rounded-xl border border-border bg-card p-5 shadow-soft"
+        <motion.div className="glass-card p-5"
           initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
           <div className="mb-4">
             <h3 className="font-semibold">Monthly Net Flow</h3>
@@ -205,7 +205,7 @@ export default function AnalyticsPage() {
         </motion.div>
 
         {/* Category Breakdown Pie */}
-        <motion.div className="rounded-xl border border-border bg-card p-5 shadow-soft"
+        <motion.div className="glass-card p-5"
           initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}>
           <div className="mb-4">
             <h3 className="font-semibold">Spending by Category</h3>
@@ -243,7 +243,7 @@ export default function AnalyticsPage() {
             </div>
           ) : (
             <div className="flex flex-col items-center justify-center h-40">
-              <PieIcon className="w-10 h-10 text-muted-foreground/30 mb-2" />
+              <ChartPieSlice className="w-10 h-10 text-muted-foreground/30 mb-2" weight="light" />
               <p className="text-xs text-muted-foreground">No expense data yet</p>
             </div>
           )}
@@ -251,7 +251,7 @@ export default function AnalyticsPage() {
       </div>
 
       {/* Savings Goal Progress */}
-      <motion.div className="rounded-xl border border-border bg-card p-5 shadow-soft"
+      <motion.div className="glass-card p-5"
         initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }}>
         <div className="flex items-center justify-between mb-5">
           <div>

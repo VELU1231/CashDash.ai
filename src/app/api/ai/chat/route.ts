@@ -14,7 +14,7 @@ export async function POST(req: NextRequest) {
   const { messages, currency = 'USD' } = await req.json();
   const today = format(new Date(), 'yyyy-MM-dd');
 
-  const result = streamText({
+  const result = await streamText({
     model: ollama('gemma4:31b-cloud'),
     messages,
     system: `You are CashDash AI, a friendly, human-like, and proactive financial advisor and assistant.
