@@ -1,13 +1,12 @@
 import { streamText, tool } from 'ai';
-import { createOpenAI } from '@ai-sdk/openai';
+import { createOllama } from 'ollama-ai-provider';
 import { z } from 'zod';
 import { NextRequest } from 'next/server';
 import { format } from 'date-fns';
 
-// Create an OpenAI provider instance for Ollama cloud
-const ollama = createOpenAI({
-  apiKey: process.env.OLLAMA_API_KEY || 'ollama',
-  baseURL: process.env.AI_BASE_URL,
+// Create an Ollama provider instance for native Ollama cloud
+const ollama = createOllama({
+  baseURL: process.env.AI_BASE_URL || 'https://ollama.com/api',
 });
 
 export async function POST(req: NextRequest) {
