@@ -64,12 +64,35 @@ export async function POST(request: NextRequest) {
 
     await ensureUserData(supabase, user);
 
-    const body = await request.json();
+    let body: Record<string, unknown>;
+    try {
+      body = await request.json();
+    } catch {
+      return NextResponse.json({ error: 'Invalid or empty request body' }, { status: 400 });
+    }
+
     const { 
       type, amount, currency, description, note, 
       category_id, account_id, dest_account_id, transaction_date, tag_ids,
       attachment_path, attachment_name, attachment_size, attachment_type 
-    } = body;
+    } = body as {
+      type?: string; amount?: unknown; currency?: string; description?: string; note?: string;
+      category_id?: string; account_id?: string; dest_account_id?: string;
+      transaction_date?: string; tag_ids?: string[];
+      attachment_path?: string; attachment_name?: string;
+      attachment_size?: number; attachment_type?: string;
+    };
+
+    if (!type) {
+      return NextResponse.json({ error: 'Missing required field: type' }, { status: 400 });
+    }
+    if (amount === undefined || amount === null) {
+      return NextResponse.json({ error: 'Missing required field: amount' }, { status: 400 });
+    }
+    const parsedAmount = parseFloat(String(amount));
+    if (isNaN(parsedAmount) || !isFinite(parsedAmount)) {
+      return NextResponse.json({ error: 'Invalid value for amount: must be a valid number' }, { status: 400 });
+    }
 
     // If no account_id provided, use the default account
     let resolvedAccountId = account_id;
@@ -78,27 +101,29 @@ export async function POST(request: NextRequest) {
       resolvedAccountId = defaultAccount?.id;
     }
 
-    if (!type || !amount || !resolvedAccountId) {
-      return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
+    if (!resolvedAccountId) {
+      return NextResponse.json({ error: 'Missing required field: account_id' }, { status: 400 });
     }
 
-    const amountCents = Math.round(parseFloat(amount) * 100);
+    const amountCents = Math.round(parsedAmount * 100);
+
+    const payload = {
+      user_id: user.id,
+      type,
+      amount: amountCents,
+      currency: currency || 'PHP',
+      description: description || null,
+      note: note || null,
+      category_id: category_id || null,
+      account_id: resolvedAccountId,
+      dest_account_id: dest_account_id || null,
+      transaction_date: transaction_date || new Date().toISOString(),
+      is_ai_created: false,
+    };
 
     const { data: tx, error } = await supabase
       .from('transactions')
-      .insert({
-        user_id: user.id,
-        type,
-        amount: amountCents,
-        currency: currency || 'PHP',
-        description: description || null,
-        note: note || null,
-        category_id: category_id || null,
-        account_id: resolvedAccountId,
-        dest_account_id: dest_account_id || null,
-        transaction_date: transaction_date || new Date().toISOString(),
-        is_ai_created: false,
-      })
+      .insert([payload])
       .select('*, category:categories(*), account:accounts(*)')
       .single();
 
