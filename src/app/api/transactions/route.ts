@@ -48,6 +48,7 @@ export async function GET(request: NextRequest) {
       has_more: (count || 0) > offset + limit,
     });
   } catch (error) {
+    console.error('[GET /api/transactions] Error:', error);
     return NextResponse.json({ error: 'Failed to fetch transactions' }, { status: 500 });
   }
 }
@@ -123,6 +124,8 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ data: tx }, { status: 201 });
   } catch (error) {
-    return NextResponse.json({ error: 'Failed to create transaction' }, { status: 500 });
+    console.error('[POST /api/transactions] Error:', error);
+    const message = error instanceof Error ? error.message : 'Failed to create transaction';
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }

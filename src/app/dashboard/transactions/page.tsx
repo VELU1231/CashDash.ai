@@ -273,7 +273,7 @@ export default function TransactionsPage() {
                   style={{ borderRadius: '16px' }}>
                   {txs.map((tx, i) => (
                     <motion.div key={tx.id}
-                      className={`flex items-center gap-3 px-4 py-3.5 transition-all duration-200 ${selectedIds.has(tx.id) ? 'bg-emerald-500/[0.04]' : 'hover:bg-foreground/[0.02]'}`}
+                      className={`group flex items-center gap-3 px-4 py-3.5 transition-all duration-200 ${selectedIds.has(tx.id) ? 'bg-emerald-500/[0.04]' : 'hover:bg-foreground/[0.02]'}`}
                       style={i < txs.length - 1 ? { borderBottom: '1px solid hsl(var(--foreground) / 0.03)' } : {}}
                       initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.02 }}>
                       <button onClick={() => toggleSelect(tx.id)}

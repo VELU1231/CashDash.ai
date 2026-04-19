@@ -44,12 +44,11 @@ interface LLMConfig {
 }
 
 function getModel(config: LLMConfig) {
-  const provider = config.provider || 'gateway';
+  const provider = config.provider || 'ollama';
 
-  // ─── Vercel AI Gateway (RECOMMENDED) ────────────────────────────────
+  // ─── Vercel AI Gateway ──────────────────────────────────────────────
   // One API key → hundreds of models. Set AI_PROVIDER=gateway
   // Model format: "provider/model" e.g. "google/gemma-4-31b-it", "openai/gpt-4o-mini"
-  // Get key from: Vercel Dashboard → AI Gateway → Create API Key
   if (provider === 'gateway') {
     const gateway = createOpenAI({
       apiKey: process.env.AI_GATEWAY_API_KEY || process.env.AI_API_KEY || '',
@@ -68,13 +67,13 @@ function getModel(config: LLMConfig) {
 
   // ─── Ollama (local or cloud via OpenAI-compatible API) ──────────────
   if (provider === 'ollama') {
-    const baseURL = config.baseUrl || process.env.AI_BASE_URL || 'http://localhost:11434/v1';
+    const baseURL = config.baseUrl || process.env.AI_BASE_URL || 'https://ollama.com/v1';
     const ollamaURL = baseURL.endsWith('/v1') ? baseURL : baseURL + '/v1';
     const ollama = createOpenAI({
       apiKey: process.env.OLLAMA_API_KEY || 'ollama',
       baseURL: ollamaURL,
     });
-    return ollama(config.model || 'gemma4:31b-cloud');
+    return ollama(config.model || process.env.AI_MODEL || 'gemma4:31b-cloud');
   }
 
   // ─── OpenAI (direct) ───────────────────────────────────────────────
@@ -121,7 +120,7 @@ export async function parseFinancialText(
   const today = format(new Date(), 'yyyy-MM-dd');
 
   const llmConfig: LLMConfig = {
-    provider: (config?.provider || process.env.AI_PROVIDER || 'gateway') as LLMConfig['provider'],
+    provider: (config?.provider || process.env.AI_PROVIDER || 'ollama') as LLMConfig['provider'],
     apiKey: config?.apiKey || process.env.AI_API_KEY || '',
     baseUrl: config?.baseUrl || process.env.AI_BASE_URL || '',
     model: config?.model || process.env.AI_MODEL || '',

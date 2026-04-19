@@ -5,6 +5,7 @@ import { motion } from 'framer-motion';
 import Link from 'next/link';
 import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
+import { InlineEmojiPicker } from '@/components/ui/emoji-picker-mart';
 
 export default function NewTransactionPage() {
   const [loading, setLoading] = useState(false);
@@ -18,6 +19,7 @@ export default function NewTransactionPage() {
     currency: 'USD',
     description: '',
     note: '',
+    emoji: '',
     category_id: '',
     account_id: '',
     dest_account_id: '',
@@ -210,9 +212,15 @@ export default function NewTransactionPage() {
 
             <div>
               <label className="text-sm font-medium mb-1 block">Description</label>
-              <input type="text" value={form.description} onChange={e => setForm({...form, description: e.target.value})}
-                className="w-full px-3 py-2 rounded-lg border border-input bg-background focus:outline-none focus:ring-2 focus:ring-primary/20"
-                placeholder="e.g. Groceries at Walmart" />
+              <div className="flex items-center gap-2">
+                <InlineEmojiPicker
+                  value={form.emoji}
+                  onChange={(emoji) => setForm({...form, emoji})}
+                />
+                <input type="text" value={form.description} onChange={e => setForm({...form, description: e.target.value})}
+                  className="flex-1 px-3 py-2 rounded-lg border border-input bg-background focus:outline-none focus:ring-2 focus:ring-primary/20"
+                  placeholder="e.g. Groceries at Walmart" />
+              </div>
             </div>
 
             <div>

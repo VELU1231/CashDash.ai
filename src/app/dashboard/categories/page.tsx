@@ -8,7 +8,7 @@ import {
 import { ACCOUNT_COLORS } from '@/lib/utils';
 import { toast } from 'sonner';
 import type { Category, CategoryFormData, CategoryType } from '@/types';
-import { IconPicker, IconDisplay } from '@/components/ui/icon-picker';
+import { EmojiPicker } from '@/components/ui/emoji-picker-mart';
 
 export default function CategoriesPage() {
   const [categories, setCategories] = useState<Category[]>([]);
@@ -16,7 +16,7 @@ export default function CategoriesPage() {
   const [showForm, setShowForm] = useState(false);
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
   const [form, setForm] = useState<CategoryFormData>({
-    name: '', type: 'expense', icon: 'FolderOpen', color: '#6366f1', parent_id: ''
+    name: '', type: 'expense', icon: '📦', color: '#6366f1', parent_id: ''
   });
   const [saving, setSaving] = useState(false);
   const [expandedParents, setExpandedParents] = useState<Record<string, boolean>>({});
@@ -75,7 +75,7 @@ export default function CategoriesPage() {
   };
 
   const resetForm = () => {
-    setForm({ name: '', type: 'expense', icon: 'FolderOpen', color: '#6366f1', parent_id: '' });
+    setForm({ name: '', type: 'expense', icon: '📦', color: '#6366f1', parent_id: '' });
   };
 
   const toggleExpand = (id: string) => {
@@ -147,13 +147,13 @@ export default function CategoriesPage() {
                             >
                               {expandedParents[parent.id] ? <ChevronDown className="w-4 h-4 text-muted-foreground" /> : <ChevronRight className="w-4 h-4 text-muted-foreground" />}
                             </button>
-                            <div className="w-8 h-8 rounded-lg flex items-center justify-center text-lg" style={{ background: `${parent.color}20`, color: parent.color }}>
-                              <IconDisplay name={parent.icon} className="w-4 h-4" />
+                            <div className="w-8 h-8 rounded-lg flex items-center justify-center text-lg" style={{ background: `${parent.color}20` }}>
+                              <span>{parent.icon}</span>
                             </div>
                             <span className="font-medium">{parent.name}</span>
                           </div>
                           <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                            <button onClick={() => { setForm({ name: '', type: parent.type, icon: 'Tag', color: parent.color, parent_id: parent.id }); setShowForm(true); }}
+                            <button onClick={() => { setForm({ name: '', type: parent.type, icon: '📦', color: parent.color, parent_id: parent.id }); setShowForm(true); }}
                               className="p-1.5 rounded-lg hover:bg-muted text-muted-foreground hover:text-primary transition-colors" title="Add Sub-category">
                               <Plus className="w-3.5 h-3.5" />
                             </button>
@@ -182,8 +182,8 @@ export default function CategoriesPage() {
                                   <div className="absolute left-[-12px] top-0 bottom-1/2 w-px bg-border" />
                                   
                                   <div className="flex items-center gap-2">
-                                    <div className="w-6 h-6 rounded flex items-center justify-center text-sm" style={{ background: `${sub.color}20`, color: sub.color }}>
-                                      <IconDisplay name={sub.icon} className="w-3.5 h-3.5" />
+                                    <div className="w-6 h-6 rounded flex items-center justify-center text-sm" style={{ background: `${sub.color}20` }}>
+                                      <span>{sub.icon}</span>
                                     </div>
                                     <span className="text-sm">{sub.name}</span>
                                   </div>
@@ -258,8 +258,7 @@ export default function CategoriesPage() {
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="text-sm font-medium mb-1 block">Icon</label>
-                  <IconPicker value={form.icon} onChange={val => setForm({ ...form, icon: val })} />
+                  <EmojiPicker value={form.icon} onChange={val => setForm({ ...form, icon: val })} label="Icon" size="md" />
                 </div>
                 <div>
                   <label className="text-sm font-medium mb-2 block">Color</label>
