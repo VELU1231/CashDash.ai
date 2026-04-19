@@ -29,7 +29,7 @@ export interface Profile {
   monthly_budget: number | null;
   created_at: string;
   updated_at: string;
-  subscription_tier?: string;
+  subscription_tier?: 'free' | 'pro' | 'family';
   lemonsqueezy_customer_id?: string;
   lemonsqueezy_subscription_id?: string;
 }

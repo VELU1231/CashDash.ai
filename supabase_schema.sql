@@ -40,7 +40,7 @@ CREATE TABLE profiles (
   weekly_budget BIGINT,
   monthly_budget BIGINT,
   -- Subscription (LemonSqueezy)
-  subscription_tier TEXT NOT NULL DEFAULT 'free' CHECK (subscription_tier IN ('free','basic','pro','family','business')),
+  subscription_tier TEXT NOT NULL DEFAULT 'free' CHECK (subscription_tier IN ('free','pro','family')),
   lemonsqueezy_customer_id TEXT,
   lemonsqueezy_subscription_id TEXT,
   created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
@@ -363,9 +363,9 @@ BEGIN
   display := split_part(user_email, '@', 1);
   IF display = '' THEN display := 'User'; END IF;
 
-  -- Create profile
+  -- Create profile (new users start on free tier)
   INSERT INTO profiles (id, display_name, default_currency, subscription_tier)
-  VALUES (new_user_id, display, 'USD', 'pro')
+  VALUES (new_user_id, display, 'USD', 'free')
   ON CONFLICT (id) DO NOTHING;
 
   -- Create default "Cash" account
@@ -425,5 +425,10 @@ CREATE TRIGGER on_auth_user_created
 
 -- ════════════════════════════════════════════════════════════════════════════════
 -- DONE! All tables created with RLS policies.
--- New users get: profile (tier=pro for testing) + Cash account + 19 categories
+-- New users get: profile (tier=free) + Cash account + 19 categories
 -- ════════════════════════════════════════════════════════════════════════════════
+
+-- ─── ADMIN: Set velu2k03@gmail.com to family tier ────────────────────────────
+-- Run this AFTER a user with this email has signed up:
+-- UPDATE profiles SET subscription_tier = 'family'
+-- WHERE id = (SELECT id FROM auth.users WHERE email = 'velu2k03@gmail.com');

@@ -33,30 +33,22 @@
 
 ### About Subscription Tiers
 
-The app has **5 tiers**. New signups default to `pro` for testing:
+The app has **3 tiers** (+ business as contact-us):
 
 | Tier | What it means |
 |------|--------------|
-| `free` | Basic features, no AI chat history |
-| `basic` | More features |
+| `free` | Basic features (default for new signups) |
 | `pro` | All features including AI insights, chat history |
-| `family` | Multi-user |
-| `business` | Everything |
+| `family` | Multi-user, everything included |
+| Business | Contact us (not a database tier) |
 
-**To change what new users get**, edit this line in `supabase_schema.sql`:
+**Your account (`velu2k03@gmail.com`) is set to `family`** so you can test everything.
 
-```sql
--- Change 'pro' to 'free' for production:
-INSERT INTO profiles (id, display_name, default_currency, subscription_tier)
-VALUES (new_user_id, display, 'USD', 'pro')
---                                    ^^^^ change this to 'free' for production
-```
-
-**To upgrade YOUR existing account to pro**, run this in SQL Editor:
+To upgrade your account after running the SQL, run this in SQL Editor:
 
 ```sql
-UPDATE profiles SET subscription_tier = 'pro'
-WHERE id = (SELECT id FROM auth.users WHERE email = 'YOUR_EMAIL_HERE');
+UPDATE profiles SET subscription_tier = 'family'
+WHERE id = (SELECT id FROM auth.users WHERE email = 'velu2k03@gmail.com');
 ```
 
 ---
