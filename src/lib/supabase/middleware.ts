@@ -40,7 +40,8 @@ export async function updateSession(request: NextRequest) {
     const isAuthRoute = url.pathname.startsWith('/login') ||
       url.pathname.startsWith('/register') ||
       url.pathname.startsWith('/forgot-password') ||
-      url.pathname === '/';
+      url.pathname === '/' ||
+      url.pathname === '/manifest.webmanifest';
 
     if (!user && !isAuthRoute) {
       url.pathname = '/login';

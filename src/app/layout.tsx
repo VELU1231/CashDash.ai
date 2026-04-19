@@ -43,7 +43,6 @@ export const metadata: Metadata = {
     title: 'CashDash.ai',
     description: 'AI-powered personal finance tracker',
   },
-  manifest: '/manifest.json',
   icons: { icon: '/favicon.ico', apple: '/apple-touch-icon.png' },
 };
 
