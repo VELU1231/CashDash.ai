@@ -26,7 +26,7 @@ export async function GET(request: NextRequest) {
       .select(`
         *,
         category:categories(id, name, icon, color, type),
-        account:accounts(id, name, icon, color, currency)
+        account:accounts!account_id(id, name, icon, color, currency)
       `, { count: 'exact' })
       .eq('user_id', user.id)
       .order('transaction_date', { ascending: false })
@@ -99,7 +99,7 @@ export async function POST(request: NextRequest) {
         transaction_date: transaction_date || new Date().toISOString(),
         is_ai_created: false,
       })
-      .select('*, category:categories(*), account:accounts(*)')
+      .select('*, category:categories(*), account:accounts!account_id(*)')
       .single();
 
     if (error) throw error;
