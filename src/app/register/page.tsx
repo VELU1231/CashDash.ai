@@ -13,7 +13,7 @@ export default function RegisterPage() {
   const [formData, setFormData] = useState({ name: '', email: '', password: '', confirm: '' });
   const [showPass, setShowPass] = useState(false);
   const [loading, setLoading] = useState(false);
-  const supabase = createClient();
+
 
   const update = (field: string, value: string) =>
     setFormData(prev => ({ ...prev, [field]: value }));
@@ -30,6 +30,7 @@ export default function RegisterPage() {
     }
     setLoading(true);
     try {
+      const supabase = createClient();
       const { data, error } = await supabase.auth.signUp({
         email: formData.email,
         password: formData.password,

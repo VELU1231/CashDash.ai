@@ -10,7 +10,7 @@ export default function PricingPage() {
 
   const handleUpgrade = async (planId: string, variantId?: string) => {
     if (!variantId) {
-      window.location.href = '/signup';
+      window.location.href = '/register';
       return;
     }
     setLoading(planId);
