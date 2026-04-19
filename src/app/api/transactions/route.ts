@@ -1,11 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { ensureUserData, ensureDefaultAccount } from '@/lib/ensure-user-data';
 
 export async function GET(request: NextRequest) {
   try {
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+
+    await ensureUserData(supabase, user);
 
     const { searchParams } = new URL(request.url);
     const page = parseInt(searchParams.get('page') || '1');
@@ -59,6 +62,8 @@ export async function POST(request: NextRequest) {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
+    await ensureUserData(supabase, user);
+
     const body = await request.json();
     const { 
       type, amount, currency, description, note, 
@@ -66,7 +71,14 @@ export async function POST(request: NextRequest) {
       attachment_path, attachment_name, attachment_size, attachment_type 
     } = body;
 
-    if (!type || !amount || !account_id) {
+    // If no account_id provided, use the default account
+    let resolvedAccountId = account_id;
+    if (!resolvedAccountId) {
+      const defaultAccount = await ensureDefaultAccount(supabase, user.id);
+      resolvedAccountId = defaultAccount?.id;
+    }
+
+    if (!type || !amount || !resolvedAccountId) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
     }
 
@@ -78,11 +90,11 @@ export async function POST(request: NextRequest) {
         user_id: user.id,
         type,
         amount: amountCents,
-        currency: currency || 'USD',
+        currency: currency || 'PHP',
         description: description || null,
         note: note || null,
         category_id: category_id || null,
-        account_id,
+        account_id: resolvedAccountId,
         dest_account_id: dest_account_id || null,
         transaction_date: transaction_date || new Date().toISOString(),
         is_ai_created: false,
@@ -97,7 +109,7 @@ export async function POST(request: NextRequest) {
     if (balanceChange !== 0) {
       try {
         await supabase.rpc('adjust_account_balance', {
-          p_account_id: account_id,
+          p_account_id: resolvedAccountId,
           p_delta: balanceChange,
         });
       } catch { /* non-blocking */ }

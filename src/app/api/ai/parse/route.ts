@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { parseFinancialText } from '@/lib/ai-parser';
+import { ensureUserData } from '@/lib/ensure-user-data';
 import type { TransactionType } from '@/types';
 
 export async function POST(request: NextRequest) {
@@ -8,6 +9,8 @@ export async function POST(request: NextRequest) {
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+
+    await ensureUserData(supabase, user);
 
     const { message, currency = 'USD', parseOnly = false } = await request.json();
     if (!message?.trim()) {

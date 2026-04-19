@@ -1,11 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { ensureUserData, ensureDefaultAccount } from '@/lib/ensure-user-data';
 
 export async function POST(request: NextRequest) {
   try {
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+
+    // Ensure profile + account exist before any inserts
+    await ensureUserData(supabase, user);
 
     const { transactions } = await request.json();
 
@@ -17,39 +21,9 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Max 20 transactions per batch' }, { status: 400 });
     }
 
-    // Get user's default account — use maybeSingle to avoid crash
-    let defaultAccount = await supabase
-      .from('accounts')
-      .select('id, currency')
-      .eq('user_id', user.id)
-      .eq('is_hidden', false)
-      .order('display_order')
-      .limit(1)
-      .maybeSingle()
-      .then(r => r.data);
-
-    // Self-healing: create a default account if none exists
+    const defaultAccount = await ensureDefaultAccount(supabase, user.id);
     if (!defaultAccount) {
-      const { data: newAccount } = await supabase
-        .from('accounts')
-        .insert({
-          user_id: user.id,
-          name: 'Cash',
-          type: 'cash',
-          currency: 'PHP',
-          balance: 0,
-          initial_balance: 0,
-          icon: '💵',
-          color: '#10b981',
-          display_order: 0,
-        })
-        .select('id, currency')
-        .single();
-
-      if (!newAccount) {
-        return NextResponse.json({ error: 'Failed to create default account. Please create an account first.' }, { status: 400 });
-      }
-      defaultAccount = newAccount;
+      return NextResponse.json({ error: 'Failed to find or create default account' }, { status: 400 });
     }
 
     const created = [];
@@ -90,7 +64,6 @@ export async function POST(request: NextRequest) {
         }
       }
 
-      // Insert transaction
       const { data: newTx, error } = await supabase
         .from('transactions')
         .insert({
@@ -114,7 +87,7 @@ export async function POST(request: NextRequest) {
       }
       if (newTx) created.push(newTx);
 
-      // Update account balance (non-blocking)
+      // Update account balance
       const balanceChange = (tx.type || 'expense') === 'income' ? amountCents : -amountCents;
       try {
         await supabase.rpc('adjust_account_balance', {
