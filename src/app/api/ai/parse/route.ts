@@ -19,7 +19,7 @@ export async function POST(request: NextRequest) {
       .from('profiles')
       .select('default_currency, ai_enabled')
       .eq('id', user.id)
-      .single();
+      .maybeSingle();
 
     const defaultCurrency = profile?.default_currency || currency;
 

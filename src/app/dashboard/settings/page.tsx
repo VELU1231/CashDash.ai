@@ -71,19 +71,31 @@ export default function SettingsPage() {
   const saveProfile = async () => {
     setLoading(true);
     try {
+      // Only send fields that exist in the database profiles table
+      const payload: Record<string, unknown> = {
+        display_name: profile.display_name,
+        default_currency: profile.default_currency,
+        timezone: profile.timezone,
+        locale: profile.locale,
+        date_format: profile.date_format,
+        first_day_of_week: profile.first_day_of_week,
+        ai_enabled: profile.ai_enabled,
+        ai_auto_categorize: profile.ai_auto_categorize,
+        ai_suggestions: profile.ai_suggestions,
+        monthly_budget: profile.monthly_budget ? Math.round(parseFloat(profile.monthly_budget) * 100) : null,
+        weekly_budget: profile.weekly_budget ? Math.round(parseFloat(profile.weekly_budget) * 100) : null,
+      };
+
       const res = await fetch('/api/profile', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          ...profile,
-          monthly_budget: profile.monthly_budget ? Math.round(parseFloat(profile.monthly_budget) * 100) : null,
-          weekly_budget: profile.weekly_budget ? Math.round(parseFloat(profile.weekly_budget) * 100) : null,
-        }),
+        body: JSON.stringify(payload),
       });
       if (res.ok) {
         toast.success('Settings saved!');
       } else {
-        toast.error('Failed to save settings');
+        const errData = await res.json().catch(() => ({}));
+        toast.error(errData.error || 'Failed to save settings');
       }
     } catch {
       toast.error('Failed to save');

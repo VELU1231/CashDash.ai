@@ -17,24 +17,44 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Max 20 transactions per batch' }, { status: 400 });
     }
 
-    // Get user's default account
-    const { data: defaultAccount } = await supabase
+    // Get user's default account — use maybeSingle to avoid crash
+    let defaultAccount = await supabase
       .from('accounts')
       .select('id, currency')
       .eq('user_id', user.id)
       .eq('is_hidden', false)
       .order('display_order')
       .limit(1)
-      .single();
+      .maybeSingle()
+      .then(r => r.data);
 
+    // Self-healing: create a default account if none exists
     if (!defaultAccount) {
-      return NextResponse.json({ error: 'No account found. Please create an account first.' }, { status: 400 });
+      const { data: newAccount } = await supabase
+        .from('accounts')
+        .insert({
+          user_id: user.id,
+          name: 'Cash',
+          type: 'cash',
+          currency: 'PHP',
+          balance: 0,
+          initial_balance: 0,
+          icon: '💵',
+          color: '#10b981',
+          display_order: 0,
+        })
+        .select('id, currency')
+        .single();
+
+      if (!newAccount) {
+        return NextResponse.json({ error: 'Failed to create default account. Please create an account first.' }, { status: 400 });
+      }
+      defaultAccount = newAccount;
     }
 
     const created = [];
 
     for (const tx of transactions) {
-      // Validate each transaction
       if (!tx.amount || !tx.description) continue;
 
       const amountCents = Math.round(Math.abs(parseFloat(tx.amount)) * 100);
@@ -79,7 +99,7 @@ export async function POST(request: NextRequest) {
           category_id: categoryId,
           account_id: tx.account_id || defaultAccount.id,
           amount: amountCents,
-          currency: tx.currency || defaultAccount.currency || 'USD',
+          currency: tx.currency || defaultAccount.currency || 'PHP',
           description: tx.description,
           transaction_date: tx.transaction_date || new Date().toISOString(),
           is_ai_created: true,
