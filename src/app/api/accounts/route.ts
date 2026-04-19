@@ -8,7 +8,7 @@ export async function GET() {
 
   const { data, error } = await supabase
     .from('accounts')
-    .select('*, subaccounts:accounts(*)')
+    .select('*, subaccounts:accounts!parent_id(*)')
     .eq('user_id', user.id)
     .is('parent_id', null)
     .order('display_order');

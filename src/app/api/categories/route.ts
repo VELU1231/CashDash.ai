@@ -8,7 +8,7 @@ export async function GET() {
 
   const { data, error } = await supabase
     .from('categories')
-    .select('*, subcategories:categories(id,name,icon,color)')
+    .select('*, subcategories:categories!parent_id(id,name,icon,color,type)')
     .eq('user_id', user.id)
     .is('parent_id', null)
     .order('type').order('display_order');

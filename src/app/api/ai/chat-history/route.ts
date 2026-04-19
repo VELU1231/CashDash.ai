@@ -25,7 +25,7 @@ export async function GET() {
 
   // Fetch past messages for Pro users
   const { data: messages, error } = await supabase
-    .from('chat_messages')
+    .from('ai_chat_messages')
     .select('*')
     .eq('user_id', user.id)
     .order('created_at', { ascending: true })
@@ -66,7 +66,7 @@ export async function POST(req: Request) {
     const { role, content, parsed_transactions, created_transactions } = body;
 
     const { error } = await supabase
-      .from('chat_messages')
+      .from('ai_chat_messages')
       .insert({
         user_id: user.id,
         role,
