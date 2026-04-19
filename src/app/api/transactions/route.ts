@@ -64,12 +64,49 @@ export async function POST(request: NextRequest) {
 
     await ensureUserData(supabase, user);
 
-    const body = await request.json();
+    let body: Record<string, unknown>;
+    try {
+      body = await request.json();
+    } catch {
+      return NextResponse.json({ error: 'Invalid or empty request body' }, { status: 400 });
+    }
+
     const { 
       type, amount, currency, description, note, 
       category_id, account_id, dest_account_id, transaction_date, tag_ids,
       attachment_path, attachment_name, attachment_size, attachment_type 
-    } = body;
+    } = body as {
+      type?: string;
+      amount?: unknown;
+      currency?: string;
+      description?: string;
+      note?: string;
+      category_id?: string;
+      account_id?: string;
+      dest_account_id?: string;
+      transaction_date?: string;
+      tag_ids?: string[];
+      attachment_path?: string;
+      attachment_name?: string;
+      attachment_size?: number;
+      attachment_type?: string;
+    };
+
+    const VALID_TYPES = ['income', 'expense', 'transfer'] as const;
+    if (!type || !VALID_TYPES.includes(type as typeof VALID_TYPES[number])) {
+      return NextResponse.json(
+        { error: `Missing or invalid type. Must be one of: ${VALID_TYPES.join(', ')}` },
+        { status: 400 }
+      );
+    }
+
+    const parsedAmount = typeof amount === 'number' ? amount : parseFloat(String(amount ?? ''));
+    if (amount === undefined || amount === null || isNaN(parsedAmount) || parsedAmount <= 0) {
+      return NextResponse.json(
+        { error: 'Missing or invalid amount. Must be a positive number' },
+        { status: 400 }
+      );
+    }
 
     // If no account_id provided, use the default account
     let resolvedAccountId = account_id;
@@ -78,11 +115,11 @@ export async function POST(request: NextRequest) {
       resolvedAccountId = defaultAccount?.id;
     }
 
-    if (!type || !amount || !resolvedAccountId) {
-      return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
+    if (!resolvedAccountId) {
+      return NextResponse.json({ error: 'No account found. Please create an account first' }, { status: 400 });
     }
 
-    const amountCents = Math.round(parseFloat(amount) * 100);
+    const amountCents = Math.round(parsedAmount * 100);
 
     const { data: tx, error } = await supabase
       .from('transactions')
@@ -116,7 +153,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Add tags if provided
-    if (tag_ids?.length > 0) {
+    if (tag_ids && tag_ids.length > 0) {
       await supabase.from('transaction_tags').insert(
         tag_ids.map((tid: string) => ({ transaction_id: tx.id, tag_id: tid }))
       );
