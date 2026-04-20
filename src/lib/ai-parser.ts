@@ -67,8 +67,11 @@ function getModel(config: LLMConfig) {
 
   // ─── Ollama (local or cloud via OpenAI-compatible API) ──────────────
   if (provider === 'ollama') {
-    const baseURL = config.baseUrl || process.env.AI_BASE_URL || 'https://ollama.com/v1';
-    const ollamaURL = baseURL.endsWith('/v1') ? baseURL : baseURL + '/v1';
+    const rawURL = (config.baseUrl || process.env.AI_BASE_URL || 'https://ollama.com/v1')
+      .replace(/\/api$/, '/v1')   // auto-fix legacy wrong URL
+      .replace(/\/+$/, '');       // strip trailing slashes
+    // Ensure URL ends with /v1 exactly once
+    const ollamaURL = rawURL.endsWith('/v1') ? rawURL : rawURL + '/v1';
     const ollama = createOpenAI({
       apiKey: process.env.OLLAMA_API_KEY || 'ollama',
       baseURL: ollamaURL,

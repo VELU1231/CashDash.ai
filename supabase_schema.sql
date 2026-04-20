@@ -423,8 +423,163 @@ CREATE TRIGGER on_auth_user_created
 --   ON storage.objects FOR DELETE
 --   USING (bucket_id = 'attachments' AND auth.uid()::text = (storage.foldername(name))[1]);
 
+-- ═══════════════════════════════════════════════════════════════════════════════
+-- FIREFLY III-INSPIRED FEATURES (Budgets, Piggy Banks, Bills, Rules)
+-- ═══════════════════════════════════════════════════════════════════════════════
+
+-- ─── 13. BUDGETS ─────────────────────────────────────────────────────────────
+-- Monthly spending limits per category with progress tracking
+
+DROP TABLE IF EXISTS budget_periods CASCADE;
+DROP TABLE IF EXISTS budgets CASCADE;
+
+CREATE TABLE budgets (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
+  name TEXT NOT NULL,
+  category_id UUID REFERENCES categories(id) ON DELETE SET NULL,
+  amount BIGINT NOT NULL DEFAULT 0,          -- limit in cents
+  currency TEXT NOT NULL DEFAULT 'USD',
+  period TEXT NOT NULL DEFAULT 'monthly' CHECK (period IN ('weekly','monthly','quarterly','yearly')),
+  icon TEXT NOT NULL DEFAULT '📊',
+  color TEXT NOT NULL DEFAULT '#3b82f6',
+  is_active BOOLEAN NOT NULL DEFAULT true,
+  start_date DATE,
+  end_date DATE,
+  notes TEXT,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE INDEX idx_budgets_user ON budgets(user_id);
+
+ALTER TABLE budgets ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Users can view own budgets"
+  ON budgets FOR SELECT USING (auth.uid() = user_id);
+CREATE POLICY "Users can insert own budgets"
+  ON budgets FOR INSERT WITH CHECK (auth.uid() = user_id);
+CREATE POLICY "Users can update own budgets"
+  ON budgets FOR UPDATE USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
+CREATE POLICY "Users can delete own budgets"
+  ON budgets FOR DELETE USING (auth.uid() = user_id);
+
+-- ─── 14. PIGGY BANKS (Savings Goals) ─────────────────────────────────────────
+
+DROP TABLE IF EXISTS piggy_banks CASCADE;
+
+CREATE TABLE piggy_banks (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
+  account_id UUID REFERENCES accounts(id) ON DELETE SET NULL,
+  name TEXT NOT NULL,
+  target_amount BIGINT NOT NULL DEFAULT 0,    -- goal in cents
+  current_amount BIGINT NOT NULL DEFAULT 0,   -- saved so far in cents
+  currency TEXT NOT NULL DEFAULT 'USD',
+  icon TEXT NOT NULL DEFAULT '🐷',
+  color TEXT NOT NULL DEFAULT '#ec4899',
+  target_date DATE,
+  is_completed BOOLEAN NOT NULL DEFAULT false,
+  notes TEXT,
+  display_order INT NOT NULL DEFAULT 0,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE INDEX idx_piggy_banks_user ON piggy_banks(user_id);
+
+ALTER TABLE piggy_banks ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Users can view own piggy_banks"
+  ON piggy_banks FOR SELECT USING (auth.uid() = user_id);
+CREATE POLICY "Users can insert own piggy_banks"
+  ON piggy_banks FOR INSERT WITH CHECK (auth.uid() = user_id);
+CREATE POLICY "Users can update own piggy_banks"
+  ON piggy_banks FOR UPDATE USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
+CREATE POLICY "Users can delete own piggy_banks"
+  ON piggy_banks FOR DELETE USING (auth.uid() = user_id);
+
+-- ─── 15. BILLS (Recurring Bill Tracker) ──────────────────────────────────────
+
+DROP TABLE IF EXISTS bills CASCADE;
+
+CREATE TABLE bills (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
+  name TEXT NOT NULL,
+  amount_min BIGINT NOT NULL DEFAULT 0,       -- expected min in cents
+  amount_max BIGINT NOT NULL DEFAULT 0,       -- expected max in cents
+  currency TEXT NOT NULL DEFAULT 'USD',
+  category_id UUID REFERENCES categories(id) ON DELETE SET NULL,
+  account_id UUID REFERENCES accounts(id) ON DELETE SET NULL,
+  frequency TEXT NOT NULL DEFAULT 'monthly' CHECK (frequency IN ('weekly','biweekly','monthly','quarterly','yearly')),
+  icon TEXT NOT NULL DEFAULT '📄',
+  color TEXT NOT NULL DEFAULT '#f59e0b',
+  due_day INT,                                 -- day of month (1-31)
+  next_due_date DATE,
+  last_paid_date DATE,
+  is_auto_pay BOOLEAN NOT NULL DEFAULT false,
+  is_active BOOLEAN NOT NULL DEFAULT true,
+  notes TEXT,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE INDEX idx_bills_user ON bills(user_id);
+CREATE INDEX idx_bills_next_due ON bills(user_id, next_due_date);
+
+ALTER TABLE bills ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Users can view own bills"
+  ON bills FOR SELECT USING (auth.uid() = user_id);
+CREATE POLICY "Users can insert own bills"
+  ON bills FOR INSERT WITH CHECK (auth.uid() = user_id);
+CREATE POLICY "Users can update own bills"
+  ON bills FOR UPDATE USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
+CREATE POLICY "Users can delete own bills"
+  ON bills FOR DELETE USING (auth.uid() = user_id);
+
+-- ─── 16. AUTOMATION RULES ────────────────────────────────────────────────────
+-- Auto-categorize transactions based on description patterns
+
+DROP TABLE IF EXISTS automation_rules CASCADE;
+
+CREATE TABLE automation_rules (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
+  name TEXT NOT NULL,
+  is_active BOOLEAN NOT NULL DEFAULT true,
+  trigger_field TEXT NOT NULL DEFAULT 'description' CHECK (trigger_field IN ('description','amount','type')),
+  trigger_operator TEXT NOT NULL DEFAULT 'contains' CHECK (trigger_operator IN ('contains','starts_with','ends_with','equals','greater_than','less_than')),
+  trigger_value TEXT NOT NULL,
+  action_type TEXT NOT NULL DEFAULT 'set_category' CHECK (action_type IN ('set_category','set_tag','set_description','set_account')),
+  action_value TEXT NOT NULL,                  -- category_id, tag_id, etc.
+  priority INT NOT NULL DEFAULT 0,             -- higher = runs first
+  stop_processing BOOLEAN NOT NULL DEFAULT false, -- stop after this rule matches
+  times_applied INT NOT NULL DEFAULT 0,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE INDEX idx_rules_user ON automation_rules(user_id, priority DESC);
+
+ALTER TABLE automation_rules ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Users can view own rules"
+  ON automation_rules FOR SELECT USING (auth.uid() = user_id);
+CREATE POLICY "Users can insert own rules"
+  ON automation_rules FOR INSERT WITH CHECK (auth.uid() = user_id);
+CREATE POLICY "Users can update own rules"
+  ON automation_rules FOR UPDATE USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
+CREATE POLICY "Users can delete own rules"
+  ON automation_rules FOR DELETE USING (auth.uid() = user_id);
+
 -- ════════════════════════════════════════════════════════════════════════════════
 -- DONE! All tables created with RLS policies.
+-- Tables: profiles, accounts, categories, transactions, transaction_templates,
+--         tag_groups, tags, transaction_tags, transaction_attachments,
+--         ai_chat_messages, exchange_rates, budgets, piggy_banks, bills,
+--         automation_rules
 -- New users get: profile (tier=free) + Cash account + 19 categories
 -- ════════════════════════════════════════════════════════════════════════════════
 

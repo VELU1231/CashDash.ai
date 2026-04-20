@@ -36,7 +36,7 @@ function getProvider() {
   });
 }
 
-const model = process.env.AI_MODEL || 'gemma3:4b';
+const model = process.env.AI_MODEL || 'gemma4:31b-cloud';
 
 export async function POST(req: NextRequest) {
   try {
