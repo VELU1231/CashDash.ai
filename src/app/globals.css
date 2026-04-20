@@ -26,7 +26,7 @@
     --secondary-foreground: 22 33% 14%;
 
     --muted: 38 20% 86%;
-    --muted-foreground: 25 14% 46%;
+    --muted-foreground: 25 14% 38%;
 
     --accent: 28 30% 54%;            /* #B8845A — warm tan */
     --accent-foreground: 0 0% 100%;
@@ -70,7 +70,7 @@
     --secondary-foreground: 34 26% 83%;
 
     --muted: 25 10% 14%;
-    --muted-foreground: 30 12% 52%;
+    --muted-foreground: 30 12% 58%;
 
     --accent: 32 32% 64%;            /* #C9A87C — dusty gold */
     --accent-foreground: 22 33% 7%;
