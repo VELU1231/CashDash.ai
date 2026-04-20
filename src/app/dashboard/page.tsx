@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server';
 import { redirect } from 'next/navigation';
 import { DashboardClient } from './dashboard-client';
+import { ensureUserData } from '@/lib/ensure-user-data';
 import { format, startOfMonth, endOfMonth, subMonths } from 'date-fns';
 import { aiAssistantFlag, dailyChartFlag, aiInsightsFlag } from '@/flags';
 import type { Metadata } from 'next';
@@ -11,6 +12,9 @@ export default async function DashboardPage() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect('/login');
+
+  // Ensure user data is created so defaults (like currency) are ready
+  const profile = await ensureUserData(supabase, user);
 
   // Evaluate feature flags server-side
   const [showAI, showDailyChart, showInsights] = await Promise.all([
@@ -31,7 +35,7 @@ export default async function DashboardPage() {
     .select('*, category:categories(id,name,icon,color,type), account:accounts(id,name,icon,color,currency)')
     .eq('user_id', user.id)
     .gte('transaction_date', monthStart)
-    .lte('transaction_date', monthEnd)
+    .lte('transaction_date', `${monthEnd}T23:59:59`)
     .order('transaction_date', { ascending: false });
 
   // Last month transactions for comparison
@@ -40,7 +44,7 @@ export default async function DashboardPage() {
     .select('type, amount')
     .eq('user_id', user.id)
     .gte('transaction_date', prevMonthStart)
-    .lte('transaction_date', prevMonthEnd);
+    .lte('transaction_date', `${prevMonthEnd}T23:59:59`);
 
   // Accounts with balances
   const { data: accounts } = await supabase
@@ -59,12 +63,7 @@ export default async function DashboardPage() {
     .gte('transaction_date', sixMonthsAgo)
     .order('transaction_date');
 
-  // Profile
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('*')
-    .eq('id', user.id)
-    .maybeSingle();
+  // Profile already loaded by ensureUserData
 
   return (
     <DashboardClient

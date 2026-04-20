@@ -206,6 +206,10 @@ export default function AIAssistantPage() {
       toast.success(`${data.count} transaction${data.count !== 1 ? 's' : ''} saved!`);
       setPendingTxs([]);
       setPendingMsgId(null);
+      // Signal dashboard to refresh its data
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('dashboardRefresh', { detail: { count: data.count } }));
+      }
     } catch {
       toast.error('Failed to save transactions');
     } finally {

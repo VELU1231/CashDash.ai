@@ -29,7 +29,9 @@ export async function POST(request: NextRequest) {
     const created = [];
 
     for (const tx of transactions) {
-      if (!tx.amount || !tx.description) continue;
+      if (!tx.amount) continue;
+      // Fall back to category name or generic label if description is empty
+      if (!tx.description) tx.description = tx.category_name || 'Transaction';
 
       const amountCents = Math.round(Math.abs(parseFloat(tx.amount)) * 100);
       if (isNaN(amountCents) || amountCents <= 0) continue;
@@ -94,7 +96,17 @@ export async function POST(request: NextRequest) {
           p_account_id: tx.account_id || defaultAccount.id,
           p_delta: balanceChange,
         });
-      } catch { /* non-blocking */ }
+      } catch (rpcErr) {
+        console.error('[bulk adjust_account_balance] RPC failed, using direct fallback:', rpcErr);
+        const targetAccountId = tx.account_id || defaultAccount.id;
+        const { data: acct } = await supabase
+          .from('accounts').select('balance').eq('id', targetAccountId).single();
+        if (acct) {
+          await supabase.from('accounts')
+            .update({ balance: (acct.balance || 0) + balanceChange })
+            .eq('id', targetAccountId);
+        }
+      }
     }
 
     return NextResponse.json({

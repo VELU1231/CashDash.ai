@@ -1,26 +1,26 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import dynamic from 'next/dynamic';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
   TrendUp, TrendDown, ChartBar, ChartPieSlice,
-  Target, Brain, Sparkle
+  Target, Brain, Sparkle, Funnel, X, CalendarBlank,
+  ArrowUp, ArrowDown, Equals
 } from '@phosphor-icons/react';
-import { formatCurrency, getChartColor } from '@/lib/utils';
-import { format, subMonths } from 'date-fns';
+import { formatCurrency } from '@/lib/utils';
+import { format, subDays } from 'date-fns';
 
-// Lazy-load Chart.js components
 const AreaChartCard = dynamic(() => import('@/components/ui/chartjs-components').then(m => ({ default: m.AreaChartCard })), { ssr: false });
 const BarChartCard = dynamic(() => import('@/components/ui/chartjs-components').then(m => ({ default: m.BarChartCard })), { ssr: false });
 const DoughnutChartCard = dynamic(() => import('@/components/ui/chartjs-components').then(m => ({ default: m.DoughnutChartCard })), { ssr: false });
 
 const PERIODS = [
-  { label: '7 days', value: '7d' },
-  { label: '1 month', value: '1m' },
-  { label: '3 months', value: '3m' },
-  { label: '6 months', value: '6m' },
-  { label: '1 year', value: '1y' },
+  { label: '7 Days', value: '7d' },
+  { label: '1 Month', value: '1m' },
+  { label: '3 Months', value: '3m' },
+  { label: '6 Months', value: '6m' },
+  { label: '1 Year', value: '1y' },
 ];
 
 const CHART_PALETTE = [
@@ -28,67 +28,185 @@ const CHART_PALETTE = [
   '#f59e0b', '#ef4444', '#06b6d4', '#ec4899',
 ];
 
+interface AnalyticsData {
+  monthly: { month: string; label: string; income: number; expenses: number; net: number }[];
+  daily: { date: string; label: string; income: number; expenses: number }[];
+  categories: { name: string; icon: string; color: string; total: number; percentage: number; count: number }[];
+}
+
+interface HealthScores {
+  savingsRate: { score: number; desc: string };
+  spendingControl: { score: number; desc: string };
+  incomeStability: { score: number; desc: string };
+}
+
+interface Summary {
+  totalIncome: number;
+  totalExpenses: number;
+  savingsRate: number;
+  transactionCount: number;
+}
+
 export default function AnalyticsPage() {
   const [period, setPeriod] = useState('1m');
-  const [data, setData] = useState<Record<string, unknown>>({});
+  const [data, setData] = useState<AnalyticsData>({ monthly: [], daily: [], categories: [] });
+  const [summary, setSummary] = useState<Summary>({ totalIncome: 0, totalExpenses: 0, savingsRate: 0, transactionCount: 0 });
+  const [healthScores, setHealthScores] = useState<HealthScores | null>(null);
   const [loading, setLoading] = useState(true);
   const [insight, setInsight] = useState('');
+  const [currency, setCurrency] = useState('PHP');
+  const [dateRange, setDateRange] = useState({ start: '', end: '' });
 
-  useEffect(() => { fetchAnalytics(); }, [period]);
+  // Widget visibility toggles
+  const [showIncomeTrend, setShowIncomeTrend] = useState(true);
+  const [showNetFlow, setShowNetFlow] = useState(true);
+  const [showCategories, setShowCategories] = useState(true);
+  const [showHealth, setShowHealth] = useState(true);
+  const [showFiltersPanel, setShowFiltersPanel] = useState(false);
 
-  const fetchAnalytics = async () => {
+  // Filters
+  const [categories, setCategories] = useState<{ id: string; name: string; icon: string }[]>([]);
+  const [accounts, setAccounts] = useState<{ id: string; name: string }[]>([]);
+  const [filterCategory, setFilterCategory] = useState('');
+  const [filterAccount, setFilterAccount] = useState('');
+
+  useEffect(() => {
+    // Load filter options
+    Promise.all([
+      fetch('/api/categories').then(r => r.json()),
+      fetch('/api/accounts').then(r => r.json()),
+    ]).then(([catRes, accRes]) => {
+      setCategories(catRes.data || []);
+      setAccounts(accRes.data || []);
+    }).catch(() => {});
+  }, []);
+
+  const fetchAnalytics = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await fetch(`/api/analytics?period=${period}`);
+      const params = new URLSearchParams({ period });
+      if (filterCategory) params.set('category_id', filterCategory);
+      if (filterAccount) params.set('account_id', filterAccount);
+
+      const res = await fetch(`/api/analytics?${params}`);
       const json = await res.json();
-      setData(json.data || {});
+      setData(json.data || { monthly: [], daily: [], categories: [] });
+      setSummary(json.summary || { totalIncome: 0, totalExpenses: 0, savingsRate: 0, transactionCount: 0 });
+      setHealthScores(json.healthScores || null);
       setInsight(json.insight || '');
+      setCurrency(json.currency || 'PHP');
+      setDateRange(json.date_range || { start: '', end: '' });
     } catch {
-      setData(getMockData());
+      setData({ monthly: [], daily: [], categories: [] });
     } finally {
       setLoading(false);
     }
-  };
+  }, [period, filterCategory, filterAccount]);
 
-  const getMockData = () => {
-    const months = Array.from({ length: 6 }, (_, i) => {
-      const d = subMonths(new Date(), 5 - i);
-      return {
-        month: format(d, 'yyyy-MM'),
-        label: format(d, 'MMM'),
-        income: Math.floor(Math.random() * 50000 + 40000) * 100,
-        expenses: Math.floor(Math.random() * 30000 + 20000) * 100,
-      };
-    });
-    return { monthly: months, categories: [], daily: [] };
-  };
+  useEffect(() => { fetchAnalytics(); }, [fetchAnalytics]);
 
-  const monthly = (data.monthly as { label: string; income: number; expenses: number; month: string }[]) || [];
-  const categories = (data.categories as { name: string; icon: string; color: string; total: number; percentage: number }[]) || [];
+  const fmtCompact = (v: number) => formatCurrency(v, currency, { compact: true });
+  const fmtFull = (v: number) => formatCurrency(v, currency);
 
-  const fmtCompact = (v: number) => formatCurrency(v, 'USD', { compact: true });
-  const fmtFull = (v: number) => formatCurrency(v, 'USD');
+  const chartData = period === '7d' ? data.daily : data.monthly;
+  const hasActiveFilters = filterCategory || filterAccount;
 
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center gap-4 justify-between">
         <div>
           <h1 className="text-2xl font-serif font-bold">Analytics</h1>
-          <p className="text-sm text-muted-foreground font-mono mt-0.5">Your financial insights at a glance</p>
+          <p className="text-sm text-muted-foreground font-mono mt-0.5">
+            {dateRange.start && dateRange.end
+              ? `${format(new Date(dateRange.start), 'MMM d')} – ${format(new Date(dateRange.end), 'MMM d, yyyy')}`
+              : 'Your financial insights'}
+            {summary.transactionCount > 0 && ` · ${summary.transactionCount} transactions`}
+          </p>
         </div>
-        <div className="flex items-center gap-1 p-1 rounded-xl border border-input bg-background/50 backdrop-blur-sm">
-          {PERIODS.map(p => (
-            <button key={p.value} onClick={() => setPeriod(p.value)}
-              className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all duration-200 ${
-                period === p.value
-                  ? 'bg-primary text-primary-foreground shadow-sm'
-                  : 'text-muted-foreground hover:text-foreground hover:bg-foreground/[0.04]'
-              }`}>
-              {p.label}
-            </button>
-          ))}
+        <div className="flex items-center gap-2 flex-wrap">
+          {/* Period Tabs */}
+          <div className="flex items-center gap-1 p-1 rounded-xl border border-input bg-background/50 backdrop-blur-sm">
+            {PERIODS.map(p => (
+              <button key={p.value} onClick={() => setPeriod(p.value)}
+                className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all duration-200 ${
+                  period === p.value
+                    ? 'bg-primary text-primary-foreground shadow-sm'
+                    : 'text-muted-foreground hover:text-foreground hover:bg-foreground/[0.04]'
+                }`}>
+                {p.label}
+              </button>
+            ))}
+          </div>
+          {/* Filter button */}
+          <motion.button
+            onClick={() => setShowFiltersPanel(!showFiltersPanel)}
+            className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-medium border transition-all ${
+              hasActiveFilters || showFiltersPanel
+                ? 'border-primary/30 bg-primary/5 text-primary'
+                : 'border-input text-muted-foreground hover:text-foreground'
+            }`}
+            whileTap={{ scale: 0.97 }}
+          >
+            <Funnel className="w-3.5 h-3.5" weight={hasActiveFilters ? 'fill' : 'light'} />
+            Filters {hasActiveFilters ? '●' : ''}
+          </motion.button>
         </div>
+      </div>
+
+      {/* Filters Panel */}
+      <AnimatePresence>
+        {showFiltersPanel && (
+          <motion.div
+            className="glass-card p-4 grid grid-cols-2 sm:grid-cols-4 gap-3"
+            initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }}
+          >
+            <div>
+              <label className="text-xs font-medium text-muted-foreground mb-1.5 block">Category</label>
+              <select value={filterCategory} onChange={e => setFilterCategory(e.target.value)}
+                className="w-full px-2.5 py-2 rounded-xl text-xs focus:outline-none border border-input bg-background">
+                <option value="">All Categories</option>
+                {categories.map(c => <option key={c.id} value={c.id}>{c.icon} {c.name}</option>)}
+              </select>
+            </div>
+            <div>
+              <label className="text-xs font-medium text-muted-foreground mb-1.5 block">Account</label>
+              <select value={filterAccount} onChange={e => setFilterAccount(e.target.value)}
+                className="w-full px-2.5 py-2 rounded-xl text-xs focus:outline-none border border-input bg-background">
+                <option value="">All Accounts</option>
+                {accounts.map(a => <option key={a.id} value={a.id}>{a.name}</option>)}
+              </select>
+            </div>
+            <div className="flex items-end col-span-2 sm:col-span-2 gap-2">
+              <button onClick={() => { setFilterCategory(''); setFilterAccount(''); }}
+                className="flex-1 px-3 py-2 rounded-xl text-xs text-muted-foreground hover:text-foreground border border-input transition-all">
+                Clear filters
+              </button>
+              <button onClick={() => setShowFiltersPanel(false)}
+                className="px-3 py-2 rounded-xl text-xs border border-input hover:bg-muted transition-all">
+                <X className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Widget Toggle Bar */}
+      <div className="flex flex-wrap items-center gap-2 text-xs">
+        <span className="text-muted-foreground font-medium">Toggle:</span>
+        {[
+          { label: 'Trend Chart', val: showIncomeTrend, set: setShowIncomeTrend },
+          { label: 'Net Flow', val: showNetFlow, set: setShowNetFlow },
+          { label: 'Categories', val: showCategories, set: setShowCategories },
+          { label: 'Health Score', val: showHealth, set: setShowHealth },
+        ].map(w => (
+          <button key={w.label} onClick={() => w.set(!w.val)}
+            className={`px-2.5 py-1 rounded-lg border transition-all font-medium ${
+              w.val ? 'border-primary/30 bg-primary/5 text-primary' : 'border-input text-muted-foreground'
+            }`}>
+            {w.val ? '✓ ' : ''}{w.label}
+          </button>
+        ))}
       </div>
 
       {/* AI Insight */}
@@ -102,172 +220,208 @@ export default function AnalyticsPage() {
       )}
 
       {/* Summary Stats */}
-      {monthly.length > 0 && (
+      {!loading && (
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          {(() => {
-            const totalIncome = monthly.reduce((s, m) => s + m.income, 0);
-            const totalExpenses = monthly.reduce((s, m) => s + m.expenses, 0);
-            const avgMonthly = totalExpenses / Math.max(monthly.length, 1);
-            const savingsRate = totalIncome > 0 ? ((totalIncome - totalExpenses) / totalIncome * 100) : 0;
-            return [
-              { label: 'Total Income', value: fmtFull(totalIncome), icon: TrendUp, color: '#10b981', bg: 'rgba(16,185,129,0.08)' },
-              { label: 'Total Expenses', value: fmtFull(totalExpenses), icon: TrendDown, color: '#ef4444', bg: 'rgba(239,68,68,0.08)' },
-              { label: 'Avg Monthly Spend', value: fmtFull(avgMonthly), icon: ChartBar, color: '#3b82f6', bg: 'rgba(59,130,246,0.08)' },
-              { label: 'Savings Rate', value: `${Math.max(0, savingsRate).toFixed(1)}%`, icon: Target, color: '#a855f7', bg: 'rgba(168,85,247,0.08)' },
-            ].map((stat) => {
-              const Icon = stat.icon;
-              return (
-                <motion.div key={stat.label} className="stat-card" initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }}>
-                  <div className="p-2.5 rounded-xl inline-flex mb-3" style={{ background: stat.bg }}>
-                    <Icon className="w-4 h-4" style={{ color: stat.color }} />
-                  </div>
-                  <div className="text-xl font-serif font-bold editorial-number">{stat.value}</div>
-                  <div className="text-xs text-muted-foreground mt-0.5">{stat.label}</div>
-                </motion.div>
-              );
-            });
-          })()}
+          {[
+            {
+              label: 'Total Income', value: fmtFull(summary.totalIncome), icon: TrendUp,
+              color: '#10b981', bg: 'rgba(16,185,129,0.08)',
+              sub: `${summary.transactionCount} transactions`
+            },
+            {
+              label: 'Total Expenses', value: fmtFull(summary.totalExpenses), icon: TrendDown,
+              color: '#ef4444', bg: 'rgba(239,68,68,0.08)',
+              sub: data.categories[0] ? `Top: ${data.categories[0].name}` : 'No expenses'
+            },
+            {
+              label: 'Net Savings', value: fmtFull(summary.totalIncome - summary.totalExpenses), icon: Equals,
+              color: summary.totalIncome >= summary.totalExpenses ? '#10b981' : '#ef4444',
+              bg: summary.totalIncome >= summary.totalExpenses ? 'rgba(16,185,129,0.08)' : 'rgba(239,68,68,0.08)',
+              sub: 'Income minus expenses'
+            },
+            {
+              label: 'Savings Rate', value: `${Math.max(0, summary.savingsRate)}%`, icon: Target,
+              color: '#a855f7', bg: 'rgba(168,85,247,0.08)',
+              sub: summary.savingsRate > 20 ? '🎉 Great job!' : summary.savingsRate > 0 ? 'Keep going!' : 'Expenses > Income'
+            },
+          ].map((stat) => {
+            const Icon = stat.icon;
+            return (
+              <motion.div key={stat.label} className="stat-card" initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }}>
+                <div className="p-2.5 rounded-xl inline-flex mb-3" style={{ background: stat.bg }}>
+                  <Icon className="w-4 h-4" style={{ color: stat.color }} />
+                </div>
+                <div className="text-xl font-serif font-bold editorial-number" style={{ color: stat.color === '#10b981' || stat.color === '#a855f7' ? undefined : stat.color }}>{stat.value}</div>
+                <div className="text-xs text-muted-foreground mt-0.5">{stat.label}</div>
+                <div className="text-[11px] text-muted-foreground/60 mt-0.5 font-mono">{stat.sub}</div>
+              </motion.div>
+            );
+          })}
         </div>
       )}
 
       {/* Main Charts Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
 
-        {/* Income vs Expenses Area Chart */}
-        <motion.div className="glass-card p-5 lg:col-span-2"
-          initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
-          <div className="flex items-center justify-between mb-4">
-            <div>
-              <h3 className="font-serif font-semibold">Income vs Expenses</h3>
-              <p className="text-xs text-muted-foreground font-mono mt-0.5">Monthly comparison over time</p>
-            </div>
-            <div className="flex items-center gap-4 text-xs text-muted-foreground">
-              <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-emerald-500" />Income</span>
-              <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-red-400" />Expenses</span>
-            </div>
-          </div>
-          {monthly.length > 0 ? (
-            <AreaChartCard
-              labels={monthly.map(m => m.label)}
-              datasets={[
-                { label: 'Income', data: monthly.map(m => m.income), borderColor: '#10b981', bgFrom: 'rgba(16,185,129,0.18)', bgTo: 'rgba(16,185,129,0)' },
-                { label: 'Expenses', data: monthly.map(m => m.expenses), borderColor: '#f87171', bgFrom: 'rgba(248,113,113,0.15)', bgTo: 'rgba(248,113,113,0)' },
-              ]}
-              formatValue={fmtCompact}
-              height={260}
-            />
-          ) : (
-            <div className="flex flex-col items-center justify-center h-[260px] text-muted-foreground">
-              <ChartBar className="w-10 h-10 opacity-20 mb-2" />
-              <p className="text-sm">No data for this period</p>
-            </div>
-          )}
-        </motion.div>
-
-        {/* Monthly Net Flow Bar Chart */}
-        <motion.div className="glass-card p-5"
-          initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
-          <div className="mb-4">
-            <h3 className="font-serif font-semibold">Monthly Net Flow</h3>
-            <p className="text-xs text-muted-foreground font-mono mt-0.5">Income minus expenses</p>
-          </div>
-          {monthly.length > 0 ? (
-            <BarChartCard
-              labels={monthly.map(m => m.label)}
-              data={monthly.map(m => m.income - m.expenses)}
-              formatValue={fmtCompact}
-              height={220}
-            />
-          ) : (
-            <div className="flex flex-col items-center justify-center h-[220px] text-muted-foreground">
-              <ChartBar className="w-10 h-10 opacity-20 mb-2" />
-              <p className="text-sm">No data yet</p>
-            </div>
-          )}
-        </motion.div>
-
-        {/* Category Doughnut */}
-        <motion.div className="glass-card p-5"
-          initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}>
-          <div className="mb-4">
-            <h3 className="font-serif font-semibold">Spending by Category</h3>
-            <p className="text-xs text-muted-foreground font-mono mt-0.5">Where your money goes</p>
-          </div>
-          {categories.length > 0 ? (
-            <div className="flex items-center gap-4">
-              <div className="w-1/2">
-                <DoughnutChartCard
-                  labels={categories.map(c => c.name)}
-                  data={categories.map(c => c.total)}
-                  colors={categories.map((c, i) => c.color || CHART_PALETTE[i % CHART_PALETTE.length])}
-                  height={200}
-                  formatValue={fmtFull}
-                />
+        {/* Income vs Expenses */}
+        {showIncomeTrend && (
+          <motion.div className="glass-card p-5 lg:col-span-2"
+            initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <h3 className="font-serif font-semibold">Income vs Expenses</h3>
+                <p className="text-xs text-muted-foreground font-mono mt-0.5">
+                  {period === '7d' ? 'Daily breakdown' : 'Monthly comparison'}
+                </p>
               </div>
-              <div className="flex-1 space-y-2">
-                {categories.slice(0, 5).map((cat, i) => (
-                  <div key={i} className="flex items-center gap-2">
-                    <span className="text-sm">{cat.icon}</span>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center justify-between mb-0.5">
-                        <span className="text-xs font-medium truncate">{cat.name}</span>
-                        <span className="text-xs text-muted-foreground font-mono">{cat.percentage}%</span>
-                      </div>
-                      <div className="h-1 bg-muted rounded-full overflow-hidden">
-                        <motion.div className="h-full rounded-full" style={{ background: cat.color || CHART_PALETTE[i] }}
-                          initial={{ width: 0 }} animate={{ width: `${cat.percentage}%` }}
-                          transition={{ delay: 0.4 + i * 0.1, duration: 0.6 }} />
+              <div className="flex items-center gap-4 text-xs text-muted-foreground">
+                <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-emerald-500" />Income</span>
+                <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-red-400" />Expenses</span>
+              </div>
+            </div>
+            {chartData.length > 0 ? (
+              <AreaChartCard
+                labels={chartData.map(m => m.label)}
+                datasets={[
+                  { label: 'Income', data: chartData.map(m => m.income), borderColor: '#10b981', bgFrom: 'rgba(16,185,129,0.18)', bgTo: 'rgba(16,185,129,0)' },
+                  { label: 'Expenses', data: chartData.map(m => m.expenses), borderColor: '#f87171', bgFrom: 'rgba(248,113,113,0.15)', bgTo: 'rgba(248,113,113,0)' },
+                ]}
+                formatValue={fmtCompact}
+                height={260}
+              />
+            ) : (
+              <div className="flex flex-col items-center justify-center h-[260px] text-muted-foreground">
+                <ChartBar className="w-10 h-10 opacity-20 mb-2" />
+                <p className="text-sm">No data for this period</p>
+              </div>
+            )}
+          </motion.div>
+        )}
+
+        {/* Monthly Net Flow */}
+        {showNetFlow && (
+          <motion.div className="glass-card p-5"
+            initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
+            <div className="mb-4">
+              <h3 className="font-serif font-semibold">Net Cash Flow</h3>
+              <p className="text-xs text-muted-foreground font-mono mt-0.5">Income minus expenses per period</p>
+            </div>
+            {chartData.length > 0 ? (
+              <BarChartCard
+                labels={chartData.map(m => m.label)}
+                data={chartData.map(m => m.income - m.expenses)}
+                colors={chartData.map(m => m.income >= m.expenses ? '#10b981' : '#f87171')}
+                formatValue={fmtCompact}
+                height={220}
+              />
+            ) : (
+              <div className="flex flex-col items-center justify-center h-[220px] text-muted-foreground">
+                <ChartBar className="w-10 h-10 opacity-20 mb-2" />
+                <p className="text-sm">No data yet</p>
+              </div>
+            )}
+          </motion.div>
+        )}
+
+        {/* Category Breakdown */}
+        {showCategories && (
+          <motion.div className="glass-card p-5"
+            initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}>
+            <div className="mb-4">
+              <h3 className="font-serif font-semibold">Spending by Category</h3>
+              <p className="text-xs text-muted-foreground font-mono mt-0.5">Where your money goes</p>
+            </div>
+            {data.categories.length > 0 ? (
+              <div>
+                <DoughnutChartCard
+                  labels={data.categories.map(c => c.name)}
+                  data={data.categories.map(c => c.total)}
+                  colors={data.categories.map((c, i) => c.color || CHART_PALETTE[i % CHART_PALETTE.length])}
+                  height={180}
+                  formatValue={fmtFull}
+                  centerValue={fmtCompact(summary.totalExpenses)}
+                  centerLabel="Total spent"
+                />
+                <div className="space-y-2 mt-4">
+                  {data.categories.slice(0, 6).map((cat, i) => (
+                    <div key={i} className="flex items-center gap-2.5">
+                      <span className="text-sm shrink-0">{cat.icon}</span>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between mb-0.5">
+                          <span className="text-xs font-medium truncate">{cat.name}</span>
+                          <span className="text-xs text-muted-foreground font-mono ml-2 shrink-0">{cat.percentage}%</span>
+                        </div>
+                        <div className="h-1.5 bg-muted rounded-full overflow-hidden">
+                          <motion.div className="h-full rounded-full" style={{ background: cat.color || CHART_PALETTE[i] }}
+                            initial={{ width: 0 }} animate={{ width: `${cat.percentage}%` }}
+                            transition={{ delay: 0.4 + i * 0.07, duration: 0.5 }} />
+                        </div>
+                        <div className="text-[10px] text-muted-foreground/60 mt-0.5 font-mono">{fmtFull(cat.total)} · {cat.count} txn{cat.count !== 1 ? 's' : ''}</div>
                       </div>
                     </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          ) : (
-            <div className="flex flex-col items-center justify-center h-[200px] text-muted-foreground">
-              <ChartPieSlice className="w-10 h-10 opacity-20 mb-2" weight="light" />
-              <p className="text-sm">No expense data yet</p>
-            </div>
-          )}
-        </motion.div>
-      </div>
-
-      {/* Financial Health Score */}
-      <motion.div className="glass-card p-5"
-        initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }}>
-        <div className="flex items-center justify-between mb-5">
-          <div>
-            <h3 className="font-serif font-semibold">Financial Health Score</h3>
-            <p className="text-xs text-muted-foreground font-mono mt-0.5">Based on your spending patterns</p>
-          </div>
-          <Brain className="w-5 h-5 text-emerald-500" weight="duotone" />
-        </div>
-        <div className="grid grid-cols-3 gap-4">
-          {[
-            { label: 'Savings Rate', score: 72, desc: 'Good', color: '#10b981' },
-            { label: 'Spending Control', score: 65, desc: 'Fair', color: '#f59e0b' },
-            { label: 'Income Stability', score: 88, desc: 'Excellent', color: '#3b82f6' },
-          ].map((metric, i) => (
-            <div key={metric.label} className="text-center">
-              <div className="relative w-20 h-20 mx-auto mb-3">
-                <svg className="w-20 h-20 -rotate-90" viewBox="0 0 36 36">
-                  <circle cx="18" cy="18" r="15.9" fill="none" stroke="hsl(var(--muted))" strokeWidth="2" />
-                  <motion.circle cx="18" cy="18" r="15.9" fill="none" stroke={metric.color} strokeWidth="2.5"
-                    strokeDasharray={`${metric.score} 100`} strokeLinecap="round"
-                    initial={{ strokeDasharray: '0 100' }}
-                    animate={{ strokeDasharray: `${metric.score} 100` }}
-                    transition={{ delay: 0.5 + i * 0.15, duration: 1, ease: [0.4, 0, 0.2, 1] }} />
-                </svg>
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <span className="text-lg font-serif font-bold editorial-number">{metric.score}</span>
+                  ))}
                 </div>
               </div>
-              <div className="text-sm font-medium">{metric.label}</div>
-              <div className="text-xs text-muted-foreground">{metric.desc}</div>
+            ) : (
+              <div className="flex flex-col items-center justify-center h-[200px] text-muted-foreground">
+                <ChartPieSlice className="w-10 h-10 opacity-20 mb-2" weight="light" />
+                <p className="text-sm">No expense data yet</p>
+              </div>
+            )}
+          </motion.div>
+        )}
+      </div>
+
+      {/* Financial Health Score — Real Data */}
+      {showHealth && healthScores && (
+        <motion.div className="glass-card p-5"
+          initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }}>
+          <div className="flex items-center justify-between mb-5">
+            <div>
+              <h3 className="font-serif font-semibold">Financial Health Score</h3>
+              <p className="text-xs text-muted-foreground font-mono mt-0.5">Computed from your real data</p>
             </div>
+            <Brain className="w-5 h-5 text-emerald-500" weight="duotone" />
+          </div>
+          <div className="grid grid-cols-3 gap-4">
+            {[
+              { label: 'Savings Rate', ...healthScores.savingsRate, color: healthScores.savingsRate.score >= 60 ? '#10b981' : healthScores.savingsRate.score >= 30 ? '#f59e0b' : '#ef4444' },
+              { label: 'Spending Control', ...healthScores.spendingControl, color: healthScores.spendingControl.score >= 60 ? '#10b981' : healthScores.spendingControl.score >= 40 ? '#f59e0b' : '#ef4444' },
+              { label: 'Income Stability', ...healthScores.incomeStability, color: healthScores.incomeStability.score >= 60 ? '#3b82f6' : healthScores.incomeStability.score >= 30 ? '#f59e0b' : '#94a3b8' },
+            ].map((metric, i) => (
+              <div key={metric.label} className="text-center">
+                <div className="relative w-20 h-20 mx-auto mb-3">
+                  <svg className="w-20 h-20 -rotate-90" viewBox="0 0 36 36">
+                    <circle cx="18" cy="18" r="15.9" fill="none" stroke="hsl(var(--muted))" strokeWidth="2" />
+                    <motion.circle cx="18" cy="18" r="15.9" fill="none" stroke={metric.color} strokeWidth="2.5"
+                      strokeDasharray={`${metric.score} 100`} strokeLinecap="round"
+                      initial={{ strokeDasharray: '0 100' }}
+                      animate={{ strokeDasharray: `${metric.score} 100` }}
+                      transition={{ delay: 0.5 + i * 0.15, duration: 1, ease: [0.4, 0, 0.2, 1] }} />
+                  </svg>
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <span className="text-lg font-serif font-bold editorial-number">{metric.score}</span>
+                  </div>
+                </div>
+                <div className="text-sm font-medium">{metric.label}</div>
+                <div className="text-xs text-muted-foreground">{metric.desc}</div>
+              </div>
+            ))}
+          </div>
+          <p className="text-[11px] text-muted-foreground/50 text-center mt-4 font-mono">
+            Scores update as you log more transactions
+          </p>
+        </motion.div>
+      )}
+
+      {/* Loading skeleton */}
+      {loading && (
+        <div className="space-y-4">
+          {[...Array(2)].map((_, i) => (
+            <div key={i} className="glass-card h-[200px] shimmer-bg rounded-2xl" />
           ))}
         </div>
-      </motion.div>
+      )}
     </div>
   );
 }

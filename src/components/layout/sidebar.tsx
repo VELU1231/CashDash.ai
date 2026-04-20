@@ -9,7 +9,7 @@ import {
   ChartLineUp, ArrowsLeftRight, Wallet, Tag, FolderOpen,
   ChartBar, GearSix, Brain, DownloadSimple, CaretLeft,
   CaretRight, TrendUp, SignOut, BookmarkSimple,
-  Sun, Moon, Monitor, Sparkle
+  Sun, Moon, Monitor, Sparkle, Receipt, PiggyBank, ChartBarHorizontal
 } from '@phosphor-icons/react';
 import { useTheme } from 'next-themes';
 import { toast } from 'sonner';
@@ -18,12 +18,15 @@ import type { Profile } from '@/types';
 const NAV_ITEMS = [
   { href: '/dashboard', icon: ChartLineUp, label: 'Dashboard' },
   { href: '/dashboard/transactions', icon: ArrowsLeftRight, label: 'Transactions' },
+  { href: '/dashboard/ai-assistant', icon: Brain, label: 'AI Assistant', badge: 'AI' },
   { href: '/dashboard/accounts', icon: Wallet, label: 'Accounts' },
   { href: '/dashboard/categories', icon: FolderOpen, label: 'Categories' },
-  { href: '/dashboard/tags', icon: Tag, label: 'Tags' },
   { href: '/dashboard/analytics', icon: ChartBar, label: 'Analytics' },
+  { href: '/dashboard/budgets', icon: ChartBarHorizontal, label: 'Budgets' },
+  { href: '/dashboard/bills', icon: Receipt, label: 'Bills' },
+  { href: '/dashboard/goals', icon: PiggyBank, label: 'Savings Goals' },
   { href: '/dashboard/templates', icon: BookmarkSimple, label: 'Templates' },
-  { href: '/dashboard/ai-assistant', icon: Brain, label: 'AI Assistant', badge: 'AI' },
+  { href: '/dashboard/tags', icon: Tag, label: 'Tags' },
   { href: '/dashboard/import-export', icon: DownloadSimple, label: 'Import / Export' },
 ];
 

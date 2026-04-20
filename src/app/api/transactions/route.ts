@@ -66,7 +66,7 @@ export async function POST(request: NextRequest) {
 
     const body = await request.json();
     const { 
-      type, amount, currency, description, note, 
+      type, amount, currency, description, note, emoji,
       category_id, account_id, dest_account_id, transaction_date, tag_ids,
       attachment_path, attachment_name, attachment_size, attachment_type 
     } = body;
@@ -78,11 +78,14 @@ export async function POST(request: NextRequest) {
       resolvedAccountId = defaultAccount?.id;
     }
 
-    if (!type || !amount || !resolvedAccountId) {
-      return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
+    if (!type || !resolvedAccountId) {
+      return NextResponse.json({ error: 'Missing type or account' }, { status: 400 });
     }
 
-    const amountCents = Math.round(parseFloat(amount) * 100);
+    const amountCents = Math.round(parseFloat(String(amount)) * 100);
+    if (isNaN(amountCents) || amountCents <= 0) {
+      return NextResponse.json({ error: 'Amount must be a positive number' }, { status: 400 });
+    }
 
     const { data: tx, error } = await supabase
       .from('transactions')
@@ -93,6 +96,7 @@ export async function POST(request: NextRequest) {
         currency: currency || 'PHP',
         description: description || null,
         note: note || null,
+        emoji: emoji || null,
         category_id: category_id || null,
         account_id: resolvedAccountId,
         dest_account_id: dest_account_id || null,
@@ -112,7 +116,17 @@ export async function POST(request: NextRequest) {
           p_account_id: resolvedAccountId,
           p_delta: balanceChange,
         });
-      } catch { /* non-blocking */ }
+      } catch (rpcErr) {
+        console.error('[adjust_account_balance] RPC failed, using direct fallback:', rpcErr);
+        // Direct fallback: fetch current balance and update
+        const { data: acct } = await supabase
+          .from('accounts').select('balance').eq('id', resolvedAccountId).single();
+        if (acct) {
+          await supabase.from('accounts')
+            .update({ balance: (acct.balance || 0) + balanceChange })
+            .eq('id', resolvedAccountId);
+        }
+      }
     }
 
     // Add tags if provided

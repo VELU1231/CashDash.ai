@@ -4,15 +4,16 @@ import { usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
 import {
-  ChartLineUp, ArrowsLeftRight, Wallet, ChartBar, Brain
+  ChartLineUp, ArrowsLeftRight, Wallet, ChartBar, Brain,
+  Receipt, PiggyBank
 } from '@phosphor-icons/react';
 
 const MOBILE_NAV = [
   { href: '/dashboard', icon: ChartLineUp, label: 'Home' },
   { href: '/dashboard/transactions', icon: ArrowsLeftRight, label: 'Tx' },
   { href: '/dashboard/ai-assistant', icon: Brain, label: 'AI', highlight: true },
-  { href: '/dashboard/accounts', icon: Wallet, label: 'Accounts' },
-  { href: '/dashboard/analytics', icon: ChartBar, label: 'Charts' },
+  { href: '/dashboard/budgets', icon: Receipt, label: 'Budgets' },
+  { href: '/dashboard/goals', icon: PiggyBank, label: 'Goals' },
 ];
 
 export function MobileNav() {

@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState, useEffect } from 'react';
+import { useMemo, useState, useEffect, useCallback } from 'react';
 import dynamic from 'next/dynamic';
 import { motion } from 'framer-motion';
 import {
@@ -41,6 +41,33 @@ export function DashboardClient({ transactions, prevTransactions, accounts, tren
   const currency = profile?.default_currency || 'USD';
   const [exchangeRates, setExchangeRates] = useState<Record<string, number>>({});
   const [insight, setInsight] = useState<string | null>(null);
+  // Live refresh state — updated by dashboardRefresh events from AI assistant
+  const [liveTransactions, setLiveTransactions] = useState<Transaction[]>(transactions);
+  const [liveAccounts, setLiveAccounts] = useState<Account[]>(accounts);
+  const [refreshing, setRefreshing] = useState(false);
+
+  const refreshDashboard = useCallback(async () => {
+    setRefreshing(true);
+    try {
+      const [txRes, accRes] = await Promise.all([
+        fetch('/api/transactions?limit=50').then(r => r.json()),
+        fetch('/api/accounts').then(r => r.json()),
+      ]);
+      if (txRes.data) setLiveTransactions(txRes.data);
+      if (accRes.data) setLiveAccounts(accRes.data);
+    } catch { /* silent */ }
+    finally { setRefreshing(false); }
+  }, []);
+
+  useEffect(() => {
+    const handler = () => refreshDashboard();
+    window.addEventListener('dashboardRefresh', handler);
+    return () => window.removeEventListener('dashboardRefresh', handler);
+  }, [refreshDashboard]);
+
+  // Sync if server-side props change (navigation)
+  useEffect(() => { setLiveTransactions(transactions); }, [transactions]);
+  useEffect(() => { setLiveAccounts(accounts); }, [accounts]);
 
   useEffect(() => {
     fetch(`/api/exchange-rates?base=${currency}`)
@@ -56,28 +83,28 @@ export function DashboardClient({ transactions, prevTransactions, accounts, tren
     }
   }, [currency, profile?.subscription_tier]);
 
-  const convert = (amount: number, fromCurr: string) => {
+  const convert = useCallback((amount: number, fromCurr: string) => {
     if (!fromCurr || fromCurr === currency || !exchangeRates[fromCurr]) return amount;
     return amount / exchangeRates[fromCurr];
-  };
+  }, [currency, exchangeRates]);
 
   // ─── Computed Stats ──────────────────────────────────────────
   const stats = useMemo(() => {
-    const income = transactions.filter(t => t.type === 'income').reduce((s, t) => s + convert(t.amount, t.currency || 'USD'), 0);
-    const expenses = transactions.filter(t => t.type === 'expense').reduce((s, t) => s + convert(t.amount, t.currency || 'USD'), 0);
+    const income = liveTransactions.filter(t => t.type === 'income').reduce((s, t) => s + convert(t.amount, t.currency || 'USD'), 0);
+    const expenses = liveTransactions.filter(t => t.type === 'expense').reduce((s, t) => s + convert(t.amount, t.currency || 'USD'), 0);
     const prevIncome = prevTransactions.filter(t => t.type === 'income').reduce((s, t) => s + convert(t.amount, (t as any).currency || 'USD'), 0);
     const prevExpenses = prevTransactions.filter(t => t.type === 'expense').reduce((s, t) => s + convert(t.amount, (t as any).currency || 'USD'), 0);
-    const totalBalance = accounts.reduce((s, a) => s + convert(a.balance, a.currency || 'USD'), 0);
+    const totalBalance = liveAccounts.reduce((s, a) => s + convert(a.balance, a.currency || 'USD'), 0);
     const savingsRate = income > 0 ? Math.round((income - expenses) / income * 100) : 0;
     const incomePct = prevIncome > 0 ? ((income - prevIncome) / prevIncome) * 100 : 0;
     const expensePct = prevExpenses > 0 ? ((expenses - prevExpenses) / prevExpenses) * 100 : 0;
     return { income, expenses, totalBalance, savingsRate, incomePct, expensePct, net: income - expenses };
-  }, [transactions, prevTransactions, accounts]);
+  }, [liveTransactions, prevTransactions, liveAccounts, exchangeRates]);
 
   // ─── Category Breakdown ──────────────────────────────────────
   const categoryData = useMemo(() => {
     const grouped: Record<string, { name: string; icon: string; color: string; total: number; count: number }> = {};
-    transactions.filter(t => t.type === 'expense').forEach(t => {
+    liveTransactions.filter(t => t.type === 'expense').forEach(t => {
       const cat = t.category;
       const key = cat?.id || 'uncategorized';
       if (!grouped[key]) {
@@ -94,7 +121,7 @@ export function DashboardClient({ transactions, prevTransactions, accounts, tren
         percentage: stats.expenses > 0 ? Math.round(item.total / stats.expenses * 100) : 0,
         fill: item.color || CHART_PALETTE[i % CHART_PALETTE.length],
       }));
-  }, [transactions, stats.expenses, exchangeRates]);
+  }, [liveTransactions, stats.expenses, exchangeRates]);
 
   // ─── Trend Data for Chart.js ─────────────────────────────────
   const trendChartData = useMemo(() => {
@@ -113,16 +140,16 @@ export function DashboardClient({ transactions, prevTransactions, accounts, tren
   // ─── Daily Spending ──────────────────────────────────────────
   const dailyData = useMemo(() => {
     const daily: Record<string, number> = {};
-    transactions.filter(t => t.type === 'expense').forEach(t => {
+    liveTransactions.filter(t => t.type === 'expense').forEach(t => {
       const day = t.transaction_date.slice(0, 10);
       daily[day] = (daily[day] || 0) + convert(t.amount, t.currency || 'USD');
     });
     return Object.entries(daily)
       .sort(([a], [b]) => a.localeCompare(b))
       .map(([date, amount]) => ({ date: format(parseISO(date), 'MMM d'), amount }));
-  }, [transactions, exchangeRates]);
+  }, [liveTransactions, exchangeRates]);
 
-  const recentTransactions = transactions.slice(0, 8);
+  const recentTransactions = liveTransactions.slice(0, 8);
   const fmtCompact = (v: number) => formatCurrency(v, currency, { compact: true });
 
   return (
@@ -188,7 +215,7 @@ export function DashboardClient({ transactions, prevTransactions, accounts, tren
       {/* ═══ Stat Cards ═══ */}
       <motion.div className="grid grid-cols-2 lg:grid-cols-4 gap-4" initial="initial" animate="animate" variants={stagger}>
         {[
-          { label: 'Total Balance', value: formatCurrency(stats.totalBalance, currency), icon: Wallet, color: '#10b981', bg: 'rgba(16,185,129,0.08)', change: null, sub: `${accounts.length} accounts` },
+          { label: 'Total Balance', value: formatCurrency(stats.totalBalance, currency), icon: Wallet, color: '#10b981', bg: 'rgba(16,185,129,0.08)', change: null, sub: `${liveAccounts.length} account${liveAccounts.length !== 1 ? 's' : ''}${refreshing ? ' ↻' : ''}` },
           { label: 'Monthly Income', value: formatCurrency(stats.income, currency), icon: TrendUp, color: '#10b981', bg: 'rgba(16,185,129,0.08)', change: stats.incomePct, sub: 'vs last month' },
           { label: 'Monthly Expenses', value: formatCurrency(stats.expenses, currency), icon: TrendDown, color: '#D9722A', bg: 'rgba(217,114,42,0.08)', change: stats.expensePct, sub: 'vs last month', invertChange: true },
           { label: 'Savings Rate', value: `${Math.max(0, stats.savingsRate)}%`, icon: Target, color: '#a855f7', bg: 'rgba(168,85,247,0.08)', change: null, sub: formatCurrency(stats.net, currency) + ' net' },

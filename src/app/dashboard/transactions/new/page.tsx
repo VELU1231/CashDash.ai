@@ -4,10 +4,12 @@ import { Plus, ArrowLeft, Scan, CircleNotch, Image as ImageIcon, X } from '@phos
 import { motion } from 'framer-motion';
 import Link from 'next/link';
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import { InlineEmojiPicker } from '@/components/ui/emoji-picker-mart';
 
 export default function NewTransactionPage() {
+  const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [scanning, setScanning] = useState(false);
   const [accounts, setAccounts] = useState<any[]>([]);
@@ -16,7 +18,7 @@ export default function NewTransactionPage() {
   const [form, setForm] = useState<any>({
     type: 'expense',
     amount: '',
-    currency: 'USD',
+    currency: 'PHP',
     description: '',
     note: '',
     emoji: '',
@@ -76,9 +78,9 @@ export default function NewTransactionPage() {
         setForm((f: any) => ({
           ...f,
           amount: data.total ? data.total.toString() : f.amount,
-          date: data.date ? data.date : f.date,
+          transaction_date: data.date ? data.date : f.transaction_date,
           description: data.merchant ? data.merchant : f.description,
-          currency: data.currency ? data.currency : f.currency
+          currency: data.currency ? data.currency : f.currency,
         }));
         toast.success('Receipt scanned and fields auto-filled!');
       }
@@ -148,7 +150,7 @@ export default function NewTransactionPage() {
       if (!res.ok) throw new Error(data.error || 'Failed to save');
 
       toast.success('Transaction saved!');
-      window.location.href = '/dashboard/transactions';
+      router.push('/dashboard/transactions');
     } catch (err: any) {
       toast.error(err.message || 'An error occurred');
     } finally {

@@ -1,5 +1,9 @@
 import { SupabaseClient } from '@supabase/supabase-js';
 
+// In-memory cache for profiles to avoid hitting the DB on every API call
+const profileCache = new Map<string, { data: any; ts: number }>();
+const CACHE_TTL = 60_000; // 1 minute
+
 /**
  * Ensures a user has a profile, default account, and default categories.
  * This handles the case where:
@@ -10,6 +14,12 @@ import { SupabaseClient } from '@supabase/supabase-js';
  * Returns the profile row or null if creation failed.
  */
 export async function ensureUserData(supabase: SupabaseClient, user: { id: string; email?: string; user_metadata?: Record<string, any> }) {
+  // Check cache first
+  const cached = profileCache.get(user.id);
+  if (cached && Date.now() - cached.ts < CACHE_TTL) {
+    return cached.data;
+  }
+
   // 1. Check if profile exists
   const { data: existing } = await supabase
     .from('profiles')
@@ -17,7 +27,10 @@ export async function ensureUserData(supabase: SupabaseClient, user: { id: strin
     .eq('id', user.id)
     .maybeSingle();
 
-  if (existing) return existing;
+  if (existing) {
+    profileCache.set(user.id, { data: existing, ts: Date.now() });
+    return existing;
+  }
 
   // 2. Profile doesn't exist — create it
   const displayName =
@@ -44,6 +57,9 @@ export async function ensureUserData(supabase: SupabaseClient, user: { id: strin
       // Unique violation = profile was created by another concurrent request
       const { data: retried } = await supabase
         .from('profiles').select('*').eq('id', user.id).maybeSingle();
+      if (retried) {
+        profileCache.set(user.id, { data: retried, ts: Date.now() });
+      }
       return retried;
     }
     console.error('[ensureUserData] Failed to create profile:', profileErr.message);
@@ -82,6 +98,7 @@ export async function ensureUserData(supabase: SupabaseClient, user: { id: strin
     defaultCategories.map(c => ({ user_id: user.id, ...c }))
   );
 
+  profileCache.set(user.id, { data: newProfile, ts: Date.now() });
   return newProfile;
 }
 
