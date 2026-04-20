@@ -272,6 +272,7 @@ export default function AIAssistantPage() {
           <select
             value={currency}
             onChange={(e) => setCurrency(e.target.value)}
+            aria-label="Select currency"
             className="text-xs px-2.5 py-1.5 rounded-lg border border-input bg-background focus:outline-none focus:ring-2 focus:ring-primary/20"
           >
             {Object.values(CURRENCIES).map(c => (
@@ -284,6 +285,7 @@ export default function AIAssistantPage() {
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             title="Clear chat"
+            aria-label="Clear chat history"
           >
             <Trash className="w-3.5 h-3.5" />
           </motion.button>

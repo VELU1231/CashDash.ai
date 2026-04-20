@@ -1,6 +1,7 @@
 'use client';
 
 import { useMemo, useState, useEffect } from 'react';
+import dynamic from 'next/dynamic';
 import { motion } from 'framer-motion';
 import {
   TrendUp, TrendDown, Wallet, ArrowsLeftRight,
@@ -10,8 +11,12 @@ import {
 import Link from 'next/link';
 import { format, parseISO } from 'date-fns';
 import { formatCurrency, getChartColor, formatRelativeDate } from '@/lib/utils';
-import { AreaChartCard, BarChartCard, DoughnutChartCard } from '@/components/ui/chartjs-components';
 import type { Profile, Transaction, Account } from '@/types';
+
+// Lazy-load Chart.js components to reduce initial bundle (~180KB savings)
+const AreaChartCard = dynamic(() => import('@/components/ui/chartjs-components').then(m => ({ default: m.AreaChartCard })), { ssr: false });
+const BarChartCard = dynamic(() => import('@/components/ui/chartjs-components').then(m => ({ default: m.BarChartCard })), { ssr: false });
+const DoughnutChartCard = dynamic(() => import('@/components/ui/chartjs-components').then(m => ({ default: m.DoughnutChartCard })), { ssr: false });
 
 interface Props {
   transactions: Transaction[];

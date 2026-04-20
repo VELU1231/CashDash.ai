@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import dynamic from 'next/dynamic';
 import { motion } from 'framer-motion';
 import {
   TrendUp, TrendDown, ChartBar, ChartPieSlice,
@@ -8,7 +9,11 @@ import {
 } from '@phosphor-icons/react';
 import { formatCurrency, getChartColor } from '@/lib/utils';
 import { format, subMonths } from 'date-fns';
-import { AreaChartCard, BarChartCard, DoughnutChartCard } from '@/components/ui/chartjs-components';
+
+// Lazy-load Chart.js components
+const AreaChartCard = dynamic(() => import('@/components/ui/chartjs-components').then(m => ({ default: m.AreaChartCard })), { ssr: false });
+const BarChartCard = dynamic(() => import('@/components/ui/chartjs-components').then(m => ({ default: m.BarChartCard })), { ssr: false });
+const DoughnutChartCard = dynamic(() => import('@/components/ui/chartjs-components').then(m => ({ default: m.DoughnutChartCard })), { ssr: false });
 
 const PERIODS = [
   { label: '7 days', value: '7d' },
