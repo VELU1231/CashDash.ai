@@ -116,7 +116,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Add tags if provided
-    if (tag_ids?.length > 0) {
+    if (tag_ids && tag_ids.length > 0) {
       await supabase.from('transaction_tags').insert(
         tag_ids.map((tid: string) => ({ transaction_id: tx.id, tag_id: tid }))
       );

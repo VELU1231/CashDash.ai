@@ -466,19 +466,12 @@
 }
 
 /* ═══════════════════════════════════════════════════════════════
-   RECHARTS OVERRIDES
+   CHART.JS OVERRIDES
    ═══════════════════════════════════════════════════════════════ */
 
-.recharts-tooltip-wrapper {
-  filter: drop-shadow(0 8px 24px hsl(var(--foreground) / 0.08));
-}
-
-.recharts-default-tooltip {
-  background: hsl(var(--card)) !important;
-  border: 1px solid hsl(var(--border)) !important;
-  border-radius: 12px !important;
-  backdrop-filter: blur(12px);
-  box-shadow: 0 8px 32px hsl(var(--foreground) / 0.08) !important;
+canvas {
+  /* Crisp rendering on high-DPI displays */
+  image-rendering: auto;
 }
 
 /* ═══════════════════════════════════════════════════════════════
