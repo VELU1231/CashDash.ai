@@ -8,3 +8,7 @@ dist/
 .vercel
 coverage/
 .turbo/
+
+lh-*.json
+lh2-*.json
+lighthouse-*.json
