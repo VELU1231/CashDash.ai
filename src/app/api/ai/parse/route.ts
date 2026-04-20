@@ -34,8 +34,35 @@ export async function POST(request: NextRequest) {
       model: process.env.AI_MODEL,
     }, defaultCurrency);
 
+    // If AI returned a conversational message but no transactions, return that message
     if (!parsed.transactions?.length) {
-      return NextResponse.json({ parsed, created: [], message: 'No transactions found' });
+      // If the AI gave a real message (not from rule-based fallback), use it
+      if (parsed.message && parsed.message.length > 10) {
+        return NextResponse.json({ parsed, created: [], message: 'No transactions found' });
+      }
+
+      // Otherwise, generate a conversational response
+      try {
+        const { generateConversationalResponse } = await import('@/lib/ai-parser');
+        const chatReply = await generateConversationalResponse(message, {
+          provider: (process.env.AI_PROVIDER || 'ollama') as 'openai' | 'ollama' | 'gemini',
+          apiKey: process.env.AI_API_KEY,
+          baseUrl: process.env.AI_BASE_URL,
+          model: process.env.AI_MODEL,
+        });
+        return NextResponse.json({
+          parsed: { ...parsed, message: chatReply },
+          created: [],
+          message: 'No transactions found',
+        });
+      } catch {
+        // Final fallback
+        return NextResponse.json({
+          parsed: { ...parsed, message: "Hey there! 👋 I'm CashDash AI. I can help you track expenses, give financial tips, or just chat. Try telling me what you spent today!" },
+          created: [],
+          message: 'No transactions found',
+        });
+      }
     }
 
     // ─── Parse-only mode: return parsed data for user confirmation ───────

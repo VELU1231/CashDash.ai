@@ -227,6 +227,55 @@ Give ONE short (max 2 sentences), encouraging but honest financial insight. Be l
   }
 }
 
+// ─── Conversational Response (for non-financial messages) ─────────────────────
+
+export async function generateConversationalResponse(
+  userMessage: string,
+  config?: Partial<LLMConfig>
+): Promise<string> {
+  try {
+    const llmConfig: LLMConfig = {
+      provider: (config?.provider || process.env.AI_PROVIDER || 'ollama') as LLMConfig['provider'],
+      apiKey: config?.apiKey || process.env.AI_API_KEY || '',
+      baseUrl: config?.baseUrl || process.env.AI_BASE_URL || '',
+      model: config?.model || process.env.AI_MODEL || '',
+    };
+
+    const model = getModel(llmConfig);
+
+    const { text } = await generateText({
+      model,
+      system: `You are CashDash AI, a friendly, warm, and helpful financial assistant.
+You're like a supportive friend who happens to be great with money.
+
+RULES:
+1. Be conversational, friendly, and human — use casual language, emojis sparingly.
+2. If the user greets you, greet back warmly and remind them you can help track expenses.
+3. If they ask for financial advice, give practical, actionable tips.
+4. If they ask about budgeting, savings, investing — give helpful guidance.
+5. Keep responses concise (2-4 sentences max).
+6. Always end with a gentle prompt to help them track something.
+7. Never be robotic or formal.`,
+      prompt: userMessage,
+    });
+
+    return text.trim();
+  } catch {
+    // Friendly static fallbacks based on message content
+    const lower = userMessage.toLowerCase();
+    if (lower.includes('hi') || lower.includes('hello') || lower.includes('hey')) {
+      return "Hey there! 👋 Great to see you! I'm your CashDash AI buddy. I can help you track expenses, give budgeting tips, or just chat about money. What's on your mind?";
+    }
+    if (lower.includes('help') || lower.includes('what can you do')) {
+      return "I can do a lot! 💪 Tell me what you spent today and I'll log it. Ask me for budgeting tips, savings advice, or how to manage your money better. Just chat naturally!";
+    }
+    if (lower.includes('save') || lower.includes('budget')) {
+      return "Great question! 💡 A solid start is the 50/30/20 rule — 50% needs, 30% wants, 20% savings. Want me to help you track where your money's going this month?";
+    }
+    return "Hey! 👋 I'm CashDash AI. Tell me what you spent today and I'll log it for you, or ask me anything about managing your finances!";
+  }
+}
+
 // ─── Rule-Based Fallback Parser ───────────────────────────────────────────────
 
 function ruleBasedParse(userText: string, defaultCurrency: string = 'USD'): AIParseResponse {
