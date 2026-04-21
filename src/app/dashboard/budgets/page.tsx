@@ -179,21 +179,21 @@ export default function BudgetsPage() {
   const overBudgetCount = budgets.filter(b => (b.spent || 0) > b.amount).length;
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-end justify-between">
+    <div className="mobile-page">
+      <div className="mobile-page-header">
         <div>
           <h1 className="text-3xl font-serif font-bold tracking-tight">Budgets</h1>
           <p className="text-sm text-muted-foreground mt-1 font-mono">{format(new Date(), 'MMMM yyyy')} spending limits</p>
         </div>
-        <motion.button onClick={openCreate} className="btn-primary !rounded-xl"
-          whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
-          <Plus className="w-4 h-4" weight="bold" /> New Budget
-        </motion.button>
+        <div className="mobile-page-actions w-full sm:w-auto sm:justify-end">
+          <motion.button onClick={openCreate} className="btn-primary !w-full !rounded-2xl sm:!w-auto"
+            whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+            <Plus className="w-4 h-4" weight="bold" /> New Budget
+          </motion.button>
+        </div>
       </div>
 
-      {/* Summary cards */}
-      <div className="grid grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
         {[
           { label: 'Total Budgeted', value: formatCurrency(totalBudgeted, currency), icon: ChartBar, color: '#3b82f6', bg: 'rgba(59,130,246,0.08)' },
           { label: 'Total Spent', value: formatCurrency(totalSpent, currency), icon: Target, color: totalSpent > totalBudgeted ? '#ef4444' : '#10b981', bg: totalSpent > totalBudgeted ? 'rgba(239,68,68,0.08)' : 'rgba(16,185,129,0.08)' },

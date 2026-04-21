@@ -97,39 +97,45 @@ export default function AccountsPage() {
   }, {} as Record<string, (Account & { subaccounts?: Account[] })[]>);
 
   return (
-    <div className="space-y-6">
-      {/* Header — Editorial */}
-      <div className="flex items-end justify-between">
+    <div className="mobile-page">
+      <div className="mobile-page-header">
         <div>
           <h1 className="text-3xl font-serif font-bold tracking-tight">Accounts</h1>
           <p className="text-sm text-muted-foreground mt-1 font-mono">{totalInAccounts} active accounts</p>
         </div>
-        <motion.button
-          onClick={() => setShowForm(true)}
-          className="btn-primary !rounded-xl"
-          whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
-        >
-          <Plus className="w-4 h-4" weight="bold" /> Add Account
-        </motion.button>
+        <div className="mobile-page-actions w-full sm:w-auto sm:justify-end">
+          <motion.button
+            onClick={fetchAccounts}
+            className="btn-secondary !w-full !rounded-2xl sm:!w-auto"
+            whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
+          >
+            <ArrowsClockwise className="w-4 h-4" weight="bold" /> Refresh
+          </motion.button>
+          <motion.button
+            onClick={() => setShowForm(true)}
+            className="btn-primary !w-full !rounded-2xl sm:!w-auto"
+            whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
+          >
+            <Plus className="w-4 h-4" weight="bold" /> Add Account
+          </motion.button>
+        </div>
       </div>
 
-      {/* Net Worth Card — Glass with gradient */}
       <motion.div
-        className="rounded-2xl p-7 text-white relative overflow-hidden"
+        className="mobile-hero-card relative overflow-hidden text-white"
         style={{
           background: 'linear-gradient(135deg, #10b981 0%, #059669 50%, #047857 100%)',
           boxShadow: '0 8px 32px hsl(160 84% 39% / 0.25)',
         }}
         initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
       >
-        {/* Decorative glow */}
         <div className="absolute top-0 right-0 w-64 h-64 rounded-full blur-[80px] bg-white/10" />
         <div className="relative z-10">
           <p className="text-emerald-100 text-sm font-medium mb-1.5">Total Net Worth</p>
           <div className="text-4xl sm:text-5xl font-serif font-bold tracking-tight mb-5 editorial-number">
             {formatCurrency(totalBalance, 'USD')}
           </div>
-          <div className="flex items-center gap-6 text-sm text-emerald-100 font-mono">
+          <div className="grid grid-cols-3 gap-3 text-sm text-emerald-100 font-mono">
             <span>{accounts.filter(a => a.balance >= 0).length} positive</span>
             <span>{accounts.filter(a => a.balance < 0).length} negative</span>
             <span>{accounts.length} total</span>
@@ -183,7 +189,7 @@ export default function AccountsPage() {
                           <div className="text-xs text-muted-foreground capitalize">{account.type}</div>
                         </div>
                       </div>
-                      <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <div className="flex items-center gap-0.5 opacity-100 transition-opacity md:opacity-0 md:group-hover:opacity-100">
                         <button onClick={() => { setForm({
                           name: '', type: account.type, icon: '🏦', color: account.color, currency: account.currency,
                           initial_balance: '0', description: '', parent_id: account.id
@@ -239,7 +245,7 @@ export default function AccountsPage() {
                             <span className={`text-xs font-serif font-semibold editorial-number ${sub.balance >= 0 ? 'text-foreground' : 'text-red-400'}`}>
                               {formatCurrency(sub.balance, sub.currency)}
                             </span>
-                            <div className="flex items-center opacity-0 group-hover/sub:opacity-100 transition-opacity">
+                            <div className="flex items-center opacity-100 transition-opacity md:opacity-0 md:group-hover/sub:opacity-100">
                               <button onClick={() => { setEditingAccount(sub); setForm({
                                 name: sub.name, type: sub.type, icon: sub.icon, color: sub.color, currency: sub.currency,
                                 initial_balance: (sub.initial_balance / 100).toString(), description: sub.description || '', parent_id: account.id,

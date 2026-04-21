@@ -168,9 +168,8 @@ export default function AnalyticsPage() {
   const hasActiveFilters = filterCategory || filterAccount;
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center gap-4 justify-between">
+    <div className="mobile-page">
+      <div className="mobile-page-header items-start sm:items-end">
         <div>
           <h1 className="text-2xl font-serif font-bold">Analytics</h1>
           <p className="text-sm text-muted-foreground font-mono mt-0.5">
@@ -180,9 +179,8 @@ export default function AnalyticsPage() {
             {summary.transactionCount > 0 && ` · ${summary.transactionCount} transactions`}
           </p>
         </div>
-        <div className="flex items-center gap-2 flex-wrap">
-          {/* Period Tabs */}
-          <div className="flex items-center gap-1 p-1 rounded-xl border border-input bg-background/50 backdrop-blur-sm">
+        <div className="flex w-full flex-col gap-2 sm:w-auto">
+          <div className="flex items-center gap-1 overflow-x-auto rounded-xl border border-input bg-background/50 p-1 pb-2 backdrop-blur-sm scrollbar-thin">
             {PERIODS.map(p => (
               <button key={p.value} onClick={() => setPeriod(p.value)}
                 className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all duration-200 ${
@@ -194,7 +192,6 @@ export default function AnalyticsPage() {
               </button>
             ))}
           </div>
-          {/* Filter button */}
           <motion.button
             onClick={() => setShowFiltersPanel(!showFiltersPanel)}
             className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-medium border transition-all ${
@@ -210,11 +207,10 @@ export default function AnalyticsPage() {
         </div>
       </div>
 
-      {/* Filters Panel */}
       <AnimatePresence>
         {showFiltersPanel && (
           <motion.div
-            className="glass-card p-4 grid grid-cols-2 sm:grid-cols-4 gap-3"
+            className="glass-card grid grid-cols-1 gap-3 p-4 sm:grid-cols-4"
             initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }}
           >
             <div>
@@ -247,7 +243,6 @@ export default function AnalyticsPage() {
         )}
       </AnimatePresence>
 
-      {/* Widget Customizer Bar */}
       <div className="flex flex-wrap items-center gap-2">
         <div className="relative">
           <motion.button onClick={() => setShowAddWidgetMenu(!showAddWidgetMenu)}
@@ -292,7 +287,7 @@ export default function AnalyticsPage() {
         </div>
         
         {/* Active widget badges */}
-        <div className="hidden sm:flex flex-wrap gap-1.5">
+        <div className="flex max-w-full gap-1.5 overflow-x-auto scrollbar-thin sm:flex-wrap">
           {activeWidgets.map(wId => {
             const widget = AVAILABLE_WIDGETS.find(w => w.id === wId);
             if (!widget) return null;

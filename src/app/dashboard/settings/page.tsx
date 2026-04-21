@@ -155,30 +155,31 @@ export default function SettingsPage() {
   const update = (key: string, value: unknown) => setProfile(p => ({ ...p, [key]: value }));
 
   return (
-    <div className="max-w-5xl mx-auto">
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold">Settings</h1>
-        <p className="text-sm text-muted-foreground">Manage your account preferences</p>
+    <div className="mx-auto max-w-5xl space-y-4 md:space-y-6">
+      <div>
+        <p className="text-[11px] font-medium uppercase tracking-[0.24em] text-muted-foreground">More</p>
+        <h1 className="mt-1 text-2xl font-semibold text-foreground">Settings</h1>
+        <p className="text-sm text-muted-foreground">Manage your account, preferences, and app behavior.</p>
       </div>
 
-      <div className="flex gap-6">
-        {/* Sidebar nav */}
-        <nav className="hidden md:flex flex-col gap-0.5 w-52 shrink-0">
-          {SECTIONS.map(({ id, icon: Icon, label }) => (
-            <button key={id} onClick={() => setActiveSection(id)}
-              className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-left transition-all ${
-                activeSection === id
-                  ? 'bg-primary/10 text-primary'
-                  : 'text-muted-foreground hover:text-foreground hover:bg-muted'
-              }`}>
-              <Icon className="w-4 h-4 shrink-0" />
-              {label}
-            </button>
-          ))}
-        </nav>
+      <nav className="no-scrollbar flex gap-2 overflow-x-auto pb-1">
+        {SECTIONS.map(({ id, icon: Icon, label }) => (
+          <button
+            key={id}
+            onClick={() => setActiveSection(id)}
+            className={`inline-flex shrink-0 items-center gap-2 rounded-2xl border px-4 py-2.5 text-sm font-medium transition-all ${
+              activeSection === id
+                ? 'border-primary/30 bg-primary/10 text-primary'
+                : 'border-border/70 bg-card/70 text-muted-foreground'
+            }`}
+          >
+            <Icon className="h-4 w-4 shrink-0" />
+            {label}
+          </button>
+        ))}
+      </nav>
 
-        {/* Content */}
-        <div className="flex-1 min-w-0">
+      <div className="min-w-0">
           <AnimatePresence mode="wait">
             <motion.div
               key={activeSection}
@@ -186,7 +187,7 @@ export default function SettingsPage() {
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: -10 }}
               transition={{ duration: 0.2 }}
-              className="rounded-2xl border border-border bg-card p-6 shadow-soft space-y-6"
+              className="glass-card space-y-6 p-5 md:p-6"
             >
               {/* Profile */}
               {activeSection === 'profile' && (
@@ -441,9 +442,9 @@ export default function SettingsPage() {
 
               {/* Save Button */}
               {['profile', 'currency', 'ai'].includes(activeSection) && (
-                <div className="pt-4 border-t border-border flex justify-end">
+                <div className="flex justify-stretch border-t border-border pt-4 md:justify-end">
                   <motion.button onClick={saveProfile} disabled={loading}
-                    className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 disabled:opacity-60 transition-all hover:shadow-glow"
+                    className="flex w-full items-center justify-center gap-2 rounded-2xl bg-primary px-5 py-3 text-sm font-medium text-primary-foreground transition-all hover:bg-primary/90 hover:shadow-glow disabled:opacity-60 md:w-auto"
                     whileTap={{ scale: 0.97 }}>
                     {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
                     Save Changes
@@ -452,7 +453,6 @@ export default function SettingsPage() {
               )}
             </motion.div>
           </AnimatePresence>
-        </div>
       </div>
     </div>
   );
@@ -460,12 +460,12 @@ export default function SettingsPage() {
 
 function SectionHeader({ icon: Icon, title, desc }: { icon: React.ElementType; title: string; desc: string }) {
   return (
-    <div className="flex items-center gap-3 pb-2 border-b border-border">
-      <div className="w-9 h-9 rounded-xl bg-primary/10 flex items-center justify-center">
-        <Icon className="w-4.5 h-4.5 text-primary" />
+    <div className="flex items-center gap-3 border-b border-border pb-3">
+      <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-primary/10">
+        <Icon className="h-4.5 w-4.5 text-primary" />
       </div>
       <div>
-        <h2 className="font-semibold">{title}</h2>
+        <h2 className="font-semibold text-foreground">{title}</h2>
         <p className="text-xs text-muted-foreground">{desc}</p>
       </div>
     </div>
@@ -474,7 +474,7 @@ function SectionHeader({ icon: Icon, title, desc }: { icon: React.ElementType; t
 
 function ToggleRow({ label, desc, checked, onChange }: { label: string; desc: string; checked: boolean; onChange: () => void }) {
   return (
-    <div className="flex items-center justify-between py-1">
+    <div className="flex items-center justify-between gap-4 rounded-2xl border border-border/60 bg-card/40 px-4 py-3">
       <div>
         <div className="text-sm font-medium">{label}</div>
         <div className="text-xs text-muted-foreground">{desc}</div>

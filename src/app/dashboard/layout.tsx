@@ -26,22 +26,21 @@ export default async function DashboardLayout({
 
   return (
     <LockScreen>
-      <div className="flex h-screen bg-background overflow-hidden">
-        {/* Sidebar - hidden on mobile */}
+      <div className="flex h-dvh bg-background overflow-hidden">
         <div className="hidden md:flex flex-col h-full">
           <DashboardSidebar profile={profile} />
         </div>
 
-        {/* Main content */}
         <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
           <DashboardTopbar profile={profile} />
-          <main className="flex-1 overflow-y-auto scrollbar-thin relative">
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8">
-              {children}
+          <main className="flex-1 overflow-y-auto scrollbar-thin relative mobile-app-surface">
+            <div className="mx-auto w-full max-w-6xl pb-24 md:pb-0">
+              <div className="px-4 py-4 sm:px-6 md:py-8">
+                {children}
+              </div>
             </div>
           </main>
 
-          {/* Mobile bottom nav */}
           <MobileNav />
         </div>
       </div>

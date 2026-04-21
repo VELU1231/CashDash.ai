@@ -5,14 +5,29 @@
   "description": "CashDash.ai - AI-powered personal finance SaaS",
   "scripts": {
     "dev": "next dev",
+    "dev:host": "next dev --hostname 0.0.0.0",
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "type-check": "tsc --noEmit"
+    "type-check": "tsc --noEmit",
+    "cap:sync": "npx cap sync android",
+    "cap:open:android": "npx cap open android",
+    "cap:run:android": "npx cap run android",
+    "cap:assets": "npx @capacitor/assets generate --android"
   },
   "dependencies": {
     "@ai-sdk/google": "^3.0.64",
     "@ai-sdk/openai": "^3.0.53",
+    "@capacitor/android": "^8.3.1",
+    "@capacitor/app": "^8.1.0",
+    "@capacitor/assets": "^3.0.5",
+    "@capacitor/cli": "^7.6.2",
+    "@capacitor/core": "^8.3.1",
+    "@capacitor/haptics": "^8.0.2",
+    "@capacitor/keyboard": "^8.0.3",
+    "@capacitor/network": "^8.0.1",
+    "@capacitor/splash-screen": "^8.0.1",
+    "@capacitor/status-bar": "^8.0.2",
     "@emoji-mart/data": "^1.2.1",
     "@emoji-mart/react": "^1.1.1",
     "@heroicons/react": "^2.2.0",
@@ -82,6 +97,7 @@
     "tailwindcss-animate": "^1.0.7",
     "tesseract.js": "^5.1.1",
     "vaul": "^1.1.2",
+    "workbox-window": "^7.4.0",
     "workflow": "^4.2.4",
     "zod": "^3.24.1",
     "zustand": "^5.0.3"

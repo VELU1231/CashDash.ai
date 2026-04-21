@@ -1,0 +1,22 @@
+<svg width="2732" height="2732" viewBox="0 0 2732 2732" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="2732" height="2732" fill="#FAFAFA"/>
+  <circle cx="1366" cy="940" r="680" fill="url(#glow)" fill-opacity="0.32"/>
+  <rect x="822" y="822" width="1088" height="1088" rx="280" fill="url(#card)"/>
+  <rect x="1010" y="1094" width="712" height="560" rx="112" fill="#F8FAFC" fill-opacity="0.96"/>
+  <path d="M1136 1272H1598" stroke="#0F172A" stroke-width="72" stroke-linecap="round"/>
+  <path d="M1136 1408H1598" stroke="#10B981" stroke-width="72" stroke-linecap="round"/>
+  <path d="M1136 1544H1398" stroke="#0F172A" stroke-width="72" stroke-linecap="round"/>
+  <circle cx="1620" cy="1544" r="122" fill="#10B981"/>
+  <path d="M1620 1476V1612" stroke="#FAFAFA" stroke-width="38" stroke-linecap="round"/>
+  <path d="M1552 1544H1688" stroke="#FAFAFA" stroke-width="38" stroke-linecap="round"/>
+  <defs>
+    <linearGradient id="glow" x1="1366" y1="260" x2="1366" y2="1620" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#10B981"/>
+      <stop offset="1" stop-color="#10B981" stop-opacity="0"/>
+    </linearGradient>
+    <linearGradient id="card" x1="918" y1="862" x2="1818" y2="1862" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#10B981"/>
+      <stop offset="1" stop-color="#047857"/>
+    </linearGradient>
+  </defs>
+</svg>

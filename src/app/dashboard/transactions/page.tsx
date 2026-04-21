@@ -136,24 +136,25 @@ export default function TransactionsPage() {
   };
 
   const grouped = groupTransactionsByDate(transactions);
+  const incomeTotal = transactions.reduce((sum, transaction) => sum + (transaction.type === 'income' ? transaction.amount : 0), 0);
+  const expenseTotal = transactions.reduce((sum, transaction) => sum + (transaction.type === 'expense' ? transaction.amount : 0), 0);
 
   return (
-    <div className="space-y-5">
-      {/* Header — Editorial */}
-      <div className="flex items-end justify-between">
+    <div className="mobile-page">
+      <div className="mobile-page-header">
         <div>
           <h1 className="text-3xl font-serif font-bold tracking-tight">Transactions</h1>
           <p className="text-sm text-muted-foreground mt-1 font-mono">{total.toLocaleString()} total</p>
         </div>
-        <div className="flex items-center gap-2.5">
+        <div className="mobile-page-actions w-full sm:w-auto sm:justify-end">
           <Link href="/dashboard/transactions/new">
-            <motion.button className="btn-secondary !rounded-xl !text-[13px]"
+            <motion.button className="btn-secondary !w-full !rounded-2xl !text-[13px] sm:!w-auto"
               whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
               <Plus className="w-4 h-4" weight="regular" /> Manual Entry
             </motion.button>
           </Link>
           <Link href="/dashboard/ai-assistant">
-            <motion.button className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-sm font-medium transition-all duration-200"
+            <motion.button className="inline-flex w-full items-center justify-center gap-2 rounded-2xl px-3.5 py-2 text-sm font-medium transition-all duration-200 sm:w-auto"
               style={{ background: 'hsl(var(--primary) / 0.08)', color: 'hsl(var(--primary))' }}
               whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
               <Brain className="w-4 h-4" weight="duotone" /> AI Entry
@@ -162,8 +163,22 @@ export default function TransactionsPage() {
         </div>
       </div>
 
-      {/* Search + Filter bar */}
-      <div className="flex items-center gap-2.5">
+      <div className="mobile-card-grid">
+        <div className="stat-card">
+          <p className="text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">Income</p>
+          <p className="mt-2 text-2xl font-serif font-bold text-emerald-500 editorial-number">{formatCurrency(incomeTotal, transactions[0]?.currency || 'USD')}</p>
+        </div>
+        <div className="stat-card">
+          <p className="text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">Expenses</p>
+          <p className="mt-2 text-2xl font-serif font-bold text-red-400 editorial-number">{formatCurrency(expenseTotal, transactions[0]?.currency || 'USD')}</p>
+        </div>
+        <div className="stat-card">
+          <p className="text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">Net</p>
+          <p className={`mt-2 text-2xl font-serif font-bold editorial-number ${incomeTotal - expenseTotal >= 0 ? 'text-foreground' : 'text-red-400'}`}>{formatCurrency(incomeTotal - expenseTotal, transactions[0]?.currency || 'USD')}</p>
+        </div>
+      </div>
+
+      <div className="flex flex-col gap-2.5 sm:flex-row sm:items-center">
         <div className="relative flex-1">
           <MagnifyingGlass className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" weight="light" />
           <input
@@ -184,7 +199,7 @@ export default function TransactionsPage() {
           )}
         </div>
 
-        <div className="hidden sm:flex items-center gap-1 p-1 rounded-xl"
+        <div className="flex items-center gap-1 overflow-x-auto rounded-xl p-1 scrollbar-thin"
           style={{ border: '1px solid hsl(var(--foreground) / 0.06)', background: 'hsl(var(--card) / 0.4)' }}>
           {(['all', 'income', 'expense', 'transfer'] as const).map(type => (
             <button key={type} onClick={() => setFilters(f => ({ ...f, type }))}
@@ -207,7 +222,7 @@ export default function TransactionsPage() {
       {/* Extended filters */}
       <AnimatePresence>
         {showFilters && (
-          <motion.div className="grid grid-cols-2 sm:grid-cols-4 gap-3 p-4 glass-card"
+          <motion.div className="grid grid-cols-1 gap-3 p-4 glass-card sm:grid-cols-4"
             initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }}>
             <div>
               <label className="text-xs font-medium text-muted-foreground mb-1.5 block">From date</label>
@@ -221,7 +236,7 @@ export default function TransactionsPage() {
                 className="w-full px-3 py-2 rounded-xl text-xs focus:outline-none input-animated"
                 style={{ border: '1px solid hsl(var(--foreground) / 0.06)', background: 'hsl(var(--foreground) / 0.02)' }} />
             </div>
-            <div className="flex items-end">
+            <div className="flex items-end sm:col-span-2 lg:col-span-1">
               <button onClick={() => { setFilters({ type: 'all' }); setSearch(''); }}
                 className="px-3 py-2 rounded-xl text-xs text-muted-foreground hover:text-foreground w-full transition-all duration-200"
                 style={{ border: '1px solid hsl(var(--foreground) / 0.06)' }}>

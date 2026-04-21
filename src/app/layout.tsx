@@ -27,6 +27,7 @@ const jetbrainsMono = JetBrains_Mono({
 export const metadata: Metadata = {
   title: { default: 'CashDash.ai', template: '%s | CashDash.ai' },
   description: 'AI-powered personal finance tracker. Track spending, visualize money, and get smart insights — automatically.',
+  manifest: '/manifest.webmanifest',
   keywords: ['personal finance', 'budget tracker', 'AI finance', 'expense tracker', 'money management'],
   authors: [{ name: 'DrVelu' }],
   creator: 'DrVelu',
@@ -43,12 +44,14 @@ export const metadata: Metadata = {
     title: 'CashDash.ai',
     description: 'AI-powered personal finance tracker',
   },
-  icons: { icon: '/favicon.ico', apple: '/apple-touch-icon.png' },
+  icons: { icon: '/favicon.ico', apple: '/app-icon.svg', shortcut: '/favicon.ico' },
 };
 
 export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
+  viewportFit: 'cover',
+  interactiveWidget: 'resizes-content',
   themeColor: [
     { media: '(prefers-color-scheme: light)', color: '#FAFAFA' },
     { media: '(prefers-color-scheme: dark)', color: '#0B1120' },

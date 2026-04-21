@@ -95,15 +95,15 @@ export default function CategoriesPage() {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold">Categories</h1>
-          <p className="text-sm text-muted-foreground mt-0.5">Manage income and expense categories (supports sub-categories)</p>
+          <p className="text-[11px] font-medium uppercase tracking-[0.24em] text-muted-foreground">Structure</p>
+          <h1 className="mt-1 text-2xl font-semibold text-foreground">Categories</h1>
+          <p className="mt-0.5 text-sm text-muted-foreground">Manage income and expense categories, including sub-categories.</p>
         </div>
         <motion.button
           onClick={() => { resetForm(); setShowForm(true); }}
-          className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90"
+          className="inline-flex items-center justify-center gap-2 rounded-2xl bg-primary px-4 py-3 text-sm font-medium text-primary-foreground hover:bg-primary/90"
           whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
         >
           <Plus className="w-4 h-4" /> Add Category
@@ -125,13 +125,13 @@ export default function CategoriesPage() {
           </button>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 gap-4 xl:grid-cols-2 xl:gap-6">
           {['expense', 'income', 'transfer'].map(type => {
             const typeCats = groupedByType[type] || [];
             if (typeCats.length === 0) return null;
             return (
-              <div key={type} className="rounded-2xl border border-border bg-card shadow-soft overflow-hidden flex flex-col">
-                <div className="px-5 py-4 border-b border-border bg-muted/20 flex items-center gap-2">
+              <div key={type} className="glass-card overflow-hidden flex flex-col">
+                <div className="flex items-center gap-2 border-b border-border/70 bg-foreground/[0.015] px-5 py-4">
                   <div className={`w-2 h-2 rounded-full ${type === 'income' ? 'bg-emerald-500' : type === 'expense' ? 'bg-red-500' : 'bg-blue-500'}`} />
                   <h2 className="font-semibold capitalize text-lg">{type} Categories</h2>
                 </div>
@@ -139,7 +139,7 @@ export default function CategoriesPage() {
                   <div className="space-y-1">
                     {typeCats.map(parent => (
                       <div key={parent.id}>
-                        <div className="flex items-center justify-between p-2 rounded-lg hover:bg-muted/50 group transition-colors">
+                        <div className="group flex items-center justify-between rounded-2xl border border-transparent p-3 transition-colors hover:border-border/60 hover:bg-muted/30">
                           <div className="flex items-center gap-3">
                             <button
                               onClick={() => toggleExpand(parent.id)}
@@ -152,7 +152,7 @@ export default function CategoriesPage() {
                             </div>
                             <span className="font-medium">{parent.name}</span>
                           </div>
-                          <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <div className="flex items-center gap-1 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
                             <button onClick={() => { setForm({ name: '', type: parent.type, icon: '📦', color: parent.color, parent_id: parent.id }); setShowForm(true); }}
                               className="p-1.5 rounded-lg hover:bg-muted text-muted-foreground hover:text-primary transition-colors" title="Add Sub-category">
                               <Plus className="w-3.5 h-3.5" />
@@ -174,10 +174,10 @@ export default function CategoriesPage() {
                               initial={{ height: 0, opacity: 0 }}
                               animate={{ height: 'auto', opacity: 1 }}
                               exit={{ height: 0, opacity: 0 }}
-                              className="pl-9 overflow-hidden"
+                              className="overflow-hidden pl-9"
                             >
                               {parent.subcategories.map((sub: any) => (
-                                <div key={sub.id} className="flex items-center justify-between p-2 rounded-lg hover:bg-muted/50 group transition-colors mt-1 relative">
+                                <div key={sub.id} className="relative mt-1 flex items-center justify-between rounded-2xl p-2 transition-colors hover:bg-muted/40 group">
                                   <div className="absolute left-[-12px] top-1/2 w-4 h-px bg-border -translate-y-1/2" />
                                   <div className="absolute left-[-12px] top-0 bottom-1/2 w-px bg-border" />
                                   
@@ -187,7 +187,7 @@ export default function CategoriesPage() {
                                     </div>
                                     <span className="text-sm">{sub.name}</span>
                                   </div>
-                                  <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                  <div className="flex items-center gap-1 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
                                     <button onClick={() => { setEditingCategory(sub as any); setForm({ name: sub.name, type: parent.type, icon: sub.icon, color: sub.color, parent_id: parent.id }); setShowForm(true); }}
                                       className="p-1 rounded-md hover:bg-muted text-muted-foreground hover:text-foreground transition-colors">
                                       <Edit3 className="w-3 h-3" />
@@ -214,9 +214,9 @@ export default function CategoriesPage() {
 
       {/* Form Modal */}
       {showForm && (
-        <div className="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm flex items-center justify-center p-4" onClick={() => setShowForm(false)}>
+        <div className="fixed inset-0 z-50 flex items-end justify-center bg-background/80 p-0 backdrop-blur-sm md:items-center md:p-4" onClick={() => setShowForm(false)}>
           <motion.div
-            className="w-full max-w-sm rounded-2xl border border-border bg-card shadow-xl p-6"
+            className="w-full max-w-sm rounded-t-[28px] border border-border bg-card p-6 shadow-xl md:rounded-[28px]"
             initial={{ opacity: 0, scale: 0.95, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             onClick={e => e.stopPropagation()}
