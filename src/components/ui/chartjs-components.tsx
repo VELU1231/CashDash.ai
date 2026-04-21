@@ -21,9 +21,27 @@ import { MatrixController, MatrixElement } from 'chartjs-chart-matrix';
 ChartJS.register(
   CategoryScale, LinearScale, PointElement, LineElement, BarElement,
   ArcElement, Filler, Tooltip, Legend,
-  ChartDataLabels, annotationPlugin, zoomPlugin, trendlinePlugin,
+  annotationPlugin, zoomPlugin, trendlinePlugin,
   TreemapController, TreemapElement, MatrixController, MatrixElement
 );
+
+// Custom Premium Shadow Plugin
+const shadowPlugin = {
+  id: 'premiumShadow',
+  beforeDraw: (chart: any) => {
+    const { ctx } = chart;
+    const _originalStroke = ctx.stroke;
+    ctx.stroke = function() {
+      ctx.save();
+      ctx.shadowColor = 'rgba(0, 0, 0, 0.25)';
+      ctx.shadowBlur = 10;
+      ctx.shadowOffsetX = 0;
+      ctx.shadowOffsetY = 4;
+      _originalStroke.apply(this, arguments);
+      ctx.restore();
+    };
+  }
+};
 
 // Shared tooltip styling
 const tooltipConfig = {
@@ -118,10 +136,13 @@ export function AreaChartCard({ labels, datasets, formatValue, height = 240, sho
             borderDash: [6, 6],
             label: {
               display: true,
-              content: `Budget: ${formatValue ? formatValue(budgetLimit) : budgetLimit}`,
+              content: `Budget Limit`,
               position: 'end' as const,
               backgroundColor: 'rgba(239, 68, 68, 0.9)',
-              font: { size: 10, weight: 'bold' as const }
+              color: 'white',
+              font: { size: 10, weight: 'bold' as const },
+              padding: 4,
+              borderRadius: 4
             }
           }
         }
@@ -148,7 +169,7 @@ export function AreaChartCard({ labels, datasets, formatValue, height = 240, sho
 
   return (
     <div style={{ height }}>
-      <Line data={data} options={options} />
+      <Line data={data} options={options} plugins={[shadowPlugin]} />
     </div>
   );
 }
@@ -202,10 +223,13 @@ export function BarChartCard({ labels, data: values, colors, formatValue, height
             borderDash: [6, 6],
             label: {
               display: true,
-              content: `Budget: ${formatValue ? formatValue(budgetLimit) : budgetLimit}`,
+              content: `Budget Limit`,
               position: 'end' as const,
               backgroundColor: 'rgba(239, 68, 68, 0.9)',
-              font: { size: 10, weight: 'bold' as const }
+              color: 'white',
+              font: { size: 10, weight: 'bold' as const },
+              padding: 4,
+              borderRadius: 4
             }
           }
         }
@@ -333,7 +357,8 @@ export function TreemapChartCard({ data: treeData, keyField, valueField, colorFi
       key: valueField,
       groups: [keyField],
       spacing: 2,
-      borderWidth: 0,
+      borderWidth: 1,
+      borderColor: 'rgba(255,255,255,0.1)',
       backgroundColor(ctx: any) {
         if (ctx.type !== 'data') return 'transparent';
         if (colorField && ctx.raw._data[colorField]) return ctx.raw._data[colorField];
@@ -348,8 +373,8 @@ export function TreemapChartCard({ data: treeData, keyField, valueField, colorFi
           const val = formatValue ? formatValue(ctx.raw.v) : ctx.raw.v;
           return [name, val];
         },
-        color: ['#fff', 'rgba(255,255,255,0.7)'],
-        font: [{ size: 12, weight: 'bold' as const }, { size: 10 }]
+        color: ['#fff', 'rgba(255,255,255,0.85)'],
+        font: [{ size: 14, weight: 'bold' as const, family: 'serif' }, { size: 11, family: 'mono' }]
       }
     }]
   };
