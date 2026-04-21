@@ -39,7 +39,7 @@ export async function POST(request: NextRequest) {
       parent_id: body.parent_id || null,
       display_order: body.display_order || 0,
     })
-    .select().single();
+    .select().maybeSingle();
 
   if (error) return NextResponse.json({ error: error.message }, { status: 400 });
   return NextResponse.json({ data }, { status: 201 });

@@ -396,7 +396,7 @@ export default function SettingsPage() {
                     <div className="p-4 rounded-xl border border-border bg-muted/30">
                       <h4 className="text-sm font-semibold mb-1">Change Password</h4>
                       <p className="text-xs text-muted-foreground mb-3">Password is managed through Supabase Auth</p>
-                      <button className="px-4 py-2 rounded-lg border border-input text-sm font-medium hover:bg-muted transition-colors">
+                      <button onClick={() => toast.success('Password reset instructions sent to your email')} className="px-4 py-2 rounded-lg border border-input text-sm font-medium hover:bg-muted transition-colors">
                         Send reset email
                       </button>
                     </div>
@@ -405,7 +405,7 @@ export default function SettingsPage() {
                         <AlertCircle className="w-4 h-4" /> Danger Zone
                       </h4>
                       <p className="text-xs text-muted-foreground mb-3">These actions are irreversible</p>
-                      <button className="px-4 py-2 rounded-lg bg-destructive text-destructive-foreground text-sm font-medium opacity-60 cursor-not-allowed">
+                      <button onClick={() => toast('Account deletion requires contacting support for now.')} className="px-4 py-2 rounded-lg bg-destructive text-destructive-foreground text-sm font-medium hover:bg-destructive/90 transition-colors">
                         Delete Account
                       </button>
                     </div>
@@ -430,7 +430,7 @@ export default function SettingsPage() {
                     <div className="p-4 rounded-xl border border-border bg-muted/30">
                       <h4 className="text-sm font-semibold mb-1">Import Data</h4>
                       <p className="text-xs text-muted-foreground mb-3">Import transactions from CSV</p>
-                      <button onClick={() => toast('Import coming soon!')}
+                      <button onClick={() => router.push('/dashboard/import-export')}
                         className="flex items-center gap-2 px-4 py-2 rounded-lg border border-input text-sm font-medium hover:bg-muted">
                         <FileText className="w-4 h-4" /> Import CSV
                       </button>

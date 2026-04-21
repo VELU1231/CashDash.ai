@@ -44,9 +44,17 @@ export async function POST(request: NextRequest) {
       schedule_type: schedule_type || 'manual',
       is_active: true
     })
-    .select('*, category:categories(*), account:accounts(*), dest_account:accounts!dest_account_id(*)')
-    .single();
+    .select('id')
+    .maybeSingle();
 
   if (error) return NextResponse.json({ error: error.message }, { status: 400 });
-  return NextResponse.json({ data }, { status: 201 });
+  if (!data) return NextResponse.json({ error: 'Failed to create template' }, { status: 400 });
+
+  const { data: fetchedTemplate } = await supabase
+    .from('transaction_templates')
+    .select('*, category:categories(*), account:accounts(*), dest_account:accounts!dest_account_id(*)')
+    .eq('id', data.id)
+    .maybeSingle();
+
+  return NextResponse.json({ data: fetchedTemplate }, { status: 201 });
 }

@@ -57,7 +57,7 @@ export async function POST(request: NextRequest) {
         parent_id: body.parent_id || null,
       })
       .select()
-      .single();
+      .maybeSingle();
 
     if (error) {
       console.error('[POST /api/accounts]', error.message);

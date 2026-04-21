@@ -9,6 +9,7 @@ const nextConfig = {
       { protocol: 'https', hostname: 'lh3.googleusercontent.com' },
     ],
   },
+  serverExternalPackages: ['pdf-parse', 'tesseract.js'],
 
   // Security & Performance headers
   async headers() {
