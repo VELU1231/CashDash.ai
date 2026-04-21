@@ -73,7 +73,7 @@ export async function POST(req: NextRequest) {
       if (recentTx && recentTx.length > 0) {
         const txStr = recentTx.map(t => {
           const amount = t.amount / 100;
-          const cat = t.category && !Array.isArray(t.category) ? t.category.name : 'Uncategorized';
+          const cat = t.category ? (t.category as any).name : 'Uncategorized';
           return `- ${t.transaction_date}: ${t.type === 'income' ? '+' : '-'}${amount} ${t.currency} for ${t.description || 'Unknown'} (${cat})`;
         }).join('\n');
         contextStr = `\n\n${accountsStr}\n\nUSER'S RECENT TRANSACTIONS (last 15):\n${txStr}`;
