@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTheme } from 'next-themes';
 import {
@@ -24,6 +25,7 @@ const SECTIONS = [
 ];
 
 export default function SettingsPage() {
+  const router = useRouter();
   const { theme, setTheme } = useTheme();
   const [activeSection, setActiveSection] = useState('profile');
   const [loading, setLoading] = useState(false);
@@ -332,7 +334,7 @@ export default function SettingsPage() {
                       </p>
                       
                       {(profile as any).subscription_tier === 'free' ? (
-                        <button onClick={() => window.location.href = '/pricing'}
+                        <button onClick={() => router.push('/pricing')}
                           className="px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90">
                           Upgrade Plan
                         </button>

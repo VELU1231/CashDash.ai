@@ -351,7 +351,7 @@ export default function HomePage() {
               {
                 name: 'Pro', price: '$5', period: '/month',
                 features: ['Everything in Free', 'Unlimited AI messages', 'Unlimited accounts', 'Proactive AI Insights', 'AI Receipt Scanning', 'Multi-currency support'],
-                cta: 'Upgrade to Pro', href: process.env.NEXT_PUBLIC_LEMONSQUEEZY_CHECKOUT_URL || '/pricing', highlight: true,
+                cta: 'Upgrade to Pro', href: '/pricing', highlight: true,
               },
             ].map((plan) => (
               <motion.div

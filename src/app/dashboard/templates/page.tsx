@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { BookTemplate, Plus, Play, Edit3, Trash2, CalendarClock } from 'lucide-react';
+import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
 import { formatCurrency, formatRelativeDate } from '@/lib/utils';
 import { toast } from 'sonner';
@@ -111,9 +112,9 @@ export default function TemplatesPage() {
           <p className="text-muted-foreground max-w-md mx-auto mb-6">
             Upgrade to the Pro tier to create recurring transaction templates and save time logging your bills and salaries.
           </p>
-          <a href="/pricing" className="px-6 py-2.5 rounded-xl bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90">
+          <Link href="/pricing" className="px-6 py-2.5 rounded-xl bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90">
             View Pricing
-          </a>
+          </Link>
         </motion.div>
       ) : (
         <>
