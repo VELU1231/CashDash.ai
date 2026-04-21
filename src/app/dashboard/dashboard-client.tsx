@@ -33,8 +33,8 @@ const stagger = { animate: { transition: { staggerChildren: 0.08 } } };
 
 // Premium chart colors
 const CHART_PALETTE = [
-  '#10b981', '#C9A87C', '#3b82f6', '#a855f7',
-  '#f59e0b', '#ef4444', '#06b6d4', '#ec4899',
+  '#10b981', '#3b82f6', '#a855f7', '#f59e0b',
+  '#ef4444', '#06b6d4', '#ec4899', '#64748b',
 ];
 
 export function DashboardClient({ transactions, prevTransactions, accounts, trendData, profile, currentMonth, flags }: Props) {
@@ -177,20 +177,20 @@ export function DashboardClient({ transactions, prevTransactions, accounts, tren
       {/* ═══ Upgrade Banner ═══ */}
       {profile?.subscription_tier === 'free' && (
         <motion.div className="glass-card p-4 flex items-center justify-between"
-          style={{ borderColor: 'hsl(var(--warm) / 0.2)' }}
+          style={{ borderColor: 'hsl(var(--primary) / 0.15)' }}
           initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: 'hsl(var(--warm) / 0.12)' }}>
-              <Crown className="w-5 h-5" weight="duotone" style={{ color: 'hsl(var(--warm))' }} />
+            <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: 'hsl(var(--primary) / 0.1)' }}>
+              <Crown className="w-5 h-5" weight="duotone" style={{ color: 'hsl(var(--primary))' }} />
             </div>
             <div>
-              <h4 className="font-semibold text-sm" style={{ color: 'hsl(var(--warm))' }}>Upgrade to Pro</h4>
+              <h4 className="font-semibold text-sm" style={{ color: 'hsl(var(--primary))' }}>Upgrade to Pro</h4>
               <p className="text-xs text-muted-foreground">Unlock Multi-currency, Receipt Scanning, and AI Insights.</p>
             </div>
           </div>
           <Link href="/pricing">
-            <button className="px-4 py-2 rounded-xl text-white text-sm font-medium transition-all duration-200 hover:shadow-glow-warm"
-              style={{ background: 'hsl(var(--warm))' }}>
+            <button className="px-4 py-2 rounded-xl text-white text-sm font-medium transition-all duration-200 hover:shadow-glow"
+              style={{ background: 'hsl(var(--primary))' }}>
               Upgrade Now
             </button>
           </Link>

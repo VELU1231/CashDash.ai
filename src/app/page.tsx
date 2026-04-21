@@ -62,22 +62,22 @@ export default function HomePage() {
 
       {/* ─── Hero — Editorial + Liquid ─── */}
       <section className="pt-36 pb-24 px-4 relative">
-        {/* Background gradient blobs — warm tones */}
+        {/* Background gradient blobs — clean tones */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
           <motion.div 
             className="absolute top-20 left-1/4 w-[500px] h-[500px] rounded-full blur-[100px]"
-            style={{ background: 'hsl(var(--warm) / 0.06)' }}
+            style={{ background: 'hsl(var(--primary) / 0.05)' }}
             animate={{ y: [0, -20, 0], x: [0, 10, 0] }}
             transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
           />
           <motion.div 
             className="absolute top-40 right-1/4 w-[400px] h-[400px] rounded-full blur-[100px]"
-            style={{ background: 'hsl(var(--primary) / 0.05)' }}
+            style={{ background: 'hsl(217 91% 60% / 0.04)' }}
             animate={{ y: [0, 15, 0], x: [0, -10, 0] }}
             transition={{ duration: 10, repeat: Infinity, ease: "easeInOut" }}
           />
           <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[700px] h-56 rounded-full blur-[100px]"
-            style={{ background: 'hsl(var(--warm) / 0.04)' }}
+            style={{ background: 'hsl(var(--primary) / 0.03)' }}
           />
         </div>
 
@@ -254,15 +254,15 @@ export default function HomePage() {
               },
               {
                 icon: <Shield className="w-5 h-5" weight="regular" />,
-                color: 'hsl(var(--warm))',
-                bg: 'hsl(var(--warm) / 0.08)',
+                color: 'hsl(215 25% 40%)',
+                bg: 'hsl(215 25% 40% / 0.08)',
                 title: 'Privacy First',
                 desc: 'Your data is encrypted and protected with Supabase RLS. Only you can see your finances.',
               },
               {
                 icon: <Lightning className="w-5 h-5" weight="regular" />,
-                color: 'hsl(34 75% 63%)',
-                bg: 'hsl(34 75% 63% / 0.08)',
+                color: 'hsl(24 95% 53%)',
+                bg: 'hsl(24 95% 53% / 0.08)',
                 title: 'Multi-Currency',
                 desc: 'Track in PHP, USD, EUR, and 17+ more currencies. Perfect for travelers and freelancers.',
               },

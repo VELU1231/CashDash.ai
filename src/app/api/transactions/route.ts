@@ -87,26 +87,48 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Amount must be a positive number' }, { status: 400 });
     }
 
-    const { data: tx, error } = await supabase
+    // Insert the transaction first, then fetch with joins separately.
+    // PostgREST can return 300 when .single() is used with joins on insert,
+    // causing the API to crash with a 500 error.
+    const insertPayload = {
+      user_id: user.id,
+      type,
+      amount: amountCents,
+      currency: currency || 'PHP',
+      description: description || null,
+      note: note || null,
+      emoji: emoji || null,
+      category_id: category_id || null,
+      account_id: resolvedAccountId,
+      dest_account_id: dest_account_id || null,
+      transaction_date: transaction_date || new Date().toISOString(),
+      is_ai_created: false,
+    };
+
+    const { data: inserted, error: insertError } = await supabase
       .from('transactions')
-      .insert({
-        user_id: user.id,
-        type,
-        amount: amountCents,
-        currency: currency || 'PHP',
-        description: description || null,
-        note: note || null,
-        emoji: emoji || null,
-        category_id: category_id || null,
-        account_id: resolvedAccountId,
-        dest_account_id: dest_account_id || null,
-        transaction_date: transaction_date || new Date().toISOString(),
-        is_ai_created: false,
-      })
-      .select('*, category:categories(*), account:accounts(*)')
+      .insert(insertPayload)
+      .select('id, user_id, type, amount, currency, description, note, emoji, category_id, account_id, dest_account_id, transaction_date, is_ai_created, created_at, updated_at')
       .single();
 
-    if (error) throw error;
+    if (insertError) {
+      console.error('[POST /api/transactions] Insert error:', insertError);
+      throw insertError;
+    }
+
+    // Now fetch the full transaction with joined relations
+    let tx = inserted;
+    try {
+      const { data: fullTx } = await supabase
+        .from('transactions')
+        .select('*, category:categories(id, name, icon, color, type), account:accounts(id, name, icon, color, currency)')
+        .eq('id', inserted.id)
+        .maybeSingle();
+      if (fullTx) tx = fullTx;
+    } catch (joinErr) {
+      // Non-fatal: we still have the base transaction
+      console.warn('[POST /api/transactions] Join fetch failed, returning base row:', joinErr);
+    }
 
     // Update account balance
     const balanceChange = type === 'income' ? amountCents : type === 'expense' ? -amountCents : 0;

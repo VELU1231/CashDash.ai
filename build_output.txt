@@ -1,37 +1,34 @@
-﻿
-> cashdash-ai@0.1.0 build
-> next build
-
-npm : (node:17304) ExperimentalWarning: Importing JSON modules is an experimental feature and might change at any time
+﻿npx : (node:13352) ExperimentalWarning: Importing JSON modules is an experimental feature and might change at any time
 At line:1 char:1
-+ npm run build 2>&1 | Out-File -FilePath ".\build_output.txt" -Encodin ...
-+ ~~~~~~~~~~~~~~~~~~
-    + CategoryInfo          : NotSpecified: ((node:17304) Ex...nge at any time:String) [], RemoteException
++ npx next build 2>&1 | Out-File -FilePath ".\build_output.txt" -Encodi ...
++ ~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: ((node:13352) Ex...nge at any time:String) [], RemoteException
     + FullyQualifiedErrorId : NativeCommandError
  
 (Use `node --trace-warnings ...` to show where the warning was created)
-Discovering workflow directives 23359ms
-Created steps bundle 156ms
-Created intermediate workflow bundle 232ms
+Discovering workflow directives 7887ms
+Created steps bundle 59ms
+Created intermediate workflow bundle 135ms
 Creating webhook route
 Creating manifest...
-Created manifest with 9 steps, 3 workflows, and 0 classes 15ms
+Created manifest with 9 steps, 3 workflows, and 0 classes 18ms
 Γû▓ Next.js 16.2.4 (Turbopack)
 
   Creating an optimized production build ...
-(node:20684) ExperimentalWarning: Importing JSON modules is an experimental feature and might change at any time
+(node:13204) ExperimentalWarning: Importing JSON modules is an experimental feature and might change at any time
 (Use `node --trace-warnings ...` to show where the warning was created)
-(node:19488) ExperimentalWarning: Importing JSON modules is an experimental feature and might change at any time
+(node:15680) ExperimentalWarning: Importing JSON modules is an experimental feature and might change at any time
 (Use `node --trace-warnings ...` to show where the warning was created)
-Γ£ô Compiled successfully in 78s
+Γ£ô Compiled successfully in 36.7s
   Running TypeScript ...
-  Finished TypeScript in 50s ...
+  Finished TypeScript in 19.0s ...
   Collecting page data using 3 workers ...
-  Generating static pages using 3 workers (0/37) ...
-  Generating static pages using 3 workers (9/37) 
-  Generating static pages using 3 workers (18/37) 
-  Generating static pages using 3 workers (27/37) 
-Γ£ô Generating static pages using 3 workers (37/37) in 1879ms
+ΓÜá Using edge runtime on a page currently disables static generation for that page
+  Generating static pages using 3 workers (0/47) ...
+  Generating static pages using 3 workers (11/47) 
+  Generating static pages using 3 workers (23/47) 
+  Generating static pages using 3 workers (35/47) 
+Γ£ô Generating static pages using 3 workers (47/47) in 1232ms
   Finalizing page optimization ...
 
 Route (app)
@@ -48,10 +45,18 @@ Route (app)
 Γö£ ╞Æ /api/ai/parse
 Γö£ ╞Æ /api/ai/scan
 Γö£ ╞Æ /api/analytics
+Γö£ ╞Æ /api/bills
+Γö£ ╞Æ /api/bills/[id]
+Γö£ ╞Æ /api/budgets
+Γö£ ╞Æ /api/budgets/[id]
 Γö£ ╞Æ /api/categories
+Γö£ ╞Æ /api/categories/[id]
 Γö£ ╞Æ /api/checkout
+Γö£ ╞Æ /api/diagnostics
 Γö£ ╞Æ /api/exchange-rates
 Γö£ ╞Æ /api/export
+Γö£ ╞Æ /api/goals
+Γö£ ╞Æ /api/goals/[id]
 Γö£ ╞Æ /api/import
 Γö£ ╞Æ /api/portal
 Γö£ ╞Æ /api/profile
@@ -62,21 +67,29 @@ Route (app)
 Γö£ ╞Æ /api/transactions/bulk
 Γö£ ╞Æ /api/webhooks/lemonsqueezy
 Γö£ ╞Æ /api/workflows
+Γö£ ╞Æ /apple-icon
 Γö£ ╞Æ /auth/callback
 Γö£ ╞Æ /dashboard
 Γö£ ╞Æ /dashboard/accounts
 Γö£ ╞Æ /dashboard/ai-assistant
 Γö£ ╞Æ /dashboard/analytics
+Γö£ ╞Æ /dashboard/bills
+Γö£ ╞Æ /dashboard/budgets
 Γö£ ╞Æ /dashboard/categories
+Γö£ ╞Æ /dashboard/goals
 Γö£ ╞Æ /dashboard/import-export
 Γö£ ╞Æ /dashboard/settings
 Γö£ ╞Æ /dashboard/tags
 Γö£ ╞Æ /dashboard/templates
 Γö£ ╞Æ /dashboard/transactions
 Γö£ ╞Æ /dashboard/transactions/new
+Γö£ Γùï /forgot-password
+Γö£ ╞Æ /icon
 Γö£ ╞Æ /login
+Γö£ Γùï /manifest.webmanifest
 Γö£ Γùï /pricing
-Γöö ╞Æ /register
+Γö£ ╞Æ /register
+Γöö Γùï /reset-password
 
 
 ╞Æ Proxy (Middleware)

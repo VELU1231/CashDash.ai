@@ -49,28 +49,17 @@ module.exports = {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
         },
-        warm: {
-          DEFAULT: "hsl(var(--warm))",
-          foreground: "hsl(var(--warm-foreground))",
-        },
         // CashDash brand palette
         emerald: {
           50: "#ecfdf5", 100: "#d1fae5", 200: "#a7f3d0",
           300: "#6ee7b7", 400: "#34d399", 500: "#10b981",
           600: "#059669", 700: "#047857", 800: "#065f46", 900: "#064e3b",
         },
-        paper: {
-          50: "#FDFBF5",
-          100: "#F8F2E1",
-          200: "#F1EAD6",
-          300: "#E6DBBC",
-          400: "#D4C8A2",
-          500: "#BFB08A",
-          600: "#9A8A6A",
-          700: "#7A6D52",
-          800: "#5C5240",
-          900: "#3D3630",
-          950: "#1C1814",
+        slate: {
+          50: "#f8fafc", 100: "#f1f5f9", 200: "#e2e8f0",
+          300: "#cbd5e1", 400: "#94a3b8", 500: "#64748b",
+          600: "#475569", 700: "#334155", 800: "#1e293b",
+          900: "#0f172a", 950: "#020617",
         },
       },
       borderRadius: {
@@ -163,9 +152,9 @@ module.exports = {
         "shimmer-gradient":
           "linear-gradient(90deg, transparent 25%, hsl(var(--card) / 0.3) 50%, transparent 75%)",
         "hero-gradient":
-          "linear-gradient(135deg, hsl(var(--warm) / 0.1) 0%, hsl(var(--primary) / 0.08) 50%, transparent 80%)",
-        "warm-gradient":
-          "linear-gradient(135deg, hsl(var(--warm) / 0.15) 0%, transparent 60%)",
+          "linear-gradient(135deg, hsl(var(--primary) / 0.06) 0%, hsl(var(--primary) / 0.03) 50%, transparent 80%)",
+        "subtle-gradient":
+          "linear-gradient(135deg, hsl(var(--muted) / 0.5) 0%, transparent 60%)",
       },
       fontFamily: {
         sans: ["var(--font-inter)", "system-ui", "sans-serif"],
@@ -174,7 +163,7 @@ module.exports = {
       },
       boxShadow: {
         glow: "0 0 20px -5px hsl(var(--primary) / 0.3)",
-        "glow-warm": "0 0 20px -5px hsl(var(--warm) / 0.3)",
+        "glow-warm": "0 0 20px -5px hsl(var(--primary) / 0.3)",
         "card-hover": "0 8px 30px -8px hsl(var(--foreground) / 0.12)",
         soft: "0 2px 8px -2px hsl(var(--foreground) / 0.06)",
         glass: "0 4px 24px -4px hsl(var(--foreground) / 0.06), inset 0 1px 0 hsl(var(--foreground) / 0.02)",
