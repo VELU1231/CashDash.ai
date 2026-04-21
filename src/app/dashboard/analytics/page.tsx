@@ -16,23 +16,39 @@ const BarChartCard = dynamic(() => import('@/components/ui/chartjs-components').
 const DoughnutChartCard = dynamic(() => import('@/components/ui/chartjs-components').then(m => ({ default: m.DoughnutChartCard })), { ssr: false });
 const TreemapChartCard = dynamic(() => import('@/components/ui/chartjs-components').then(m => ({ default: m.TreemapChartCard })), { ssr: false });
 const MatrixChartCard = dynamic(() => import('@/components/ui/chartjs-components').then(m => ({ default: m.MatrixChartCard })), { ssr: false });
+const RadarChartCard = dynamic(() => import('@/components/ui/chartjs-components').then(m => ({ default: m.RadarChartCard })), { ssr: false });
+const PolarAreaChartCard = dynamic(() => import('@/components/ui/chartjs-components').then(m => ({ default: m.PolarAreaChartCard })), { ssr: false });
+const ScatterChartCard = dynamic(() => import('@/components/ui/chartjs-components').then(m => ({ default: m.ScatterChartCard })), { ssr: false });
+const BubbleChartCard = dynamic(() => import('@/components/ui/chartjs-components').then(m => ({ default: m.BubbleChartCard })), { ssr: false });
+const PieChartCard = dynamic(() => import('@/components/ui/chartjs-components').then(m => ({ default: m.PieChartCard })), { ssr: false });
+const MixedChartCard = dynamic(() => import('@/components/ui/chartjs-components').then(m => ({ default: m.MixedChartCard })), { ssr: false });
 
-type WidgetType = 'income_trend' | 'net_flow' | 'category_doughnut' | 'category_treemap' | 'activity_heatmap' | 'health_score';
+type WidgetType = 'income_trend' | 'net_flow' | 'category_doughnut' | 'category_treemap' | 'activity_heatmap' | 'health_score' | 'category_radar' | 'category_polar' | 'transaction_scatter' | 'category_bubble' | 'category_pie' | 'income_mixed';
 
 interface WidgetDef {
   id: WidgetType;
   label: string;
   icon: any;
   defaultActive: boolean;
+  group: 'Trends' | 'Distributions' | 'Advanced' | 'Metrics';
 }
 
 const AVAILABLE_WIDGETS: WidgetDef[] = [
-  { id: 'income_trend', label: 'Income vs Expenses', icon: TrendUp, defaultActive: true },
-  { id: 'net_flow', label: 'Net Cash Flow', icon: ChartBar, defaultActive: true },
-  { id: 'category_doughnut', label: 'Category Doughnut', icon: ChartPieSlice, defaultActive: true },
-  { id: 'category_treemap', label: 'Category Treemap', icon: Target, defaultActive: false },
-  { id: 'activity_heatmap', label: 'Activity Matrix', icon: CalendarBlank, defaultActive: false },
-  { id: 'health_score', label: 'Health Score', icon: Brain, defaultActive: true },
+  { id: 'income_trend', label: 'Income vs Expenses', icon: TrendUp, defaultActive: true, group: 'Trends' },
+  { id: 'net_flow', label: 'Net Cash Flow', icon: ChartBar, defaultActive: true, group: 'Trends' },
+  { id: 'income_mixed', label: 'Income vs Net (Mixed)', icon: TrendUp, defaultActive: false, group: 'Trends' },
+  
+  { id: 'category_doughnut', label: 'Category Doughnut', icon: ChartPieSlice, defaultActive: true, group: 'Distributions' },
+  { id: 'category_pie', label: 'Category Pie', icon: ChartPieSlice, defaultActive: false, group: 'Distributions' },
+  { id: 'category_treemap', label: 'Category Treemap', icon: Target, defaultActive: false, group: 'Distributions' },
+  
+  { id: 'category_radar', label: 'Category Radar', icon: Target, defaultActive: false, group: 'Advanced' },
+  { id: 'category_polar', label: 'Category Polar Area', icon: Target, defaultActive: false, group: 'Advanced' },
+  { id: 'category_bubble', label: 'Category Bubble', icon: Target, defaultActive: false, group: 'Advanced' },
+  { id: 'transaction_scatter', label: 'Transaction Scatter', icon: Target, defaultActive: false, group: 'Advanced' },
+  { id: 'activity_heatmap', label: 'Activity Matrix', icon: CalendarBlank, defaultActive: false, group: 'Advanced' },
+  
+  { id: 'health_score', label: 'Health Score', icon: Brain, defaultActive: true, group: 'Metrics' },
 ];
 
 const PERIODS = [
@@ -249,20 +265,25 @@ export default function AnalyticsPage() {
                   <div className="px-3 py-2 border-b border-input bg-muted/30">
                     <span className="text-xs font-medium text-muted-foreground">Select Widgets</span>
                   </div>
-                  <div className="p-1 max-h-[300px] overflow-y-auto">
-                    {AVAILABLE_WIDGETS.map(widget => {
-                      const isActive = activeWidgets.includes(widget.id);
-                      const Icon = widget.icon;
-                      return (
-                        <button key={widget.id} onClick={() => toggleWidget(widget.id)}
-                          className={`w-full flex items-center justify-between px-2.5 py-2 rounded-lg text-sm transition-all ${
-                            isActive ? 'bg-primary/10 text-primary font-medium' : 'hover:bg-muted text-foreground'
-                          }`}>
-                          <span className="flex items-center gap-2"><Icon className="w-4 h-4" /> {widget.label}</span>
-                          {isActive && <div className="w-2 h-2 rounded-full bg-primary" />}
-                        </button>
-                      );
-                    })}
+                  <div className="p-1 max-h-[400px] overflow-y-auto">
+                    {['Trends', 'Distributions', 'Advanced', 'Metrics'].map((group) => (
+                      <div key={group} className="mb-2">
+                        <div className="px-2.5 py-1 text-[10px] uppercase font-bold text-muted-foreground/70 tracking-wider">{group}</div>
+                        {AVAILABLE_WIDGETS.filter(w => w.group === group).map(widget => {
+                          const isActive = activeWidgets.includes(widget.id);
+                          const Icon = widget.icon;
+                          return (
+                            <button key={widget.id} onClick={() => toggleWidget(widget.id)}
+                              className={`w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg text-sm transition-all ${
+                                isActive ? 'bg-primary/10 text-primary font-medium' : 'hover:bg-muted text-foreground'
+                              }`}>
+                              <span className="flex items-center gap-2"><Icon className="w-4 h-4" /> {widget.label}</span>
+                              {isActive && <div className="w-2 h-2 rounded-full bg-primary" />}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    ))}
                   </div>
                 </motion.div>
               </>
@@ -485,6 +506,169 @@ export default function AnalyticsPage() {
               <div className="flex flex-col items-center justify-center h-[280px] text-muted-foreground">
                 <Target className="w-10 h-10 opacity-20 mb-2" weight="light" />
                 <p className="text-sm">No expense data yet</p>
+              </div>
+            )}
+          </motion.div>
+        )}
+
+        {/* PIE CHART */}
+        {activeWidgets.includes('category_pie') && (
+          <motion.div className="glass-card p-5"
+            initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}>
+            <div className="mb-4">
+              <h3 className="font-serif font-semibold">Spending Proportions</h3>
+              <p className="text-xs text-muted-foreground font-mono mt-0.5">Category Pie Chart</p>
+            </div>
+            {data.categories.length > 0 ? (
+              <PieChartCard
+                labels={data.categories.map(c => c.name)}
+                data={data.categories.map(c => c.total)}
+                colors={data.categories.map((c, i) => c.color || CHART_PALETTE[i % CHART_PALETTE.length])}
+                height={220}
+                formatValue={fmtFull}
+              />
+            ) : (
+              <div className="flex flex-col items-center justify-center h-[220px] text-muted-foreground">
+                <ChartPieSlice className="w-10 h-10 opacity-20 mb-2" weight="light" />
+                <p className="text-sm">No expense data yet</p>
+              </div>
+            )}
+          </motion.div>
+        )}
+
+        {/* RADAR CHART */}
+        {activeWidgets.includes('category_radar') && (
+          <motion.div className="glass-card p-5"
+            initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}>
+            <div className="mb-4">
+              <h3 className="font-serif font-semibold">Spending Radar</h3>
+              <p className="text-xs text-muted-foreground font-mono mt-0.5">Radial category balance</p>
+            </div>
+            {data.categories.length > 0 ? (
+              <RadarChartCard
+                labels={data.categories.map(c => c.name)}
+                datasets={[{
+                  label: 'Spending',
+                  data: data.categories.map(c => c.total),
+                  color: '#10b981'
+                }]}
+                height={280}
+                formatValue={fmtFull}
+              />
+            ) : (
+              <div className="flex flex-col items-center justify-center h-[280px] text-muted-foreground">
+                <Target className="w-10 h-10 opacity-20 mb-2" weight="light" />
+                <p className="text-sm">No data yet</p>
+              </div>
+            )}
+          </motion.div>
+        )}
+
+        {/* POLAR AREA CHART */}
+        {activeWidgets.includes('category_polar') && (
+          <motion.div className="glass-card p-5 lg:col-span-2"
+            initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}>
+            <div className="mb-4">
+              <h3 className="font-serif font-semibold">Spending Imbalance</h3>
+              <p className="text-xs text-muted-foreground font-mono mt-0.5">Polar Area Distribution</p>
+            </div>
+            {data.categories.length > 0 ? (
+              <PolarAreaChartCard
+                labels={data.categories.map(c => c.name)}
+                data={data.categories.map(c => c.total)}
+                colors={data.categories.map((c, i) => c.color || CHART_PALETTE[i % CHART_PALETTE.length])}
+                height={320}
+                formatValue={fmtFull}
+              />
+            ) : (
+              <div className="flex flex-col items-center justify-center h-[320px] text-muted-foreground">
+                <Target className="w-10 h-10 opacity-20 mb-2" weight="light" />
+                <p className="text-sm">No data yet</p>
+              </div>
+            )}
+          </motion.div>
+        )}
+
+        {/* BUBBLE CHART */}
+        {activeWidgets.includes('category_bubble') && (
+          <motion.div className="glass-card p-5 lg:col-span-2"
+            initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}>
+            <div className="mb-4">
+              <h3 className="font-serif font-semibold">Category Density</h3>
+              <p className="text-xs text-muted-foreground font-mono mt-0.5">Frequency vs Total Amount vs Avg Size</p>
+            </div>
+            {data.categories.length > 0 ? (
+              <BubbleChartCard
+                datasets={data.categories.map((c, i) => ({
+                  label: c.name,
+                  data: [{
+                    x: c.count,
+                    y: c.total,
+                    r: Math.max(5, Math.min((c.total / Math.max(1, c.count)) / 500, 30)) // Calculate average transaction size as radius
+                  }],
+                  color: c.color || CHART_PALETTE[i % CHART_PALETTE.length]
+                }))}
+                height={320}
+                formatValue={fmtFull}
+              />
+            ) : (
+              <div className="flex flex-col items-center justify-center h-[320px] text-muted-foreground">
+                <Target className="w-10 h-10 opacity-20 mb-2" weight="light" />
+                <p className="text-sm">No data yet</p>
+              </div>
+            )}
+          </motion.div>
+        )}
+
+        {/* SCATTER CHART */}
+        {activeWidgets.includes('transaction_scatter') && (
+          <motion.div className="glass-card p-5 lg:col-span-2"
+            initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}>
+            <div className="mb-4">
+              <h3 className="font-serif font-semibold">Expense Scatter Plot</h3>
+              <p className="text-xs text-muted-foreground font-mono mt-0.5">Daily expense anomalies (High-density view)</p>
+            </div>
+            {data.daily.length > 0 ? (
+              <ScatterChartCard
+                datasets={[{
+                  label: 'Daily Expenses',
+                  data: data.daily.map((d, i) => ({ x: i + 1, y: d.expenses })),
+                  color: '#f87171'
+                }]}
+                height={300}
+                formatValue={fmtFull}
+              />
+            ) : (
+              <div className="flex flex-col items-center justify-center h-[300px] text-muted-foreground">
+                <Target className="w-10 h-10 opacity-20 mb-2" weight="light" />
+                <p className="text-sm">No data yet</p>
+              </div>
+            )}
+          </motion.div>
+        )}
+
+        {/* MIXED CHART */}
+        {activeWidgets.includes('income_mixed') && (
+          <motion.div className="glass-card p-5 lg:col-span-2"
+            initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}>
+            <div className="mb-4">
+              <h3 className="font-serif font-semibold">Net vs Expenses Overlay</h3>
+              <p className="text-xs text-muted-foreground font-mono mt-0.5">Mixed Chart</p>
+            </div>
+            {chartData.length > 0 ? (
+              <MixedChartCard
+                labels={chartData.map(m => m.label)}
+                barData={chartData.map(m => m.expenses)}
+                lineData={chartData.map(m => m.income - m.expenses)}
+                barColor="#f87171"
+                lineColor="#10b981"
+                height={300}
+                formatValue={fmtCompact}
+              />
+            ) : (
+              <div className="flex flex-col items-center justify-center h-[300px] text-muted-foreground">
+                <TrendUp className="w-10 h-10 opacity-20 mb-2" weight="light" />
+                <p className="text-sm">No data yet</p>
               </div>
             )}
           </motion.div>

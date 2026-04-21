@@ -3,10 +3,10 @@
 import { useEffect, useRef } from 'react';
 import {
   Chart as ChartJS,
-  CategoryScale, LinearScale, PointElement, LineElement, BarElement,
-  ArcElement, Filler, Tooltip, Legend,
+  CategoryScale, LinearScale, RadialLinearScale, PointElement, LineElement, BarElement,
+  ArcElement, Filler, Tooltip, Legend, Decimation,
 } from 'chart.js';
-import { Line, Bar, Doughnut, Chart as ReactChart } from 'react-chartjs-2';
+import { Line, Bar, Doughnut, Pie, Radar, PolarArea, Scatter, Bubble, Chart as ReactChart } from 'react-chartjs-2';
 
 // Advanced Plugins
 import ChartDataLabels from 'chartjs-plugin-datalabels';
@@ -19,8 +19,8 @@ import { MatrixController, MatrixElement } from 'chartjs-chart-matrix';
 
 // Register Chart.js modules once
 ChartJS.register(
-  CategoryScale, LinearScale, PointElement, LineElement, BarElement,
-  ArcElement, Filler, Tooltip, Legend,
+  CategoryScale, LinearScale, RadialLinearScale, PointElement, LineElement, BarElement,
+  ArcElement, Filler, Tooltip, Legend, Decimation,
   annotationPlugin, zoomPlugin, trendlinePlugin,
   TreemapController, TreemapElement, MatrixController, MatrixElement
 );
@@ -59,6 +59,26 @@ const tooltipConfig = {
 };
 
 const gridColor = 'rgba(128, 128, 128, 0.06)';
+
+// Advanced Global Config
+ChartJS.defaults.devicePixelRatio = typeof window !== 'undefined' && window.devicePixelRatio > 1 ? 2 : 1;
+ChartJS.defaults.layout.padding = 4;
+ChartJS.defaults.font.family = 'system-ui, -apple-system, sans-serif';
+
+// Canvas Background Plugin
+export const canvasBackgroundPlugin = {
+  id: 'canvasBackground',
+  beforeDraw: (chart: any, args: any, options: any) => {
+    if (!options.color) return;
+    const { ctx, width, height } = chart;
+    ctx.save();
+    ctx.globalCompositeOperation = 'destination-over';
+    ctx.fillStyle = options.color;
+    ctx.fillRect(0, 0, width, height);
+    ctx.restore();
+  }
+};
+ChartJS.register(canvasBackgroundPlugin);
 
 // ─── AREA / LINE CHART ───────────────────────────────────────────
 interface AreaChartProps {
@@ -473,3 +493,319 @@ export function MatrixChartCard({ data: matrixData, xLabels, yLabels, height = 2
     </div>
   );
 }
+
+// ─── RADAR CHART ─────────────────────────────────────────────────
+interface RadarChartProps {
+  labels: string[];
+  datasets: { label: string; data: number[]; color: string }[];
+  height?: number;
+  formatValue?: (v: number) => string;
+}
+
+export function RadarChartCard({ labels, datasets, height = 300, formatValue }: RadarChartProps) {
+  const data = {
+    labels,
+    datasets: datasets.map(ds => ({
+      label: ds.label,
+      data: ds.data,
+      backgroundColor: ds.color.replace('rgb', 'rgba').replace(')', ', 0.2)').replace('rgba,', 'rgba('),
+      borderColor: ds.color,
+      pointBackgroundColor: ds.color,
+      pointBorderColor: '#fff',
+      pointHoverBackgroundColor: '#fff',
+      pointHoverBorderColor: ds.color,
+      borderWidth: 2,
+    })),
+  };
+
+  const options = {
+    responsive: true,
+    maintainAspectRatio: false,
+    scales: {
+      r: {
+        angleLines: { color: gridColor },
+        grid: { color: gridColor },
+        pointLabels: { color: 'rgba(128,128,128,0.8)', font: { size: 11, family: 'system-ui' } },
+        ticks: { display: false } // Hide ticks for cleaner look
+      }
+    },
+    plugins: {
+      legend: { position: 'bottom' as const, labels: { usePointStyle: true, boxWidth: 8 } },
+      tooltip: {
+        ...tooltipConfig,
+        callbacks: {
+          label: (ctx: any) => {
+            const val = formatValue ? formatValue(ctx.raw) : ctx.raw;
+            return `  ${ctx.dataset.label}: ${val}`;
+          }
+        }
+      }
+    }
+  };
+
+  return (
+    <div style={{ height }}>
+      <Radar data={data} options={options} plugins={[shadowPlugin]} />
+    </div>
+  );
+}
+
+// ─── POLAR AREA CHART ────────────────────────────────────────────
+interface PolarAreaProps {
+  labels: string[];
+  data: number[];
+  colors: string[];
+  height?: number;
+  formatValue?: (v: number) => string;
+}
+
+export function PolarAreaChartCard({ labels, data: values, colors, height = 300, formatValue }: PolarAreaProps) {
+  const data = {
+    labels,
+    datasets: [{
+      data: values,
+      backgroundColor: colors.map(c => c.replace('rgb', 'rgba').replace(')', ', 0.6)').replace('rgba,', 'rgba(')),
+      borderColor: colors,
+      borderWidth: 1,
+    }]
+  };
+
+  const options = {
+    responsive: true,
+    maintainAspectRatio: false,
+    scales: {
+      r: {
+        grid: { color: gridColor },
+        ticks: { display: false }
+      }
+    },
+    plugins: {
+      legend: { position: 'right' as const, labels: { usePointStyle: true, boxWidth: 8 } },
+      tooltip: {
+        ...tooltipConfig,
+        callbacks: {
+          label: (ctx: any) => {
+            const val = formatValue ? formatValue(ctx.raw) : ctx.raw;
+            return `  ${ctx.label}: ${val}`;
+          }
+        }
+      }
+    }
+  };
+
+  return (
+    <div style={{ height }}>
+      <PolarArea data={data} options={options} />
+    </div>
+  );
+}
+
+// ─── SCATTER CHART ───────────────────────────────────────────────
+interface ScatterChartProps {
+  datasets: { label: string; data: { x: number; y: number }[]; color: string }[];
+  height?: number;
+  formatValue?: (v: number) => string;
+}
+
+export function ScatterChartCard({ datasets, height = 300, formatValue }: ScatterChartProps) {
+  const data = {
+    datasets: datasets.map(ds => ({
+      label: ds.label,
+      data: ds.data,
+      backgroundColor: ds.color,
+      pointRadius: 5,
+      pointHoverRadius: 8,
+    }))
+  };
+
+  const options = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      decimation: { enabled: true, algorithm: 'lttb' as const },
+      legend: { position: 'top' as const, labels: { usePointStyle: true } },
+      tooltip: {
+        ...tooltipConfig,
+        callbacks: {
+          label: (ctx: any) => {
+            const val = formatValue ? formatValue(ctx.raw.y) : ctx.raw.y;
+            return `  ${ctx.dataset.label}: ${val} (Day ${ctx.raw.x})`;
+          }
+        }
+      }
+    },
+    scales: {
+      x: {
+        type: 'linear' as const,
+        position: 'bottom' as const,
+        grid: { display: false },
+        title: { display: true, text: 'Day of Month', color: 'rgba(128,128,128,0.5)', font: { size: 10 } }
+      },
+      y: {
+        grid: { color: gridColor },
+        ticks: { callback: (v: any) => formatValue ? formatValue(v) : v }
+      }
+    }
+  };
+
+  return (
+    <div style={{ height }}>
+      <Scatter data={data} options={options} plugins={[shadowPlugin]} />
+    </div>
+  );
+}
+
+// ─── BUBBLE CHART ────────────────────────────────────────────────
+interface BubbleChartProps {
+  datasets: { label: string; data: { x: number; y: number; r: number }[]; color: string }[];
+  height?: number;
+  formatValue?: (v: number) => string;
+}
+
+export function BubbleChartCard({ datasets, height = 300, formatValue }: BubbleChartProps) {
+  const data = {
+    datasets: datasets.map(ds => ({
+      label: ds.label,
+      data: ds.data,
+      backgroundColor: ds.color.replace('rgb', 'rgba').replace(')', ', 0.6)').replace('rgba,', 'rgba('),
+      borderColor: ds.color,
+      borderWidth: 1,
+    }))
+  };
+
+  const options = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: { display: false },
+      tooltip: {
+        ...tooltipConfig,
+        callbacks: {
+          label: (ctx: any) => {
+            const val = formatValue ? formatValue(ctx.raw.y) : ctx.raw.y;
+            return `  ${ctx.dataset.label}: ${val} (${ctx.raw.x} txns)`;
+          }
+        }
+      }
+    },
+    scales: {
+      x: {
+        grid: { display: false },
+        title: { display: true, text: 'Transaction Count', color: 'rgba(128,128,128,0.5)', font: { size: 10 } }
+      },
+      y: {
+        grid: { color: gridColor },
+        title: { display: true, text: 'Total Amount', color: 'rgba(128,128,128,0.5)', font: { size: 10 } },
+        ticks: { callback: (v: any) => formatValue ? formatValue(v) : v }
+      }
+    }
+  };
+
+  return (
+    <div style={{ height }}>
+      <Bubble data={data} options={options} />
+    </div>
+  );
+}
+
+// ─── PIE CHART ───────────────────────────────────────────────────
+export function PieChartCard({ labels, data: values, colors, height = 240, formatValue }: PolarAreaProps) {
+  const data = {
+    labels,
+    datasets: [{
+      data: values,
+      backgroundColor: colors,
+      borderWidth: 0,
+      hoverOffset: 4,
+    }]
+  };
+
+  const options = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: { position: 'right' as const, labels: { usePointStyle: true, boxWidth: 8 } },
+      tooltip: {
+        ...tooltipConfig,
+        callbacks: {
+          label: (ctx: any) => {
+            const val = formatValue ? formatValue(ctx.parsed) : ctx.parsed;
+            return `  ${ctx.label}: ${val}`;
+          }
+        }
+      }
+    }
+  };
+
+  return (
+    <div style={{ height }}>
+      <Pie data={data} options={options} plugins={[shadowPlugin]} />
+    </div>
+  );
+}
+
+// ─── MIXED CHART ─────────────────────────────────────────────────
+interface MixedChartProps {
+  labels: string[];
+  barData: number[];
+  lineData: number[];
+  barColor: string;
+  lineColor: string;
+  height?: number;
+  formatValue?: (v: number) => string;
+}
+
+export function MixedChartCard({ labels, barData, lineData, barColor, lineColor, height = 300, formatValue }: MixedChartProps) {
+  const data = {
+    labels,
+    datasets: [
+      {
+        type: 'line' as const,
+        label: 'Net Flow',
+        data: lineData,
+        borderColor: lineColor,
+        borderWidth: 3,
+        pointBackgroundColor: lineColor,
+        pointBorderColor: '#fff',
+        pointRadius: 4,
+        tension: 0.4,
+      },
+      {
+        type: 'bar' as const,
+        label: 'Expenses',
+        data: barData,
+        backgroundColor: barColor,
+        borderRadius: 4,
+      }
+    ]
+  };
+
+  const options = {
+    responsive: true,
+    maintainAspectRatio: false,
+    interaction: { mode: 'index' as const, intersect: false },
+    plugins: {
+      legend: { position: 'top' as const, labels: { usePointStyle: true } },
+      tooltip: {
+        ...tooltipConfig,
+        callbacks: {
+          label: (ctx: any) => {
+            const val = formatValue ? formatValue(ctx.raw) : ctx.raw;
+            return `  ${ctx.dataset.label}: ${val}`;
+          }
+        }
+      }
+    },
+    scales: {
+      x: { grid: { display: false } },
+      y: { grid: { color: gridColor }, ticks: { callback: (v: any) => formatValue ? formatValue(v) : v } }
+    }
+  };
+
+  return (
+    <div style={{ height }}>
+      <ReactChart type="bar" data={data} options={options} plugins={[shadowPlugin]} />
+    </div>
+  );
+}
+
