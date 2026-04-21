@@ -80,7 +80,7 @@ export async function POST(request: NextRequest) {
           is_ai_created: true,
           ai_confidence: tx.confidence || null,
         })
-        .select('*, category:categories(id,name,icon,color), account:accounts(id,name,icon,color,currency)')
+        .select('*, category:categories(id,name,icon,color), account:accounts!account_id(id,name,icon,color,currency)')
         .single();
 
       if (error) {

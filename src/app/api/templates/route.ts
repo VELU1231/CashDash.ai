@@ -11,7 +11,7 @@ export async function GET() {
 
   const { data, error } = await supabase
     .from('transaction_templates')
-    .select('*, category:categories(*), account:accounts(*), dest_account:accounts!dest_account_id(*)')
+    .select('*, category:categories(*), account:accounts!account_id(*), dest_account:accounts!dest_account_id(*)')
     .eq('user_id', user.id)
     .order('created_at', { ascending: false });
 
@@ -52,7 +52,7 @@ export async function POST(request: NextRequest) {
 
   const { data: fetchedTemplate } = await supabase
     .from('transaction_templates')
-    .select('*, category:categories(*), account:accounts(*), dest_account:accounts!dest_account_id(*)')
+    .select('*, category:categories(*), account:accounts!account_id(*), dest_account:accounts!dest_account_id(*)')
     .eq('id', data.id)
     .maybeSingle();
 

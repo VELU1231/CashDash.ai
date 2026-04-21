@@ -29,7 +29,7 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
     })
     .eq('id', id)
     .eq('user_id', user.id)
-    .select('*, category:categories(*), account:accounts(*), dest_account:accounts!dest_account_id(*)')
+    .select('*, category:categories(*), account:accounts!account_id(*), dest_account:accounts!dest_account_id(*)')
     .single();
 
   if (error) return NextResponse.json({ error: error.message }, { status: 400 });

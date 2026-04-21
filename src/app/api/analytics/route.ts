@@ -43,7 +43,7 @@ export async function GET(request: NextRequest) {
   // ─── Build query ────────────────────────────────────────────────────
   let query = supabase
     .from('transactions')
-    .select('type, amount, currency, transaction_date, category:categories(id,name,icon,color), account:accounts(id,name)')
+    .select('type, amount, currency, transaction_date, category:categories(id,name,icon,color), account:accounts!account_id(id,name)')
     .eq('user_id', user.id)
     .gte('transaction_date', startDate)
     .lte('transaction_date', endDateFull);

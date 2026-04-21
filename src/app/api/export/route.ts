@@ -11,7 +11,7 @@ export async function GET() {
     .select(`
       *,
       category:categories(name,icon),
-      account:accounts(name,currency)
+      account:accounts!account_id(name,currency)
     `)
     .eq('user_id', user.id)
     .order('transaction_date', { ascending: false });

@@ -137,7 +137,7 @@ export async function POST(request: NextRequest) {
             is_ai_created: true,
             ai_confidence: tx.confidence,
           })
-          .select('*, category:categories(*), account:accounts(*)')
+          .select('*, category:categories(*), account:accounts!account_id(*)')
           .single();
 
         if (newTx) created.push(newTx);

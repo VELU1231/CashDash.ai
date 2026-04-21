@@ -9,7 +9,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
 
   const { data, error } = await supabase
     .from('transactions')
-    .select('*, category:categories(*), account:accounts(*), dest_account:accounts!dest_account_id(*)')
+    .select('*, category:categories(*), account:accounts!account_id(*), dest_account:accounts!dest_account_id(*)')
     .eq('id', id)
     .eq('user_id', user.id)
     .single();
@@ -44,7 +44,7 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
     .update(allowedFields)
     .eq('id', id)
     .eq('user_id', user.id)
-    .select('*, category:categories(*), account:accounts(*)')
+    .select('*, category:categories(*), account:accounts!account_id(*)')
     .single();
 
   if (error) return NextResponse.json({ error: error.message }, { status: 400 });
