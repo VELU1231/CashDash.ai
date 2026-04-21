@@ -14,6 +14,26 @@ import { format, subDays } from 'date-fns';
 const AreaChartCard = dynamic(() => import('@/components/ui/chartjs-components').then(m => ({ default: m.AreaChartCard })), { ssr: false });
 const BarChartCard = dynamic(() => import('@/components/ui/chartjs-components').then(m => ({ default: m.BarChartCard })), { ssr: false });
 const DoughnutChartCard = dynamic(() => import('@/components/ui/chartjs-components').then(m => ({ default: m.DoughnutChartCard })), { ssr: false });
+const TreemapChartCard = dynamic(() => import('@/components/ui/chartjs-components').then(m => ({ default: m.TreemapChartCard })), { ssr: false });
+const MatrixChartCard = dynamic(() => import('@/components/ui/chartjs-components').then(m => ({ default: m.MatrixChartCard })), { ssr: false });
+
+type WidgetType = 'income_trend' | 'net_flow' | 'category_doughnut' | 'category_treemap' | 'activity_heatmap' | 'health_score';
+
+interface WidgetDef {
+  id: WidgetType;
+  label: string;
+  icon: any;
+  defaultActive: boolean;
+}
+
+const AVAILABLE_WIDGETS: WidgetDef[] = [
+  { id: 'income_trend', label: 'Income vs Expenses', icon: TrendUp, defaultActive: true },
+  { id: 'net_flow', label: 'Net Cash Flow', icon: ChartBar, defaultActive: true },
+  { id: 'category_doughnut', label: 'Category Doughnut', icon: ChartPieSlice, defaultActive: true },
+  { id: 'category_treemap', label: 'Category Treemap', icon: Target, defaultActive: false },
+  { id: 'activity_heatmap', label: 'Activity Matrix', icon: CalendarBlank, defaultActive: false },
+  { id: 'health_score', label: 'Health Score', icon: Brain, defaultActive: true },
+];
 
 const PERIODS = [
   { label: '7 Days', value: '7d' },
@@ -58,12 +78,31 @@ export default function AnalyticsPage() {
   const [dateRange, setDateRange] = useState({ start: '', end: '' });
 
   // Widget visibility toggles
-  const [showIncomeTrend, setShowIncomeTrend] = useState(true);
-  const [showNetFlow, setShowNetFlow] = useState(true);
-  const [showCategories, setShowCategories] = useState(true);
-  const [showHealth, setShowHealth] = useState(true);
+  const [activeWidgets, setActiveWidgets] = useState<WidgetType[]>([]);
   const [showFiltersPanel, setShowFiltersPanel] = useState(false);
+  const [showAddWidgetMenu, setShowAddWidgetMenu] = useState(false);
   const [trendChartType, setTrendChartType] = useState<'area' | 'bar'>('area');
+
+  useEffect(() => {
+    const saved = localStorage.getItem('cashdash_widgets');
+    if (saved) {
+      try {
+        setActiveWidgets(JSON.parse(saved));
+      } catch {
+        setActiveWidgets(AVAILABLE_WIDGETS.filter(w => w.defaultActive).map(w => w.id));
+      }
+    } else {
+      setActiveWidgets(AVAILABLE_WIDGETS.filter(w => w.defaultActive).map(w => w.id));
+    }
+  }, []);
+
+  const toggleWidget = (id: WidgetType) => {
+    setActiveWidgets(prev => {
+      const next = prev.includes(id) ? prev.filter(w => w !== id) : [...prev, id];
+      localStorage.setItem('cashdash_widgets', JSON.stringify(next));
+      return next;
+    });
+  };
 
   // Filters
   const [categories, setCategories] = useState<{ id: string; name: string; icon: string }[]>([]);
@@ -192,22 +231,57 @@ export default function AnalyticsPage() {
         )}
       </AnimatePresence>
 
-      {/* Widget Toggle Bar */}
-      <div className="flex flex-wrap items-center gap-2 text-xs">
-        <span className="text-muted-foreground font-medium">Toggle:</span>
-        {[
-          { label: 'Trend Chart', val: showIncomeTrend, set: setShowIncomeTrend },
-          { label: 'Net Flow', val: showNetFlow, set: setShowNetFlow },
-          { label: 'Categories', val: showCategories, set: setShowCategories },
-          { label: 'Health Score', val: showHealth, set: setShowHealth },
-        ].map(w => (
-          <button key={w.label} onClick={() => w.set(!w.val)}
-            className={`px-2.5 py-1 rounded-lg border transition-all font-medium ${
-              w.val ? 'border-primary/30 bg-primary/5 text-primary' : 'border-input text-muted-foreground'
-            }`}>
-            {w.val ? '✓ ' : ''}{w.label}
-          </button>
-        ))}
+      {/* Widget Customizer Bar */}
+      <div className="flex flex-wrap items-center gap-2">
+        <div className="relative">
+          <motion.button onClick={() => setShowAddWidgetMenu(!showAddWidgetMenu)}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-input text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-all"
+            whileTap={{ scale: 0.97 }}>
+            <Target className="w-3.5 h-3.5" /> Customize Widgets
+          </motion.button>
+          
+          <AnimatePresence>
+            {showAddWidgetMenu && (
+              <>
+                <div className="fixed inset-0 z-40" onClick={() => setShowAddWidgetMenu(false)} />
+                <motion.div className="absolute top-full left-0 mt-2 w-56 bg-card border border-input rounded-xl shadow-xl z-50 overflow-hidden"
+                  initial={{ opacity: 0, y: 5 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 5 }}>
+                  <div className="px-3 py-2 border-b border-input bg-muted/30">
+                    <span className="text-xs font-medium text-muted-foreground">Select Widgets</span>
+                  </div>
+                  <div className="p-1 max-h-[300px] overflow-y-auto">
+                    {AVAILABLE_WIDGETS.map(widget => {
+                      const isActive = activeWidgets.includes(widget.id);
+                      const Icon = widget.icon;
+                      return (
+                        <button key={widget.id} onClick={() => toggleWidget(widget.id)}
+                          className={`w-full flex items-center justify-between px-2.5 py-2 rounded-lg text-sm transition-all ${
+                            isActive ? 'bg-primary/10 text-primary font-medium' : 'hover:bg-muted text-foreground'
+                          }`}>
+                          <span className="flex items-center gap-2"><Icon className="w-4 h-4" /> {widget.label}</span>
+                          {isActive && <div className="w-2 h-2 rounded-full bg-primary" />}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </motion.div>
+              </>
+            )}
+          </AnimatePresence>
+        </div>
+        
+        {/* Active widget badges */}
+        <div className="hidden sm:flex flex-wrap gap-1.5">
+          {activeWidgets.map(wId => {
+            const widget = AVAILABLE_WIDGETS.find(w => w.id === wId);
+            if (!widget) return null;
+            return (
+              <span key={wId} className="flex items-center gap-1 px-2 py-1 rounded-md bg-muted text-[10px] text-muted-foreground">
+                {widget.label} <button onClick={() => toggleWidget(wId)} className="hover:text-foreground"><X className="w-3 h-3" /></button>
+              </span>
+            );
+          })}
+        </div>
       </div>
 
       {/* AI Insight */}
@@ -265,7 +339,7 @@ export default function AnalyticsPage() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
 
         {/* Income vs Expenses */}
-        {showIncomeTrend && (
+        {activeWidgets.includes('income_trend') && (
           <motion.div className="glass-card p-5 lg:col-span-2"
             initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
             <div className="flex items-center justify-between mb-4">
@@ -294,6 +368,8 @@ export default function AnalyticsPage() {
                   ]}
                   formatValue={fmtCompact}
                   height={260}
+                  showTrendline={true}
+                  budgetLimit={summary.totalIncome > 0 ? summary.totalIncome * 0.7 : 50000} // Example dynamic budget limit (70% of income)
                 />
               ) : (
                 <BarChartCard
@@ -302,6 +378,7 @@ export default function AnalyticsPage() {
                   colors={[...chartData.map(() => '#10b981'), ...chartData.map(() => '#f87171')]}
                   formatValue={fmtCompact}
                   height={260}
+                  budgetLimit={summary.totalIncome > 0 ? summary.totalIncome * 0.7 : 50000}
                 />
               )
             ) : (
@@ -314,7 +391,7 @@ export default function AnalyticsPage() {
         )}
 
         {/* Monthly Net Flow */}
-        {showNetFlow && (
+        {activeWidgets.includes('net_flow') && (
           <motion.div className="glass-card p-5"
             initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
             <div className="mb-4">
@@ -339,7 +416,7 @@ export default function AnalyticsPage() {
         )}
 
         {/* Category Breakdown */}
-        {showCategories && (
+        {activeWidgets.includes('category_doughnut') && (
           <motion.div className="glass-card p-5"
             initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}>
             <div className="mb-4">
@@ -385,10 +462,69 @@ export default function AnalyticsPage() {
             )}
           </motion.div>
         )}
+
+        {/* Category Treemap */}
+        {activeWidgets.includes('category_treemap') && (
+          <motion.div className="glass-card p-5 lg:col-span-2"
+            initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.35 }}>
+            <div className="mb-4">
+              <h3 className="font-serif font-semibold">Spending Distribution Treemap</h3>
+              <p className="text-xs text-muted-foreground font-mono mt-0.5">Hierarchical view of your expenses</p>
+            </div>
+            {data.categories.length > 0 ? (
+              <TreemapChartCard
+                data={data.categories}
+                keyField="name"
+                valueField="total"
+                colorField="color"
+                colors={CHART_PALETTE}
+                height={280}
+                formatValue={fmtFull}
+              />
+            ) : (
+              <div className="flex flex-col items-center justify-center h-[280px] text-muted-foreground">
+                <Target className="w-10 h-10 opacity-20 mb-2" weight="light" />
+                <p className="text-sm">No expense data yet</p>
+              </div>
+            )}
+          </motion.div>
+        )}
+
+        {/* Activity Matrix */}
+        {activeWidgets.includes('activity_heatmap') && (
+          <motion.div className="glass-card p-5 lg:col-span-2"
+            initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.35 }}>
+            <div className="mb-4">
+              <h3 className="font-serif font-semibold">Spending Matrix</h3>
+              <p className="text-xs text-muted-foreground font-mono mt-0.5">Activity heatmap over time</p>
+            </div>
+            {data.daily.length > 0 ? (
+              <MatrixChartCard
+                data={data.daily.map((d) => {
+                  const date = new Date(d.date);
+                  return {
+                    x: format(date, 'EEE'), // Mon, Tue
+                    y: `Week ${Math.ceil(date.getDate() / 7)}`, // Week 1, 2
+                    v: d.expenses
+                  };
+                })}
+                xLabels={['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']}
+                yLabels={['Week 1', 'Week 2', 'Week 3', 'Week 4', 'Week 5']}
+                height={280}
+                formatValue={fmtFull}
+              />
+            ) : (
+              <div className="flex flex-col items-center justify-center h-[280px] text-muted-foreground">
+                <CalendarBlank className="w-10 h-10 opacity-20 mb-2" weight="light" />
+                <p className="text-sm">No activity data yet</p>
+              </div>
+            )}
+          </motion.div>
+        )}
       </div>
 
       {/* Financial Health Score — Real Data */}
-      {showHealth && healthScores && (
+      {activeWidgets.includes('health_score') && healthScores && (
         <motion.div className="glass-card p-5"
           initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }}>
           <div className="flex items-center justify-between mb-5">

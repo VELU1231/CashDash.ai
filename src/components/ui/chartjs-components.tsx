@@ -6,12 +6,23 @@ import {
   CategoryScale, LinearScale, PointElement, LineElement, BarElement,
   ArcElement, Filler, Tooltip, Legend,
 } from 'chart.js';
-import { Line, Bar, Doughnut } from 'react-chartjs-2';
+import { Line, Bar, Doughnut, Chart as ReactChart } from 'react-chartjs-2';
+
+// Advanced Plugins
+import ChartDataLabels from 'chartjs-plugin-datalabels';
+import annotationPlugin from 'chartjs-plugin-annotation';
+import zoomPlugin from 'chartjs-plugin-zoom';
+// @ts-ignore
+import trendlinePlugin from 'chartjs-plugin-trendline';
+import { TreemapController, TreemapElement } from 'chartjs-chart-treemap';
+import { MatrixController, MatrixElement } from 'chartjs-chart-matrix';
 
 // Register Chart.js modules once
 ChartJS.register(
   CategoryScale, LinearScale, PointElement, LineElement, BarElement,
-  ArcElement, Filler, Tooltip, Legend
+  ArcElement, Filler, Tooltip, Legend,
+  ChartDataLabels, annotationPlugin, zoomPlugin, trendlinePlugin,
+  TreemapController, TreemapElement, MatrixController, MatrixElement
 );
 
 // Shared tooltip styling
@@ -43,14 +54,16 @@ interface AreaChartProps {
   }[];
   formatValue?: (v: number) => string;
   height?: number;
+  showTrendline?: boolean;
+  budgetLimit?: number;
 }
 
-export function AreaChartCard({ labels, datasets, formatValue, height = 240 }: AreaChartProps) {
+export function AreaChartCard({ labels, datasets, formatValue, height = 240, showTrendline = false, budgetLimit }: AreaChartProps) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
   const data = {
     labels,
-    datasets: datasets.map((ds) => ({
+    datasets: datasets.map((ds, idx) => ({
       label: ds.label,
       data: ds.data,
       borderColor: ds.borderColor,
@@ -71,6 +84,11 @@ export function AreaChartCard({ labels, datasets, formatValue, height = 240 }: A
         gradient.addColorStop(1, ds.bgTo || 'rgba(0,0,0,0)');
         return gradient;
       },
+      trendlineLinear: showTrendline && idx === 0 ? {
+        style: ds.borderColor,
+        lineStyle: "dotted",
+        width: 2
+      } : undefined
     })),
   };
 
@@ -89,6 +107,25 @@ export function AreaChartCard({ labels, datasets, formatValue, height = 240 }: A
           },
         },
       },
+      annotation: budgetLimit ? {
+        annotations: {
+          budgetLine: {
+            type: 'line' as const,
+            yMin: budgetLimit,
+            yMax: budgetLimit,
+            borderColor: 'rgba(239, 68, 68, 0.8)',
+            borderWidth: 2,
+            borderDash: [6, 6],
+            label: {
+              display: true,
+              content: `Budget: ${formatValue ? formatValue(budgetLimit) : budgetLimit}`,
+              position: 'end' as const,
+              backgroundColor: 'rgba(239, 68, 68, 0.9)',
+              font: { size: 10, weight: 'bold' as const }
+            }
+          }
+        }
+      } : undefined
     },
     scales: {
       x: {
@@ -123,9 +160,10 @@ interface BarChartProps {
   colors?: string[];
   formatValue?: (v: number) => string;
   height?: number;
+  budgetLimit?: number;
 }
 
-export function BarChartCard({ labels, data: values, colors, formatValue, height = 200 }: BarChartProps) {
+export function BarChartCard({ labels, data: values, colors, formatValue, height = 200, budgetLimit }: BarChartProps) {
   const defaultColors = values.map((v) => v >= 0 ? '#10b981' : '#f87171');
 
   const data = {
@@ -153,6 +191,25 @@ export function BarChartCard({ labels, data: values, colors, formatValue, height
           label: (ctx: any) => formatValue ? formatValue(ctx.parsed.y) : ctx.parsed.y,
         },
       },
+      annotation: budgetLimit ? {
+        annotations: {
+          budgetLine: {
+            type: 'line' as const,
+            yMin: budgetLimit,
+            yMax: budgetLimit,
+            borderColor: 'rgba(239, 68, 68, 0.8)',
+            borderWidth: 2,
+            borderDash: [6, 6],
+            label: {
+              display: true,
+              content: `Budget: ${formatValue ? formatValue(budgetLimit) : budgetLimit}`,
+              position: 'end' as const,
+              backgroundColor: 'rgba(239, 68, 68, 0.9)',
+              font: { size: 10, weight: 'bold' as const }
+            }
+          }
+        }
+      } : undefined
     },
     scales: {
       x: {
@@ -254,6 +311,140 @@ export function DoughnutChartCard({ labels, data: values, colors, centerLabel, c
   return (
     <div style={{ height }}>
       <Doughnut data={data} options={options} plugins={[centerTextPlugin]} />
+    </div>
+  );
+}
+
+// ─── TREEMAP CHART ─────────────────────────────────────────────────
+export interface TreemapChartProps {
+  data: any[]; // Expecting an array of objects
+  keyField: string;
+  valueField: string;
+  colorField?: string;
+  colors?: string[];
+  height?: number;
+  formatValue?: (v: number) => string;
+}
+
+export function TreemapChartCard({ data: treeData, keyField, valueField, colorField, colors, height = 240, formatValue }: TreemapChartProps) {
+  const data = {
+    datasets: [{
+      tree: treeData,
+      key: valueField,
+      groups: [keyField],
+      spacing: 2,
+      borderWidth: 0,
+      backgroundColor(ctx: any) {
+        if (ctx.type !== 'data') return 'transparent';
+        if (colorField && ctx.raw._data[colorField]) return ctx.raw._data[colorField];
+        return colors ? colors[ctx.dataIndex % colors.length] : '#10b981';
+      },
+      labels: {
+        align: 'left',
+        display: true,
+        formatter(ctx: any) {
+          if (ctx.type !== 'data') return [];
+          const name = ctx.raw._data[keyField];
+          const val = formatValue ? formatValue(ctx.raw.v) : ctx.raw.v;
+          return [name, val];
+        },
+        color: ['#fff', 'rgba(255,255,255,0.7)'],
+        font: [{ size: 12, weight: 'bold' as const }, { size: 10 }]
+      }
+    }]
+  };
+
+  const options = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: { display: false },
+      tooltip: {
+        ...tooltipConfig,
+        callbacks: {
+          title: (items: any) => items[0].raw._data[keyField],
+          label: (ctx: any) => {
+            const val = formatValue ? formatValue(ctx.raw.v) : ctx.raw.v;
+            return `Value: ${val}`;
+          }
+        }
+      }
+    }
+  };
+
+  return (
+    <div style={{ height }}>
+      {/* @ts-ignore - Type mismatch in react-chartjs-2 for custom types */}
+      <ReactChart type="treemap" data={data} options={options} />
+    </div>
+  );
+}
+
+// ─── MATRIX / HEATMAP CHART ──────────────────────────────────────
+export interface MatrixChartProps {
+  data: { x: string; y: string; v: number }[];
+  xLabels: string[];
+  yLabels: string[];
+  height?: number;
+  formatValue?: (v: number) => string;
+}
+
+export function MatrixChartCard({ data: matrixData, xLabels, yLabels, height = 240, formatValue }: MatrixChartProps) {
+  const data = {
+    datasets: [{
+      label: 'Activity',
+      data: matrixData,
+      backgroundColor(ctx: any) {
+        const value = ctx.dataset.data[ctx.dataIndex]?.v;
+        if (!value) return 'rgba(16, 185, 129, 0.05)';
+        // Heatmap intensity (simplified logic)
+        const alpha = Math.min(0.1 + (value / 100), 1);
+        return `rgba(16, 185, 129, ${alpha})`;
+      },
+      width(ctx: any) { return (ctx.chart.chartArea || {}).width / xLabels.length - 2; },
+      height(ctx: any) { return (ctx.chart.chartArea || {}).height / yLabels.length - 2; },
+      borderRadius: 4,
+    }]
+  };
+
+  const options = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: { display: false },
+      tooltip: {
+        ...tooltipConfig,
+        callbacks: {
+          title: (items: any) => `${items[0].raw.y} - ${items[0].raw.x}`,
+          label: (ctx: any) => {
+            const val = formatValue ? formatValue(ctx.raw.v) : ctx.raw.v;
+            return `Value: ${val}`;
+          }
+        }
+      }
+    },
+    scales: {
+      x: {
+        type: 'category' as const,
+        labels: xLabels,
+        grid: { display: false },
+        ticks: { color: 'rgba(128,128,128,0.6)', font: { size: 10 } },
+        border: { display: false },
+      },
+      y: {
+        type: 'category' as const,
+        labels: yLabels,
+        grid: { display: false },
+        ticks: { color: 'rgba(128,128,128,0.6)', font: { size: 10 } },
+        border: { display: false },
+      }
+    }
+  };
+
+  return (
+    <div style={{ height }}>
+      {/* @ts-ignore */}
+      <ReactChart type="matrix" data={data} options={options} />
     </div>
   );
 }

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { parseFinancialText } from '@/lib/ai-parser';
+import { parseNaturalLanguageTransaction } from '@/lib/smart-parser';
 import { ensureUserData } from '@/lib/ensure-user-data';
 import type { TransactionType } from '@/types';
 
@@ -26,13 +27,33 @@ export async function POST(request: NextRequest) {
 
     const defaultCurrency = profile?.default_currency || currency;
 
-    // Parse with AI
-    const parsed = await parseFinancialText(message, {
-      provider: (process.env.AI_PROVIDER || 'ollama') as 'openai' | 'ollama' | 'gemini',
-      apiKey: process.env.AI_API_KEY,
-      baseUrl: process.env.AI_BASE_URL,
-      model: process.env.AI_MODEL,
-    }, defaultCurrency);
+    let parsed: any;
+
+    // ─── Instant "Zero-AI" NLP Fallback ──────────────────────────────────
+    const instantParse = parseNaturalLanguageTransaction(message, defaultCurrency);
+    
+    if (instantParse) {
+      parsed = {
+        transactions: [{
+          description: instantParse.description,
+          amount: instantParse.amount,
+          currency: instantParse.currency,
+          transaction_date: instantParse.date,
+          category_type: instantParse.type,
+          category_name: 'General',
+          confidence: 100,
+        }],
+        message: 'Parsed instantly without AI.',
+      };
+    } else {
+      // Parse with AI
+      parsed = await parseFinancialText(message, {
+        provider: (process.env.AI_PROVIDER || 'ollama') as 'openai' | 'ollama' | 'gemini',
+        apiKey: process.env.AI_API_KEY,
+        baseUrl: process.env.AI_BASE_URL,
+        model: process.env.AI_MODEL,
+      }, defaultCurrency);
+    }
 
     // If AI returned a conversational message but no transactions, return that message
     if (!parsed.transactions?.length) {

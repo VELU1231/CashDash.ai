@@ -114,33 +114,50 @@ export function extractTransactionsFromText(text: string, defaultCurrency: strin
  * Zero-AI, runs instantly locally.
  */
 export function parseNaturalLanguageTransaction(text: string, defaultCurrency: string = 'USD'): ParsedTransaction | null {
-  const lowerText = text.toLowerCase();
+  const lowerText = text.toLowerCase().trim();
   
-  // Quick check if it looks like a transaction statement
-  if (!lowerText.includes('spent') && !lowerText.includes('bought') && !lowerText.includes('paid') && !lowerText.includes('earned') && !lowerText.includes('got')) {
-      return null;
-  }
-
-  // Find amount
-  const amountMatch = lowerText.match(/\$?(\d+(?:\.\d{2})?)/);
+  // Find amount anywhere in the string. Looks for $10, 10.50, 15
+  // Also match currency symbols
+  const amountMatch = lowerText.match(/(?:[$£€₱¥])?\s*(\d+(?:\.\d{2})?)/);
   if (!amountMatch) return null;
   
   const amountNum = parseFloat(amountMatch[1]);
-  if (isNaN(amountNum)) return null;
+  if (isNaN(amountNum) || amountNum <= 0) return null;
 
   // Determine type
   let type: 'income' | 'expense' = 'expense';
-  if (lowerText.includes('earned') || lowerText.includes('got paid') || lowerText.includes('received')) {
+  if (/(earned|got paid|received|income)/i.test(lowerText)) {
       type = 'income';
   }
 
-  // Try to find description
+  // Find description
   let desc = 'Transaction';
-  const descRegex = /(?:on|for|bought|paid|from) ([\w\s]+?)(?:today|yesterday|last|this|$)/i;
-  const descMatch = lowerText.match(descRegex);
-  if (descMatch && descMatch[1]) {
-      desc = descMatch[1].trim();
+  
+  // Patterns to try matching description:
+  // 1. "spent X on Y" or "paid X for Y"
+  const descPattern1 = /(?:on|for|bought|paid|from)\s+([a-z0-9\s]+?)(?:\s+(?:today|yesterday|last|this|$))/i;
+  // 2. "Y X" (e.g., "coffee 10")
+  const descPattern2 = /^([a-z\s]+)\s+(?:[$£€₱¥])?\s*\d+(?:\.\d{2})?/i;
+  // 3. "X for Y" (e.g., "10 for coffee")
+  const descPattern3 = /(?:[$£€₱¥])?\s*\d+(?:\.\d{2})?\s+(?:for|on)\s+([a-z0-9\s]+?)(?:\s+(?:today|yesterday|last|this|$))/i;
+
+  let m = lowerText.match(descPattern1);
+  if (m && m[1].trim() && m[1].trim() !== 'a' && m[1].trim() !== 'an') {
+      desc = m[1].trim();
+  } else {
+      m = lowerText.match(descPattern3);
+      if (m && m[1].trim()) {
+          desc = m[1].trim();
+      } else {
+          m = lowerText.match(descPattern2);
+          if (m && m[1].trim() && !/^(spent|paid|bought|got)$/i.test(m[1].trim())) {
+              desc = m[1].trim();
+          }
+      }
   }
+
+  // Capitalize first letter of each word
+  desc = desc.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
 
   // Try to find date
   let date = new Date();
@@ -148,8 +165,25 @@ export function parseNaturalLanguageTransaction(text: string, defaultCurrency: s
       date.setDate(date.getDate() - 1);
   } else if (lowerText.includes('day before yesterday')) {
       date.setDate(date.getDate() - 2);
+  } else {
+      // Look for days of week "last monday"
+      const days = ['sunday','monday','tuesday','wednesday','thursday','friday','saturday'];
+      for (let i=0; i<days.length; i++) {
+          if (lowerText.includes(`last ${days[i]}`)) {
+              let d = date.getDay();
+              let diff = d - i;
+              if (diff <= 0) diff += 7;
+              date.setDate(date.getDate() - diff);
+              break;
+          }
+      }
   }
   
+  // If the description is still just "Transaction" and we didn't match any explicit verb, fallback to AI
+  if (desc === 'Transaction' && !/(spent|paid|bought|cost)/i.test(lowerText)) {
+      return null;
+  }
+
   return {
       date: date.toISOString().split('T')[0],
       description: desc.substring(0, 50),

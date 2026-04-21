@@ -26,7 +26,6 @@ const NAV_ITEMS = [
   { href: '/dashboard/bills', icon: Receipt, label: 'Bills' },
   { href: '/dashboard/goals', icon: PiggyBank, label: 'Savings Goals' },
   { href: '/dashboard/templates', icon: BookmarkSimple, label: 'Templates' },
-  { href: '/dashboard/tags', icon: Tag, label: 'Tags' },
   { href: '/dashboard/import-export', icon: DownloadSimple, label: 'Import / Export' },
 ];
 

@@ -98,6 +98,17 @@ export default function NewTransactionPage() {
       return;
     }
 
+    if (form.type === 'transfer') {
+      if (!form.dest_account_id) {
+        toast.error('Destination account is required for transfers');
+        return;
+      }
+      if (form.account_id === form.dest_account_id) {
+        toast.error('Cannot transfer to the same account');
+        return;
+      }
+    }
+
     setLoading(true);
     try {
       let attachment_path = null;
