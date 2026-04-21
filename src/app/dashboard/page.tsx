@@ -32,7 +32,7 @@ export default async function DashboardPage() {
   // Fetch this month's transactions
   const { data: transactions } = await supabase
     .from('transactions')
-    .select('*, category:categories(id,name,icon,color,type), account:accounts(id,name,icon,color,currency)')
+    .select('*, category:categories(id,name,icon,color,type), account:accounts!account_id(id,name,icon,color,currency)')
     .eq('user_id', user.id)
     .gte('transaction_date', monthStart)
     .lte('transaction_date', `${monthEnd}T23:59:59`)
