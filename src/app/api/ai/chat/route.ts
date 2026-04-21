@@ -84,6 +84,21 @@ export async function POST(req: NextRequest) {
       contextStr = `\n\n(Note: User is not authenticated, cannot retrieve financial data)`;
     }
 
+    // Save the user's message to the database if authenticated
+    if (user && messages.length > 0) {
+      const lastUserMessage = messages[messages.length - 1];
+      if (lastUserMessage.role === 'user') {
+        // We fire and forget this insert to not block the AI request
+        supabase.from('ai_chat_messages').insert({
+          user_id: user.id,
+          role: 'user',
+          content: lastUserMessage.content,
+        }).then(({ error }) => {
+          if (error) console.error('Failed to save user message:', error);
+        });
+      }
+    }
+
     const provider = getProvider();
 
     const result = await streamText({
@@ -117,6 +132,17 @@ RULES:
         }),
       },
       maxRetries: 1,
+      onFinish: async ({ text, toolCalls, toolResults }) => {
+        // Save the assistant's message to the database if authenticated
+        if (user && text) {
+          // We don't save tool calls directly into content right now, but if the AI returns text, we save it.
+          await supabase.from('ai_chat_messages').insert({
+            user_id: user.id,
+            role: 'assistant',
+            content: text,
+          });
+        }
+      }
     });
 
     return result.toTextStreamResponse();

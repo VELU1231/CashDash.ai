@@ -40,7 +40,7 @@ CREATE TABLE profiles (
   weekly_budget BIGINT,
   monthly_budget BIGINT,
   -- Subscription (LemonSqueezy)
-  subscription_tier TEXT NOT NULL DEFAULT 'free' CHECK (subscription_tier IN ('free','pro','family')),
+  subscription_tier TEXT NOT NULL DEFAULT 'free' CHECK (subscription_tier IN ('free','pro','family','business')),
   lemonsqueezy_customer_id TEXT,
   lemonsqueezy_subscription_id TEXT,
   created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
@@ -583,9 +583,11 @@ CREATE POLICY "Users can delete own rules"
 -- New users get: profile (tier=free) + Cash account + 19 categories
 -- ════════════════════════════════════════════════════════════════════════════════
 
--- ─── ADMIN: Set velu2k03@gmail.com to family tier ────────────────────────────
--- Run this AFTER a user with this email has signed up:
--- UPDATE profiles SET subscription_tier = 'family'
+-- ─── ADMIN: Set velu2k03@gmail.com to business tier ────────────────────────────
+-- Run this AFTER a user with this email has signed up to bypass limits:
+-- ALTER TABLE profiles DROP CONSTRAINT profiles_subscription_tier_check;
+-- ALTER TABLE profiles ADD CONSTRAINT profiles_subscription_tier_check CHECK (subscription_tier IN ('free', 'pro', 'family', 'business'));
+-- UPDATE profiles SET subscription_tier = 'business'
 -- WHERE id = (SELECT id FROM auth.users WHERE email = 'velu2k03@gmail.com');
 
 
