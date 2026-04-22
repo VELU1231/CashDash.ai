@@ -79,7 +79,7 @@ export async function POST(request: NextRequest) {
       } catch {
         // Final fallback
         return NextResponse.json({
-          parsed: { ...parsed, message: "Hey there! 👋 I'm CashDash AI. I can help you track expenses, give financial tips, or just chat. Try telling me what you spent today!" },
+          parsed: { ...parsed, message: "Hey there! 👋 I'm CashBash AI. I can help you track expenses, give financial tips, or just chat. Try telling me what you spent today!" },
           created: [],
           message: 'No transactions found',
         });

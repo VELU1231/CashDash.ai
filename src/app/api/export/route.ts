@@ -36,7 +36,7 @@ export async function GET() {
   return new NextResponse(csv, {
     headers: {
       'Content-Type': 'text/csv',
-      'Content-Disposition': `attachment; filename="cashdash-export-${new Date().toISOString().slice(0, 10)}.csv"`,
+      'Content-Disposition': `attachment; filename="cashbash-export-${new Date().toISOString().slice(0, 10)}.csv"`,
     },
   });
 }

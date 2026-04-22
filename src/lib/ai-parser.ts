@@ -1,5 +1,5 @@
 // ────────────────────────────────────────────────────────────────────────────────
-// CashDash.ai - AI Financial Parser (Vercel AI SDK)
+// CashBash.ai - AI Financial Parser (Vercel AI SDK)
 // Uses: generateText + Output.object() with Zod schemas
 // Supports: OpenAI, Google Gemini, Ollama (local + cloud)
 // Falls back to rule-based parser when AI is unavailable
@@ -89,7 +89,7 @@ function getModel(config: LLMConfig) {
 
 // ─── System Prompt ────────────────────────────────────────────────────────────
 
-const SYSTEM_PROMPT = `You are CashDash AI, a friendly and expert financial advisor and transaction parser.
+const SYSTEM_PROMPT = `You are CashBash AI, a friendly and expert financial advisor and transaction parser.
 Your job is to act like a helpful friend who manages the user's finances. Always include a friendly, encouraging, or advisory message in your response.
 
 RULES:
@@ -245,7 +245,7 @@ export async function generateConversationalResponse(
 
     const { text } = await generateText({
       model,
-      system: `You are CashDash AI, a friendly, warm, and helpful financial assistant.
+      system: `You are CashBash AI, a friendly, warm, and helpful financial assistant.
 You're like a supportive friend who happens to be great with money.
 
 RULES:
@@ -264,7 +264,7 @@ RULES:
     // Friendly static fallbacks based on message content
     const lower = userMessage.toLowerCase();
     if (lower.includes('hi') || lower.includes('hello') || lower.includes('hey')) {
-      return "Hey there! 👋 Great to see you! I'm your CashDash AI buddy. I can help you track expenses, give budgeting tips, or just chat about money. What's on your mind?";
+      return "Hey there! 👋 Great to see you! I'm your CashBash AI buddy. I can help you track expenses, give budgeting tips, or just chat about money. What's on your mind?";
     }
     if (lower.includes('help') || lower.includes('what can you do')) {
       return "I can do a lot! 💪 Tell me what you spent today and I'll log it. Ask me for budgeting tips, savings advice, or how to manage your money better. Just chat naturally!";
@@ -272,7 +272,7 @@ RULES:
     if (lower.includes('save') || lower.includes('budget')) {
       return "Great question! 💡 A solid start is the 50/30/20 rule — 50% needs, 30% wants, 20% savings. Want me to help you track where your money's going this month?";
     }
-    return "Hey! 👋 I'm CashDash AI. Tell me what you spent today and I'll log it for you, or ask me anything about managing your finances!";
+    return "Hey! 👋 I'm CashBash AI. Tell me what you spent today and I'll log it for you, or ask me anything about managing your finances!";
   }
 }
 

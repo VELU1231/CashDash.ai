@@ -1,5 +1,5 @@
 /**
- * CashDash.ai — Centralized Icon System
+ * CashBash.ai — Centralized Icon System
  * 
  * Uses Phosphor Icons (light/regular weight) for a premium, Apple-like feel.
  * All icons are mapped here for consistency across the entire app.

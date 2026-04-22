@@ -20,7 +20,7 @@ const PAGE_META: Array<{ match: RegExp; title: string; subtitle: string }> = [
   { match: /^\/dashboard\/settings/, title: 'More', subtitle: 'Preferences and configuration' },
   { match: /^\/dashboard\/analytics/, title: 'Analytics', subtitle: 'Spending patterns and trends' },
   { match: /^\/dashboard\/import-export/, title: 'Import & Export', subtitle: 'Move your data safely' },
-  { match: /^\/dashboard\/ai-assistant/, title: 'AI Assistant', subtitle: 'Ask CashDash anything' },
+  { match: /^\/dashboard\/ai-assistant/, title: 'AI Assistant', subtitle: 'Ask CashBash anything' },
 ];
 
 export function DashboardTopbar({ profile }: TopbarProps) {

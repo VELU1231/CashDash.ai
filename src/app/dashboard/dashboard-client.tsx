@@ -454,7 +454,7 @@ export function DashboardClient({ transactions, prevTransactions, accounts, tren
           <div>
             <h3 className="text-sm font-semibold text-foreground">Start with one message</h3>
             <p className="mt-0.5 text-xs leading-relaxed text-muted-foreground">
-              Say something like &ldquo;I spent ₱150 on lunch&rdquo; and CashDash will log it for you.
+              Say something like &ldquo;I spent ₱150 on lunch&rdquo; and CashBash will log it for you.
             </p>
             <Link href="/dashboard/ai-assistant">
               <motion.span className="mt-3 inline-flex items-center gap-1.5 rounded-xl bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground" whileTap={{ scale: 0.97 }}>

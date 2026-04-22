@@ -25,7 +25,7 @@ export default function AIAssistantPage() {
     {
       id: 'welcome',
       role: 'assistant',
-      content: "Hi! I'm your CashDash AI assistant. Tell me what you spent today and I'll log your transactions.\n\nTry: **\"Today I spent ₱150 on lunch and ₱50 on bus fare\"**",
+      content: "Hi! I'm your CashBash AI assistant. Tell me what you spent today and I'll log your transactions.\n\nTry: **\"Today I spent ₱150 on lunch and ₱50 on bus fare\"**",
       timestamp: new Date().toISOString(),
     }
   ]);
@@ -334,7 +334,7 @@ export default function AIAssistantPage() {
                     <div className="w-5 h-5 rounded-full bg-primary/20 flex items-center justify-center">
                       <Sparkle className="w-5 h-5 text-primary" weight="duotone" />
                     </div>
-                    <span className="text-xs font-medium text-muted-foreground">CashDash AI</span>
+                    <span className="text-xs font-medium text-muted-foreground">CashBash AI</span>
                     <span className="text-[10px] text-muted-foreground/50">
                       {format(new Date(msg.timestamp), 'HH:mm')}
                     </span>

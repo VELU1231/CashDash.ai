@@ -6,7 +6,7 @@ import { format, startOfMonth, endOfMonth, subMonths } from 'date-fns';
 import { aiAssistantFlag, dailyChartFlag, aiInsightsFlag } from '@/flags';
 import type { Metadata } from 'next';
 
-export const metadata: Metadata = { title: 'Dashboard | CashDash.ai' };
+export const metadata: Metadata = { title: 'Dashboard | CashBash.ai' };
 
 export default async function DashboardPage() {
   const supabase = await createClient();

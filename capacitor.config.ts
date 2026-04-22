@@ -2,8 +2,8 @@ import type { CapacitorConfig } from '@capacitor/cli';
 import { KeyboardResize } from '@capacitor/keyboard';
 
 const config: CapacitorConfig = {
-  appId: 'ai.cashdash.app',
-  appName: 'CashDash',
+  appId: 'ai.cashbash.app',
+  appName: 'CashBash',
   webDir: 'capacitor-web',
   backgroundColor: '#fafafa',
   android: {
@@ -12,9 +12,9 @@ const config: CapacitorConfig = {
     webContentsDebuggingEnabled: true,
   },
   server: {
-    url: process.env.CAPACITOR_SERVER_URL || 'https://cashdash.ai',
+    url: process.env.CAPACITOR_SERVER_URL || 'https://cashbash.ai',
     cleartext: true,
-    allowNavigation: ['cashdash.ai', '*.cashdash.ai', '10.0.2.2', 'localhost'],
+    allowNavigation: ['cashbash.ai', '*.cashbash.ai', '10.0.2.2', 'localhost'],
   },
   plugins: {
     SplashScreen: {

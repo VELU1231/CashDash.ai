@@ -1,8 +1,8 @@
 {
-  "name": "cashdash-ai",
+  "name": "cashbash-ai",
   "version": "0.1.0",
   "private": true,
-  "description": "CashDash.ai - AI-powered personal finance SaaS",
+  "description": "CashBash.ai - AI-powered personal finance SaaS",
   "scripts": {
     "dev": "next dev",
     "dev:host": "next dev --hostname 0.0.0.0",

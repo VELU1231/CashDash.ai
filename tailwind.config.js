@@ -49,7 +49,7 @@ module.exports = {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
         },
-        // CashDash brand palette
+        // CashBash brand palette
         emerald: {
           50: "#ecfdf5", 100: "#d1fae5", 200: "#a7f3d0",
           300: "#6ee7b7", 400: "#34d399", 500: "#10b981",

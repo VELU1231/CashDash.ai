@@ -1,4 +1,4 @@
-const CACHE_VERSION = 'cashdash-v1';
+const CACHE_VERSION = 'cashbash-v1';
 const APP_SHELL = [
   '/',
   '/dashboard',

@@ -69,7 +69,7 @@ export default function RegisterPage() {
           <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center">
             <TrendingUp className="w-4 h-4 text-white" />
           </div>
-          <span className="font-bold text-xl">CashDash<span className="text-emerald-600">.ai</span></span>
+          <span className="font-bold text-xl">CashBash<span className="text-emerald-600">.ai</span></span>
         </Link>
 
         <div className="rounded-2xl border border-border bg-card p-8 shadow-soft">

@@ -43,7 +43,7 @@ const nextConfig = {
           { key: 'Permissions-Policy', value: 'camera=(), microphone=(), geolocation=()' },
           {
             key: 'Content-Security-Policy',
-            value: "default-src 'self' capacitor://localhost ionic://localhost; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https: capacitor://localhost ionic://localhost; connect-src 'self' https://*.supabase.co https://ollama.com https://ai-gateway.vercel.sh https://cashdash.ai http://localhost:* http://10.0.2.2:* ws://localhost:* ws://10.0.2.2:* wss://*.supabase.co capacitor://localhost ionic://localhost; frame-ancestors 'none';"
+            value: "default-src 'self' capacitor://localhost ionic://localhost; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https: capacitor://localhost ionic://localhost; connect-src 'self' https://*.supabase.co https://ollama.com https://ai-gateway.vercel.sh https://cashbash.ai http://localhost:* http://10.0.2.2:* ws://localhost:* ws://10.0.2.2:* wss://*.supabase.co capacitor://localhost ionic://localhost; frame-ancestors 'none';"
           },
         ],
       },

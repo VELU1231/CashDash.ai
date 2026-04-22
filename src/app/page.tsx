@@ -39,7 +39,7 @@ export default function HomePage() {
             <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-emerald-500 to-emerald-600 flex items-center justify-center shadow-glow">
               <TrendUp className="w-4 h-4 text-white" weight="bold" />
             </div>
-            <span className="font-serif font-bold text-lg tracking-tight">CashDash<span className="text-emerald-500">.ai</span></span>
+            <span className="font-serif font-bold text-lg tracking-tight">CashBash<span className="text-emerald-500">.ai</span></span>
           </div>
           <div className="hidden md:flex items-center gap-8 text-sm text-muted-foreground">
             <a href="#features" className="hover:text-foreground transition-colors duration-200">Features</a>
@@ -112,7 +112,7 @@ export default function HomePage() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2, duration: 0.6, ease: [0.4, 0, 0.2, 1] }}
           >
-            Just say &ldquo;I spent ₱150 on lunch and ₱50 on bus fare&rdquo; — CashDash AI
+            Just say &ldquo;I spent ₱150 on lunch and ₱50 on bus fare&rdquo; — CashBash AI
             automatically logs every transaction, creates categories, and gives you
             beautiful financial insights.
           </motion.p>
@@ -154,7 +154,7 @@ export default function HomePage() {
             <div className="float-panel overflow-hidden">
               <div className="flex items-center gap-2 px-5 py-3.5" style={{ borderBottom: '1px solid hsl(var(--foreground) / 0.04)', background: 'hsl(var(--foreground) / 0.02)' }}>
                 <Brain className="w-4 h-4 text-emerald-500" weight="duotone" />
-                <span className="text-xs font-medium text-muted-foreground">CashDash AI Assistant</span>
+                <span className="text-xs font-medium text-muted-foreground">CashBash AI Assistant</span>
                 <span className="ml-auto inline-flex items-center gap-1.5 text-xs text-emerald-500">
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse-soft" />
                   Online
@@ -219,7 +219,7 @@ export default function HomePage() {
           >
             <h2 className="text-3xl sm:text-5xl font-serif font-bold mb-5 editorial-heading">Everything you need</h2>
             <p className="text-muted-foreground text-lg max-w-xl mx-auto leading-relaxed">
-              From AI chat to beautiful charts — CashDash covers your entire financial life.
+              From AI chat to beautiful charts — CashBash covers your entire financial life.
             </p>
           </motion.div>
 
@@ -236,7 +236,7 @@ export default function HomePage() {
                 color: 'hsl(var(--primary))',
                 bg: 'hsl(var(--primary) / 0.08)',
                 title: 'AI Chat Entry',
-                desc: 'Just tell CashDash what you spent. It understands natural language in any currency and auto-creates transactions.',
+                desc: 'Just tell CashBash what you spent. It understands natural language in any currency and auto-creates transactions.',
               },
               {
                 icon: <ChartBar className="w-5 h-5" weight="regular" />,
@@ -407,15 +407,15 @@ export default function HomePage() {
             <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-emerald-500 to-emerald-600 flex items-center justify-center">
               <TrendUp className="w-3.5 h-3.5 text-white" weight="bold" />
             </div>
-            <span className="font-serif font-semibold text-sm">CashDash.ai</span>
+            <span className="font-serif font-semibold text-sm">CashBash.ai</span>
           </div>
           <p className="text-xs text-muted-foreground">
-            © 2025 CashDash.ai · Built by DrVelu · Your money, beautifully organized.
+            © 2025 CashBash.ai · Built by DrVelu · Your money, beautifully organized.
           </p>
           <div className="flex items-center gap-5 text-xs text-muted-foreground">
             <a href="#" className="hover:text-foreground transition-colors duration-200">Privacy</a>
             <a href="#" className="hover:text-foreground transition-colors duration-200">Terms</a>
-            <a href="https://github.com/VELU1231/CashDash.ai" className="hover:text-foreground transition-colors duration-200">GitHub</a>
+            <a href="https://github.com/VELU1231/CashBash.ai" className="hover:text-foreground transition-colors duration-200">GitHub</a>
           </div>
         </div>
       </footer>

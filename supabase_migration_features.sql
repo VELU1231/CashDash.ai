@@ -1,5 +1,5 @@
 -- ============================================================
--- CashDash.ai — New Feature Tables Migration
+-- CashBash.ai — New Feature Tables Migration
 -- Run this in your Supabase SQL Editor
 -- ============================================================
 

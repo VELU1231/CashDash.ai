@@ -3,14 +3,14 @@
 @tailwind utilities;
 
 /* ═══════════════════════════════════════════════════════════════
-   CASHDASH.AI — PROFESSIONAL DESIGN SYSTEM
+   CASHBASH.AI — PROFESSIONAL DESIGN SYSTEM
    Clean Fintech UI + Neutral Palette + Modern SaaS
    ═══════════════════════════════════════════════════════════════ */
 
 @layer base {
   /* ─── Light Mode: Clean White ─── */
   :root {
-    --background: 0 0% 98%;              /* #FAFAFA — soft white */
+    --background: 0 0% 99%;              /* Almost pure white */
     --foreground: 222 47% 11%;           /* #1E293B — slate 800 */
 
     --card: 0 0% 100%;                   /* #FFFFFF — pure white */
@@ -19,7 +19,7 @@
     --popover: 0 0% 100%;
     --popover-foreground: 222 47% 11%;
 
-    --primary: 160 84% 39%;              /* #10b981 — emerald */
+    --primary: 218 73% 50%;              /* Deep blue (matches dark mode icy blue accent) */
     --primary-foreground: 0 0% 100%;
 
     --secondary: 210 20% 96%;            /* #F1F5F9 — slate 100 */
@@ -28,58 +28,58 @@
     --muted: 210 20% 96%;               /* #F1F5F9 */
     --muted-foreground: 215 16% 47%;    /* #64748B — slate 500 */
 
-    --accent: 215 25% 27%;              /* #334155 — slate 700 */
-    --accent-foreground: 0 0% 100%;
+    --accent: 210 20% 96%;              /* slate 100 */
+    --accent-foreground: 222 47% 11%;
 
     --destructive: 0 72% 51%;
     --destructive-foreground: 0 0% 100%;
 
     --border: 214 20% 92%;              /* #E2E8F0 — slate 200 */
     --input: 214 20% 92%;
-    --ring: 160 84% 39%;
+    --ring: 218 73% 50%;
 
     --radius: 0.75rem;
 
     /* Chart palette */
-    --chart-1: 160 84% 39%;             /* emerald */
-    --chart-2: 217 91% 60%;             /* blue */
-    --chart-3: 262 83% 58%;             /* violet */
-    --chart-4: 24 95% 53%;              /* orange */
-    --chart-5: 330 81% 60%;             /* pink */
+    --chart-1: 218 73% 50%;             /* Blue */
+    --chart-2: 217 91% 60%;             /* Lighter Blue */
+    --chart-3: 262 83% 58%;             /* Violet */
+    --chart-4: 24 95% 53%;              /* Orange */
+    --chart-5: 330 81% 60%;             /* Pink */
   }
 
-  /* ─── Dark Mode: Deep Slate ─── */
+  /* ─── Dark Mode: Deep Navy ─── */
   .dark {
-    --background: 222 47% 6%;            /* #0B1120 — deep navy */
-    --foreground: 210 20% 90%;           /* #E2E8F0 — slate 200 */
+    --background: 220 100% 2%;           /* #00040C — deep black/navy from Page 3 */
+    --foreground: 210 40% 98%;           /* Light icy text */
 
-    --card: 217 33% 9%;                  /* #111827 — dark card */
-    --card-foreground: 210 20% 90%;
+    --card: 220 50% 6%;                  /* Slightly lighter dark card */
+    --card-foreground: 210 40% 98%;
 
-    --popover: 217 33% 9%;
-    --popover-foreground: 210 20% 90%;
+    --popover: 220 50% 6%;
+    --popover-foreground: 210 40% 98%;
 
-    --primary: 160 84% 39%;
-    --primary-foreground: 0 0% 100%;
+    --primary: 218 73% 81%;              /* #B0CAEF — Icy blue from Page 3 */
+    --primary-foreground: 220 100% 2%;
 
-    --secondary: 217 33% 14%;           /* #1E293B */
-    --secondary-foreground: 210 20% 90%;
+    --secondary: 220 30% 12%;           
+    --secondary-foreground: 210 40% 98%;
 
-    --muted: 217 33% 14%;
-    --muted-foreground: 215 16% 55%;    /* lighter slate */
+    --muted: 220 30% 12%;
+    --muted-foreground: 215 20% 65%;    
 
-    --accent: 210 20% 80%;              /* light slate accent */
-    --accent-foreground: 222 47% 6%;
+    --accent: 220 30% 12%;              
+    --accent-foreground: 210 40% 98%;
 
     --destructive: 0 62% 50%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 217 33% 17%;              /* subtle dark border */
-    --input: 217 33% 17%;
-    --ring: 160 84% 39%;
+    --border: 220 30% 16%;              
+    --input: 220 30% 16%;
+    --ring: 218 73% 81%;
 
     /* Chart palette */
-    --chart-1: 160 84% 45%;
+    --chart-1: 218 73% 81%;
     --chart-2: 217 91% 65%;
     --chart-3: 262 83% 63%;
     --chart-4: 24 95% 58%;

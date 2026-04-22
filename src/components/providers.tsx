@@ -11,7 +11,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
       defaultTheme="dark"
       enableSystem
       disableTransitionOnChange={false}
-      storageKey="cashdash-theme"
+      storageKey="cashbash-theme"
     >
       <AppBootstrap />
       {children}

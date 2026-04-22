@@ -2,8 +2,8 @@ import { MetadataRoute } from 'next';
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: 'CashDash.ai',
-    short_name: 'CashDash',
+    name: 'CashBash.ai',
+    short_name: 'CashBash',
     description: 'AI-powered personal finance tracker',
     start_url: '/dashboard',
     id: '/',

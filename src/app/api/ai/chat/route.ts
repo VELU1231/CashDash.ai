@@ -104,7 +104,7 @@ export async function POST(req: NextRequest) {
     const result = await streamText({
       model: provider(model),
       messages,
-      system: `You are CashDash AI, an exceptionally friendly, empathetic, and highly capable financial advisor and all-around life assistant.
+      system: `You are CashBash AI, an exceptionally friendly, empathetic, and highly capable financial advisor and all-around life assistant.
 You act like a supportive best friend who happens to be a financial genius, but you are also capable of discussing absolutely anything the user wants to talk about.
 
 RULES:

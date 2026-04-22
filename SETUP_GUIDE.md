@@ -1,4 +1,4 @@
-# CashDash.ai — Setup Guide
+# CashBash.ai — Setup Guide
 
 ## What You Need Before Starting
 

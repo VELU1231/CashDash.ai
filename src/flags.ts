@@ -1,5 +1,5 @@
 // ────────────────────────────────────────────────────────────────────────────────
-// CashDash.ai Feature Flags (Vercel Flags SDK)
+// CashBash.ai Feature Flags (Vercel Flags SDK)
 // Evaluate server-side, zero client-side spinners, easy to override via Vercel Toolbar
 // ────────────────────────────────────────────────────────────────────────────────
 

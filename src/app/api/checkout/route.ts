@@ -37,7 +37,7 @@ export async function POST(req: Request) {
       productOptions: {
         redirectUrl: `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/dashboard?upgrade=success`,
         receiptButtonText: 'Go to Dashboard',
-        receiptThankYouNote: 'Thank you for upgrading CashDash.ai!'
+        receiptThankYouNote: 'Thank you for upgrading CashBash.ai!'
       }
     };
 

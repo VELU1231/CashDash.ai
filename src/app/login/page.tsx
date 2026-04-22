@@ -58,7 +58,7 @@ export default function LoginPage() {
           <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center">
             <TrendingUp className="w-4 h-4 text-white" />
           </div>
-          <span className="font-bold text-lg">CashDash<span className="text-emerald-600">.ai</span></span>
+          <span className="font-bold text-lg">CashBash<span className="text-emerald-600">.ai</span></span>
         </Link>
         <div className="flex-1 flex items-center justify-center relative z-10">
           <motion.div
@@ -101,7 +101,7 @@ export default function LoginPage() {
 
           <div className="mb-8">
             <h1 className="text-2xl font-bold mb-1">Welcome back</h1>
-            <p className="text-muted-foreground text-sm">Sign in to your CashDash account</p>
+            <p className="text-muted-foreground text-sm">Sign in to your CashBash account</p>
           </div>
 
           <form onSubmit={handleLogin} className="space-y-4">

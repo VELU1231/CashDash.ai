@@ -15,7 +15,7 @@ type BeforeInstallPromptEvent = Event & {
   userChoice: Promise<{ outcome: 'accepted' | 'dismissed'; platform: string }>;
 };
 
-const INSTALL_DISMISS_KEY = 'cashdash-install-dismissed';
+const INSTALL_DISMISS_KEY = 'cashbash-install-dismissed';
 
 export function AppBootstrap() {
   const [isOffline, setIsOffline] = useState(false);
@@ -156,7 +156,7 @@ export function AppBootstrap() {
                   <DownloadSimple className="h-5 w-5" weight="fill" />
                 </div>
                 <div className="min-w-0 flex-1">
-                  <p className="text-sm font-semibold">Install CashDash</p>
+                  <p className="text-sm font-semibold">Install CashBash</p>
                   <p className="mt-1 text-xs text-muted-foreground">
                     Add the app to your phone home screen for an edge-to-edge finance view and faster launch.
                   </p>

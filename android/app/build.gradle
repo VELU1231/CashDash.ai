@@ -1,10 +1,10 @@
 apply plugin: 'com.android.application'
 
 android {
-    namespace "ai.cashdash.app"
+    namespace "ai.cashbash.app"
     compileSdk rootProject.ext.compileSdkVersion
     defaultConfig {
-        applicationId "ai.cashdash.app"
+        applicationId "ai.cashbash.app"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 1

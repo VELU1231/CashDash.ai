@@ -1,5 +1,5 @@
 // ────────────────────────────────────────────────────────────────────────────────
-// CashDash.ai - Workflows (Vercel Workflow SDK)
+// CashBash.ai - Workflows (Vercel Workflow SDK)
 // Durable background tasks: recurring transactions, weekly summaries, onboarding
 // ────────────────────────────────────────────────────────────────────────────────
 

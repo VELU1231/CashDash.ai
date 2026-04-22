@@ -1,5 +1,5 @@
 -- ════════════════════════════════════════════════════════════════════════════════
--- CashDash.ai — Complete Supabase SQL Schema (CLEAN RESET)
+-- CashBash.ai — Complete Supabase SQL Schema (CLEAN RESET)
 -- 
 -- INSTRUCTIONS:
 --   1. Go to Supabase Dashboard → SQL Editor

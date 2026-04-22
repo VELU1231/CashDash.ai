@@ -25,7 +25,7 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: { default: 'CashDash.ai', template: '%s | CashDash.ai' },
+  title: { default: 'CashBash.ai', template: '%s | CashBash.ai' },
   description: 'AI-powered personal finance tracker. Track spending, visualize money, and get smart insights — automatically.',
   manifest: '/manifest.webmanifest',
   keywords: ['personal finance', 'budget tracker', 'AI finance', 'expense tracker', 'money management'],
@@ -34,14 +34,14 @@ export const metadata: Metadata = {
   openGraph: {
     type: 'website',
     locale: 'en_US',
-    url: 'https://cashdash.ai',
-    title: 'CashDash.ai — AI-Powered Finance Tracker',
+    url: 'https://cashbash.ai',
+    title: 'CashBash.ai — AI-Powered Finance Tracker',
     description: 'Your money, beautifully organized. Just say what you spent — AI does the rest.',
-    siteName: 'CashDash.ai',
+    siteName: 'CashBash.ai',
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'CashDash.ai',
+    title: 'CashBash.ai',
     description: 'AI-powered personal finance tracker',
   },
   icons: { icon: '/favicon.ico', apple: '/app-icon.svg', shortcut: '/favicon.ico' },
