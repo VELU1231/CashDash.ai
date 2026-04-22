@@ -2,14 +2,14 @@
 
 import { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Smiley } from '@phosphor-icons/react';
+import { Smiley, X } from '@phosphor-icons/react';
 
 // Dynamic import to avoid SSR issues with emoji-mart
 import dynamic from 'next/dynamic';
 
 const EmojiPickerNoSSR = dynamic(
   () => import('@emoji-mart/react').then((mod) => mod.default),
-  { ssr: false, loading: () => <div className="w-[352px] h-[435px] flex items-center justify-center"><span className="text-xs text-muted-foreground">Loading emojis...</span></div> }
+  { ssr: false, loading: () => <div className="w-full h-[300px] flex items-center justify-center"><span className="text-xs text-muted-foreground">Loading emojis...</span></div> }
 );
 
 // We import data statically since it's JSON
@@ -93,7 +93,7 @@ export function EmojiPicker({ value, onChange, label, size = 'md' }: EmojiPicker
   );
 }
 
-// ─── Inline Emoji Button (for forms) ──────────────────────────────────────────
+// ─── Inline Emoji Button — FIXED: opens as a bottom sheet on mobile ────────
 
 interface InlineEmojiPickerProps {
   value: string;
@@ -103,26 +103,21 @@ interface InlineEmojiPickerProps {
 
 export function InlineEmojiPicker({ value, onChange, className }: InlineEmojiPickerProps) {
   const [open, setOpen] = useState(false);
-  const containerRef = useRef<HTMLDivElement>(null);
 
+  // Lock body scroll when open on mobile
   useEffect(() => {
-    function handleClickOutside(e: MouseEvent) {
-      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
-        setOpen(false);
-      }
-    }
     if (open) {
-      document.addEventListener('mousedown', handleClickOutside);
-      return () => document.removeEventListener('mousedown', handleClickOutside);
+      document.body.style.overflow = 'hidden';
+      return () => { document.body.style.overflow = ''; };
     }
   }, [open]);
 
   return (
-    <div className={`relative inline-block ${className || ''}`} ref={containerRef}>
+    <>
       <button
         type="button"
-        onClick={() => setOpen(!open)}
-        className="p-1.5 rounded-lg hover:bg-muted transition-colors text-muted-foreground hover:text-foreground"
+        onClick={() => setOpen(true)}
+        className={`p-1.5 rounded-lg hover:bg-muted transition-colors text-muted-foreground hover:text-foreground ${className || ''}`}
         title="Add emoji"
       >
         {value ? (
@@ -132,34 +127,59 @@ export function InlineEmojiPicker({ value, onChange, className }: InlineEmojiPic
         )}
       </button>
 
+      {/* Full-screen bottom sheet modal */}
       <AnimatePresence>
         {open && (
           <motion.div
-            className="absolute z-50 mt-1"
-            style={{ right: 0, top: '100%' }}
-            initial={{ opacity: 0, y: -8, scale: 0.95 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: -8, scale: 0.95 }}
+            className="fixed inset-0 z-[100] flex flex-col justify-end"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
             transition={{ duration: 0.15 }}
           >
-            <div className="rounded-2xl overflow-hidden shadow-2xl border border-border">
-              <EmojiPickerNoSSR
-                data={data}
-                onEmojiSelect={(emoji: any) => {
-                  onChange(emoji.native);
-                  setOpen(false);
-                }}
-                theme="auto"
-                previewPosition="none"
-                skinTonePosition="search"
-                maxFrequentRows={1}
-                navPosition="bottom"
-                perLine={8}
-              />
-            </div>
+            {/* Backdrop */}
+            <div className="absolute inset-0 bg-black/40" onClick={() => setOpen(false)} />
+
+            {/* Sheet */}
+            <motion.div
+              className="relative bg-background rounded-t-2xl overflow-hidden"
+              initial={{ y: '100%' }}
+              animate={{ y: 0 }}
+              exit={{ y: '100%' }}
+              transition={{ type: 'spring', damping: 30, stiffness: 400 }}
+            >
+              {/* Handle + close */}
+              <div className="flex items-center justify-between px-4 py-3 border-b border-border/10">
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-semibold">Pick Emoji</span>
+                  {value && <span className="text-lg">{value}</span>}
+                </div>
+                <button type="button" onClick={() => setOpen(false)} className="p-1.5 rounded-lg hover:bg-muted">
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              {/* Emoji picker — constrained height */}
+              <div className="max-h-[50vh] overflow-hidden">
+                <EmojiPickerNoSSR
+                  data={data}
+                  onEmojiSelect={(emoji: any) => {
+                    onChange(emoji.native);
+                    setOpen(false);
+                  }}
+                  theme="auto"
+                  previewPosition="none"
+                  skinTonePosition="search"
+                  maxFrequentRows={1}
+                  navPosition="bottom"
+                  perLine={8}
+                  dynamicWidth={true}
+                />
+              </div>
+            </motion.div>
           </motion.div>
         )}
       </AnimatePresence>
-    </div>
+    </>
   );
 }

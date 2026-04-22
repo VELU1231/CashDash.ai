@@ -1,6 +1,6 @@
 'use client';
 
-import { ArrowLeft, Scan, CircleNotch, Paperclip, X, Camera } from '@phosphor-icons/react';
+import { ArrowLeft, Scan, CircleNotch, Paperclip, X, Camera, Plus } from '@phosphor-icons/react';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
 import { useState, useEffect } from 'react';
@@ -300,18 +300,18 @@ export default function NewTransactionPage() {
           )}
         </div>
 
-        {/* Save / Continue */}
-        <div className="flex gap-3 px-4 pt-5">
+        {/* Save / Continue — clearly different actions */}
+        <div className="px-4 pt-5 pb-4 space-y-2">
           <motion.button type="submit" disabled={loading}
-            className="flex-[2] py-3.5 rounded-xl text-sm font-semibold text-white disabled:opacity-60"
+            className="w-full py-3.5 rounded-xl text-sm font-semibold text-white disabled:opacity-60"
             style={{ background: typeColors[form.type] }}
             whileTap={{ scale: 0.97 }}>
-            {loading ? 'Saving...' : 'Save'}
+            {loading ? 'Saving...' : 'Save & Close'}
           </motion.button>
           <motion.button type="button" onClick={handleSaveAndContinue} disabled={loading}
-            className="flex-1 py-3.5 rounded-xl border border-border/50 text-sm font-medium text-foreground disabled:opacity-60"
+            className="w-full py-3 rounded-xl border border-border/50 text-sm font-medium text-muted-foreground disabled:opacity-60 flex items-center justify-center gap-1.5"
             whileTap={{ scale: 0.97 }}>
-            Continue
+            <Plus className="w-4 h-4" /> Save & Add Another
           </motion.button>
         </div>
       </form>
