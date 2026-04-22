@@ -44,7 +44,7 @@ export const metadata: Metadata = {
     title: 'CashBash.ai',
     description: 'AI-powered personal finance tracker',
   },
-  icons: { icon: '/favicon.ico', apple: '/app-icon.svg', shortcut: '/favicon.ico' },
+  icons: { icon: '/favicon.ico', apple: '/apple-icon.png', shortcut: '/favicon.ico' },
 };
 
 export const viewport: Viewport = {
