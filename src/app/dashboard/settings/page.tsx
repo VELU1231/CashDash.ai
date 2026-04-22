@@ -2,45 +2,39 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { motion, AnimatePresence } from 'framer-motion';
 import { useTheme } from 'next-themes';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
-  Settings, User, Palette, Brain, DollarSign, Bell, Shield,
-  Download, Trash2, Save, Eye, EyeOff, Moon, Sun, Monitor,
-  Globe, Clock, ChevronRight, Check, Loader2, LogOut,
-  Database, FileText, AlertCircle, Key
-} from 'lucide-react';
+  Gear, Coins, LockSimple, Calculator, Desktop,
+  ArrowCounterClockwise, EnvelopeSimple, Question, ThumbsUp,
+  CaretLeft, Moon, Sun, SunDim, SignOut
+} from '@phosphor-icons/react';
 import { toast } from 'sonner';
 import { CURRENCIES } from '@/lib/utils';
 
-const SECTIONS = [
-  { id: 'profile', icon: User, label: 'Profile' },
-  { id: 'appearance', icon: Palette, label: 'Appearance' },
-  { id: 'currency', icon: DollarSign, label: 'Currency & Locale' },
-  { id: 'ai', icon: Brain, label: 'AI Settings' },
-  { id: 'billing', icon: DollarSign, label: 'Billing & Subscriptions' },
-  { id: 'notifications', icon: Bell, label: 'Notifications' },
-  { id: 'security', icon: Shield, label: 'Security' },
-  { id: 'data', icon: Database, label: 'Data & Export' },
+const SETTINGS_ITEMS = [
+  { id: 'configuration', icon: Gear, label: 'Configuration' },
+  { id: 'accounts', icon: Coins, label: 'Accounts', href: '/dashboard/accounts' },
+  { id: 'passcode', icon: LockSimple, label: 'Passcode' },
+  { id: 'calcbox', icon: Calculator, label: 'CalcBox' },
+  { id: 'sync', icon: Desktop, label: 'PC Manager' },
+  { id: 'backup', icon: ArrowCounterClockwise, label: 'Backup' },
+  { id: 'feedback', icon: EnvelopeSimple, label: 'Feedback' },
+  { id: 'help', icon: Question, label: 'Help' },
+  { id: 'recommend', icon: ThumbsUp, label: 'Recommend' },
 ];
 
 export default function SettingsPage() {
   const router = useRouter();
   const { theme, setTheme } = useTheme();
-  const [activeSection, setActiveSection] = useState('profile');
+  const [view, setView] = useState<'grid' | 'configuration' | 'passcode'>('grid');
   const [loading, setLoading] = useState(false);
   const [pinInput, setPinInput] = useState('');
   const [hasPin, setHasPin] = useState(false);
-
-  useEffect(() => {
-    setHasPin(!!localStorage.getItem('app_pin'));
-    fetchProfile();
-  }, []);
   const [profile, setProfile] = useState({
     display_name: '',
     default_currency: 'USD',
     timezone: 'UTC',
-    locale: 'en',
     date_format: 'YYYY-MM-DD',
     first_day_of_week: 0,
     monthly_budget: '',
@@ -50,9 +44,13 @@ export default function SettingsPage() {
     ai_suggestions: true,
     show_balance: true,
     compact_mode: false,
+    subscription_tier: 'free',
   });
 
-  useEffect(() => { fetchProfile(); }, []);
+  useEffect(() => {
+    setHasPin(!!localStorage.getItem('app_pin'));
+    fetchProfile();
+  }, []);
 
   const fetchProfile = async () => {
     try {
@@ -73,12 +71,10 @@ export default function SettingsPage() {
   const saveProfile = async () => {
     setLoading(true);
     try {
-      // Only send fields that exist in the database profiles table
       const payload: Record<string, unknown> = {
         display_name: profile.display_name,
         default_currency: profile.default_currency,
         timezone: profile.timezone,
-        locale: profile.locale,
         date_format: profile.date_format,
         first_day_of_week: profile.first_day_of_week,
         ai_enabled: profile.ai_enabled,
@@ -87,18 +83,13 @@ export default function SettingsPage() {
         monthly_budget: profile.monthly_budget ? Math.round(parseFloat(profile.monthly_budget) * 100) : null,
         weekly_budget: profile.weekly_budget ? Math.round(parseFloat(profile.weekly_budget) * 100) : null,
       };
-
       const res = await fetch('/api/profile', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
       });
-      if (res.ok) {
-        toast.success('Settings saved!');
-      } else {
-        const errData = await res.json().catch(() => ({}));
-        toast.error(errData.error || 'Failed to save settings');
-      }
+      if (res.ok) toast.success('Settings saved!');
+      else toast.error('Failed to save');
     } catch {
       toast.error('Failed to save');
     } finally {
@@ -127,11 +118,9 @@ export default function SettingsPage() {
       const res = await fetch('/api/portal', { method: 'POST' });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
-      if (data.url) {
-        window.location.href = data.url;
-      }
+      if (data.url) window.location.href = data.url;
     } catch (err: any) {
-      toast.error(err.message || 'Failed to open customer portal');
+      toast.error(err.message || 'Failed to open portal');
     } finally {
       setLoading(false);
     }
@@ -151,342 +140,289 @@ export default function SettingsPage() {
     toast.success('App Lock PIN removed');
   };
 
-  const toggle = (key: string) => setProfile(p => ({ ...p, [key]: !(p as Record<string, unknown>)[key] }));
   const update = (key: string, value: unknown) => setProfile(p => ({ ...p, [key]: value }));
+  const toggle = (key: string) => setProfile(p => ({ ...p, [key]: !(p as Record<string, unknown>)[key] }));
 
-  return (
-    <div className="mx-auto max-w-5xl space-y-4 md:space-y-6">
-      <div>
-        <p className="text-[11px] font-medium uppercase tracking-[0.24em] text-muted-foreground">More</p>
-        <h1 className="mt-1 text-2xl font-semibold text-foreground">Settings</h1>
-        <p className="text-sm text-muted-foreground">Manage your account, preferences, and app behavior.</p>
-      </div>
+  const handleGridClick = (id: string, href?: string) => {
+    if (href) { router.push(href); return; }
+    if (id === 'configuration') { setView('configuration'); return; }
+    if (id === 'passcode') { setView('passcode'); return; }
+    if (id === 'backup') { exportData(); return; }
+    if (id === 'feedback') { toast('Feedback: drvelu@outlook.com'); return; }
+    if (id === 'help') { toast('Help center coming soon!'); return; }
+    if (id === 'recommend') { toast('Share CashDash with friends!'); return; }
+    if (id === 'calcbox') { toast('Calculator coming soon!'); return; }
+    if (id === 'sync') { toast('PC sync coming soon!'); return; }
+  };
 
-      <nav className="no-scrollbar flex gap-2 overflow-x-auto pb-1">
-        {SECTIONS.map(({ id, icon: Icon, label }) => (
-          <button
-            key={id}
-            onClick={() => setActiveSection(id)}
-            className={`inline-flex shrink-0 items-center gap-2 rounded-2xl border px-4 py-2.5 text-sm font-medium transition-all ${
-              activeSection === id
-                ? 'border-primary/30 bg-primary/10 text-primary'
-                : 'border-border/70 bg-card/70 text-muted-foreground'
-            }`}
-          >
-            <Icon className="h-4 w-4 shrink-0" />
-            {label}
-          </button>
-        ))}
-      </nav>
+  // ── Grid View ──
+  if (view === 'grid') {
+    return (
+      <div className="space-y-0">
+        <div className="flex items-center justify-between px-4 py-3">
+          <div>
+            <h1 className="text-2xl font-semibold">Settings</h1>
+          </div>
+          <span className="text-sm text-muted-foreground">v4.11.0</span>
+        </div>
 
-      <div className="min-w-0">
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={activeSection}
-              initial={{ opacity: 0, x: 10 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -10 }}
-              transition={{ duration: 0.2 }}
-              className="glass-card space-y-6 p-5 md:p-6"
+        {/* 3×3 grid */}
+        <div className="settings-grid px-2">
+          {SETTINGS_ITEMS.map(({ id, icon: Icon, label, href }) => (
+            <motion.button
+              key={id}
+              className="settings-grid-item"
+              onClick={() => handleGridClick(id, href as string)}
+              whileTap={{ scale: 0.95 }}
             >
-              {/* Profile */}
-              {activeSection === 'profile' && (
-                <>
-                  <SectionHeader icon={User} title="Profile" desc="Your personal information" />
-                  <div className="space-y-4">
-                    <div>
-                      <label className="text-sm font-medium mb-1.5 block">Display Name</label>
-                      <input value={profile.display_name}
-                        onChange={e => update('display_name', e.target.value)}
-                        className="w-full px-3 py-2.5 rounded-lg border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
-                        placeholder="Your name" />
-                    </div>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <label className="text-sm font-medium mb-1.5 block">Monthly Budget</label>
-                        <input type="number" value={profile.monthly_budget}
-                          onChange={e => update('monthly_budget', e.target.value)}
-                          className="w-full px-3 py-2.5 rounded-lg border border-input bg-background text-sm focus:outline-none"
-                          placeholder="e.g. 3000" />
-                      </div>
-                      <div>
-                        <label className="text-sm font-medium mb-1.5 block">Weekly Budget</label>
-                        <input type="number" value={profile.weekly_budget}
-                          onChange={e => update('weekly_budget', e.target.value)}
-                          className="w-full px-3 py-2.5 rounded-lg border border-input bg-background text-sm focus:outline-none"
-                          placeholder="e.g. 750" />
-                      </div>
-                    </div>
-                    <ToggleRow label="Show Balance" desc="Show account balances in dashboard" checked={profile.show_balance} onChange={() => toggle('show_balance')} />
-                    <ToggleRow label="Compact Mode" desc="Smaller UI for more information density" checked={profile.compact_mode} onChange={() => toggle('compact_mode')} />
-                  </div>
-                </>
-              )}
+              <Icon className="icon" weight="regular" />
+              <span className="label">{label}</span>
+            </motion.button>
+          ))}
+        </div>
 
-              {/* Appearance */}
-              {activeSection === 'appearance' && (
-                <>
-                  <SectionHeader icon={Palette} title="Appearance" desc="Customize how CashDash looks" />
-                  <div>
-                    <label className="text-sm font-medium mb-3 block">Theme</label>
-                    <div className="grid grid-cols-3 gap-3">
-                      {[
-                        { value: 'light', icon: Sun, label: 'Light', desc: 'Clean and bright' },
-                        { value: 'dark', icon: Moon, label: 'Dark', desc: 'Easy on the eyes' },
-                        { value: 'system', icon: Monitor, label: 'System', desc: 'Follow OS setting' },
-                      ].map(t => {
-                        const Icon = t.icon;
-                        return (
-                          <motion.button key={t.value} onClick={() => setTheme(t.value)}
-                            className={`p-4 rounded-xl border-2 text-left transition-all ${
-                              theme === t.value ? 'border-primary bg-primary/5' : 'border-border hover:border-primary/50'
-                            }`}
-                            whileTap={{ scale: 0.97 }}>
-                            <Icon className={`w-5 h-5 mb-2 ${theme === t.value ? 'text-primary' : 'text-muted-foreground'}`} />
-                            <div className="text-sm font-medium">{t.label}</div>
-                            <div className="text-xs text-muted-foreground">{t.desc}</div>
-                            {theme === t.value && (
-                              <Check className="w-3.5 h-3.5 text-primary absolute top-3 right-3" />
-                            )}
-                          </motion.button>
-                        );
-                      })}
-                    </div>
-                  </div>
-                </>
-              )}
+        {/* Quick actions below grid */}
+        <div className="mt-4 space-y-0">
+          <div className="config-section-header">Quick Settings</div>
 
-              {/* Currency & Locale */}
-              {activeSection === 'currency' && (
-                <>
-                  <SectionHeader icon={Globe} title="Currency & Locale" desc="Your regional preferences" />
-                  <div className="space-y-4">
-                    <div>
-                      <label className="text-sm font-medium mb-1.5 block">Default Currency</label>
-                      <select value={profile.default_currency}
-                        onChange={e => update('default_currency', e.target.value)}
-                        className="w-full px-3 py-2.5 rounded-lg border border-input bg-background text-sm focus:outline-none">
-                        {Object.values(CURRENCIES).map(c => (
-                          <option key={c.code} value={c.code}>
-                            {c.code} — {c.name} ({c.symbol})
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-                    <div>
-                      <label className="text-sm font-medium mb-1.5 block">Date Format</label>
-                      <select value={profile.date_format}
-                        onChange={e => update('date_format', e.target.value)}
-                        className="w-full px-3 py-2.5 rounded-lg border border-input bg-background text-sm focus:outline-none">
-                        {['YYYY-MM-DD', 'MM/DD/YYYY', 'DD/MM/YYYY', 'MMM D, YYYY'].map(f => (
-                          <option key={f} value={f}>{f}</option>
-                        ))}
-                      </select>
-                    </div>
-                    <div>
-                      <label className="text-sm font-medium mb-1.5 block">First Day of Week</label>
-                      <div className="flex gap-2">
-                        {['Sun', 'Mon', 'Sat'].map((day, i) => {
-                          const val = i === 0 ? 0 : i === 1 ? 1 : 6;
-                          return (
-                            <button key={day} onClick={() => update('first_day_of_week', val)}
-                              className={`flex-1 py-2 rounded-lg border text-sm font-medium transition-all ${
-                                profile.first_day_of_week === val ? 'border-primary bg-primary/5 text-primary' : 'border-input text-muted-foreground hover:border-primary/50'
-                              }`}>
-                              {day}
-                            </button>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  </div>
-                </>
-              )}
+          {/* Theme */}
+          <div className="config-item" onClick={() => {
+            const themes = ['light', 'dark', 'system'];
+            const current = themes.indexOf(theme || 'system');
+            setTheme(themes[(current + 1) % themes.length]);
+          }}>
+            <span className="config-label">Theme</span>
+            <span className="config-value capitalize">{theme}</span>
+          </div>
 
-              {/* AI Settings */}
-              {activeSection === 'ai' && (
-                <>
-                  <SectionHeader icon={Brain} title="AI Settings" desc="Configure your AI financial assistant" />
-                  <div className="space-y-4">
-                    <ToggleRow label="Enable AI Assistant" desc="Use AI to parse and categorize transactions" checked={profile.ai_enabled} onChange={() => toggle('ai_enabled')} />
-                    <ToggleRow label="Auto-Categorize" desc="AI automatically assigns categories to transactions" checked={profile.ai_auto_categorize} onChange={() => toggle('ai_auto_categorize')} />
-                    <ToggleRow label="Show Suggestions" desc="AI provides spending suggestions and insights" checked={profile.ai_suggestions} onChange={() => toggle('ai_suggestions')} />
+          {/* Currency */}
+          <div className="config-item">
+            <span className="config-label">Currency</span>
+            <select
+              value={profile.default_currency}
+              onChange={e => { update('default_currency', e.target.value); saveProfile(); }}
+              className="config-value bg-transparent border-none outline-none text-right cursor-pointer"
+            >
+              {Object.values(CURRENCIES).map(c => (
+                <option key={c.code} value={c.code}>{c.code} ({c.symbol})</option>
+              ))}
+            </select>
+          </div>
 
-                    <div className="p-4 rounded-xl border border-border bg-muted/30">
-                      <p className="text-sm text-muted-foreground">
-                        Your CashDash AI is currently configured and running smoothly. It will learn your spending habits over time.
-                      </p>
-                    </div>
-                  </div>
-                </>
-              )}
+          {/* AI */}
+          <div className="config-item" onClick={() => { toggle('ai_enabled'); saveProfile(); }}>
+            <span className="config-label">AI Assistant</span>
+            <span className="config-value">{profile.ai_enabled ? 'ON' : 'OFF'}</span>
+          </div>
 
-              {/* Billing & Subscriptions */}
-              {activeSection === 'billing' && (
-                <>
-                  <SectionHeader icon={DollarSign} title="Billing & Subscriptions" desc="Manage your SaaS subscription plan" />
-                  <div className="space-y-4">
-                    <div className="p-4 rounded-xl border border-border bg-muted/30">
-                      <h4 className="text-sm font-semibold mb-1">Current Plan: <span className="capitalize text-primary">{(profile as any).subscription_tier || 'free'}</span></h4>
-                      <p className="text-xs text-muted-foreground mb-4">
-                        {(profile as any).subscription_tier === 'free' 
-                          ? 'You are currently on the Free tier. Upgrade to unlock AI features, unlimited accounts, and more.' 
-                          : 'Thank you for being a Pro user! You can manage your payment methods or cancel your subscription through the customer portal.'}
-                      </p>
-                      
-                      {(profile as any).subscription_tier === 'free' ? (
-                        <button onClick={() => router.push('/pricing')}
-                          className="px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90">
-                          Upgrade Plan
-                        </button>
-                      ) : (
-                        <button onClick={handleManageBilling} disabled={loading}
-                          className="px-4 py-2 flex items-center gap-2 rounded-lg border border-input bg-background text-sm font-medium hover:bg-muted disabled:opacity-50">
-                          {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
-                          Manage Billing Portal
-                        </button>
-                      )}
-                    </div>
-                  </div>
-                </>
-              )}
+          {/* Plan */}
+          <div className="config-item" onClick={() => router.push('/pricing')}>
+            <span className="config-label">Subscription</span>
+            <span className="config-value capitalize">{profile.subscription_tier}</span>
+          </div>
 
-              {/* Notifications */}
-              {activeSection === 'notifications' && (
-                <>
-                  <SectionHeader icon={Bell} title="Notifications" desc="When to get alerted" />
-                  <div className="space-y-4">
-                    {[
-                      { label: 'Budget Alerts', desc: 'Notify when approaching budget limit' },
-                      { label: 'Weekly Summary', desc: 'Weekly spending report every Sunday' },
-                      { label: 'AI Insights', desc: 'Receive AI-generated financial tips' },
-                      { label: 'Large Transactions', desc: 'Alert for transactions over your set limit' },
-                    ].map(item => (
-                      <ToggleRow key={item.label} label={item.label} desc={item.desc} checked={false} onChange={() => toast('Notifications coming soon!')} />
-                    ))}
-                  </div>
-                </>
-              )}
+          {/* Billing */}
+          {profile.subscription_tier !== 'free' && (
+            <div className="config-item" onClick={handleManageBilling}>
+              <span className="config-label">Manage Billing</span>
+              <span className="config-value">Portal →</span>
+            </div>
+          )}
 
-              {/* Security */}
-              {activeSection === 'security' && (
-                <>
-                  <SectionHeader icon={Shield} title="Security" desc="Protect your account" />
-                  <div className="space-y-4">
-                    <div className="p-4 rounded-xl border border-border bg-muted/30">
-                      <h4 className="text-sm font-semibold mb-1">App Lock (PIN)</h4>
-                      <p className="text-xs text-muted-foreground mb-3">Require a 4-digit PIN when you return to the app.</p>
-                      {hasPin ? (
-                        <div className="flex items-center justify-between p-3 rounded-lg bg-emerald-500/10 border border-emerald-500/20">
-                          <span className="text-sm font-medium text-emerald-600 flex items-center gap-2">
-                            <Shield className="w-4 h-4" /> PIN Protection Active
-                          </span>
-                          <button onClick={removePin} className="text-xs text-destructive hover:underline">Remove</button>
-                        </div>
-                      ) : (
-                        <div className="flex gap-2">
-                          <input type="password" maxLength={4} placeholder="0000" value={pinInput} onChange={e => setPinInput(e.target.value.replace(/\D/g, ''))}
-                            className="w-24 px-3 py-2 text-center tracking-[0.5em] rounded-lg border border-input bg-background focus:outline-none focus:ring-2 focus:ring-primary/20" />
-                          <button onClick={savePin} className="px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90">
-                            Set PIN
-                          </button>
-                        </div>
-                      )}
-                    </div>
-
-                    <div className="p-4 rounded-xl border border-border bg-muted/30">
-                      <h4 className="text-sm font-semibold mb-1">Change Password</h4>
-                      <p className="text-xs text-muted-foreground mb-3">Password is managed through Supabase Auth</p>
-                      <button onClick={() => toast.success('Password reset instructions sent to your email')} className="px-4 py-2 rounded-lg border border-input text-sm font-medium hover:bg-muted transition-colors">
-                        Send reset email
-                      </button>
-                    </div>
-                    <div className="p-4 rounded-xl border border-destructive/30 bg-destructive/5">
-                      <h4 className="text-sm font-semibold text-destructive mb-1 flex items-center gap-2">
-                        <AlertCircle className="w-4 h-4" /> Danger Zone
-                      </h4>
-                      <p className="text-xs text-muted-foreground mb-3">These actions are irreversible</p>
-                      <button onClick={() => toast('Account deletion requires contacting support for now.')} className="px-4 py-2 rounded-lg bg-destructive text-destructive-foreground text-sm font-medium hover:bg-destructive/90 transition-colors">
-                        Delete Account
-                      </button>
-                    </div>
-                  </div>
-                </>
-              )}
-
-              {/* Data */}
-              {activeSection === 'data' && (
-                <>
-                  <SectionHeader icon={Database} title="Data & Export" desc="Your data belongs to you" />
-                  <div className="space-y-4">
-                    <div className="p-4 rounded-xl border border-border bg-muted/30">
-                      <h4 className="text-sm font-semibold mb-1">Export All Data</h4>
-                      <p className="text-xs text-muted-foreground mb-3">Download all your transactions as CSV</p>
-                      <motion.button onClick={exportData}
-                        className="flex items-center gap-2 px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90"
-                        whileTap={{ scale: 0.97 }}>
-                        <Download className="w-4 h-4" /> Export CSV
-                      </motion.button>
-                    </div>
-                    <div className="p-4 rounded-xl border border-border bg-muted/30">
-                      <h4 className="text-sm font-semibold mb-1">Import Data</h4>
-                      <p className="text-xs text-muted-foreground mb-3">Import transactions from CSV</p>
-                      <button onClick={() => router.push('/dashboard/import-export')}
-                        className="flex items-center gap-2 px-4 py-2 rounded-lg border border-input text-sm font-medium hover:bg-muted">
-                        <FileText className="w-4 h-4" /> Import CSV
-                      </button>
-                    </div>
-                  </div>
-                </>
-              )}
-
-              {/* Save Button */}
-              {['profile', 'currency', 'ai'].includes(activeSection) && (
-                <div className="flex justify-stretch border-t border-border pt-4 md:justify-end">
-                  <motion.button onClick={saveProfile} disabled={loading}
-                    className="flex w-full items-center justify-center gap-2 rounded-2xl bg-primary px-5 py-3 text-sm font-medium text-primary-foreground transition-all hover:bg-primary/90 hover:shadow-glow disabled:opacity-60 md:w-auto"
-                    whileTap={{ scale: 0.97 }}>
-                    {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-                    Save Changes
-                  </motion.button>
-                </div>
-              )}
-            </motion.div>
-          </AnimatePresence>
+          {/* Sign Out */}
+          <div className="config-item" onClick={() => {
+            fetch('/auth/callback?action=signout').then(() => router.push('/login'));
+          }}>
+            <span className="config-label text-red-400">Sign Out</span>
+            <SignOut className="w-4 h-4 text-red-400" />
+          </div>
+        </div>
       </div>
-    </div>
-  );
-}
+    );
+  }
 
-function SectionHeader({ icon: Icon, title, desc }: { icon: React.ElementType; title: string; desc: string }) {
-  return (
-    <div className="flex items-center gap-3 border-b border-border pb-3">
-      <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-primary/10">
-        <Icon className="h-4.5 w-4.5 text-primary" />
-      </div>
-      <div>
-        <h2 className="font-semibold text-foreground">{title}</h2>
-        <p className="text-xs text-muted-foreground">{desc}</p>
-      </div>
-    </div>
-  );
-}
+  // ── Configuration Detail View ──
+  if (view === 'configuration') {
+    return (
+      <div className="space-y-0">
+        <div className="flex items-center gap-3 px-4 py-3">
+          <button onClick={() => setView('grid')} className="p-1">
+            <CaretLeft className="w-5 h-5" />
+          </button>
+          <h1 className="text-xl font-semibold">Configuration</h1>
+        </div>
 
-function ToggleRow({ label, desc, checked, onChange }: { label: string; desc: string; checked: boolean; onChange: () => void }) {
-  return (
-    <div className="flex items-center justify-between gap-4 rounded-2xl border border-border/60 bg-card/40 px-4 py-3">
-      <div>
-        <div className="text-sm font-medium">{label}</div>
-        <div className="text-xs text-muted-foreground">{desc}</div>
+        <div className="config-section-header">Category/Repeat</div>
+        <div className="config-item" onClick={() => router.push('/dashboard/categories')}>
+          <span className="config-label">Income Category Setting</span>
+          <span className="config-value">→</span>
+        </div>
+        <div className="config-item" onClick={() => router.push('/dashboard/categories')}>
+          <span className="config-label">Expenses Category Setting</span>
+          <span className="config-value">→</span>
+        </div>
+        <div className="config-item" onClick={() => toast('Subcategory toggle coming soon')}>
+          <span className="config-label">Subcategory</span>
+          <span className="config-value">ON</span>
+        </div>
+        <div className="config-item" onClick={() => router.push('/dashboard/budgets')}>
+          <span className="config-label">Budget Setting</span>
+          <span className="config-value">→</span>
+        </div>
+        <div className="config-item" onClick={() => router.push('/dashboard/bills')}>
+          <span className="config-label">Repeat Setting</span>
+          <span className="config-value">→</span>
+        </div>
+
+        <div className="config-section-header">Configuration</div>
+        <div className="config-item">
+          <span className="config-label">Main Currency Setting</span>
+          <select
+            value={profile.default_currency}
+            onChange={e => { update('default_currency', e.target.value); saveProfile(); }}
+            className="config-value bg-transparent border-none outline-none text-right cursor-pointer"
+          >
+            {Object.values(CURRENCIES).map(c => (
+              <option key={c.code} value={c.code}>{c.code} ({c.symbol})</option>
+            ))}
+          </select>
+        </div>
+        <div className="config-item">
+          <span className="config-label">Date Format</span>
+          <select
+            value={profile.date_format}
+            onChange={e => { update('date_format', e.target.value); saveProfile(); }}
+            className="config-value bg-transparent border-none outline-none text-right cursor-pointer"
+          >
+            {['YYYY-MM-DD', 'MM/DD/YYYY', 'DD/MM/YYYY', 'MMM D, YYYY'].map(f => (
+              <option key={f} value={f}>{f}</option>
+            ))}
+          </select>
+        </div>
+        <div className="config-item">
+          <span className="config-label">Monthly Start Date</span>
+          <span className="config-value">Every 1</span>
+        </div>
+        <div className="config-item">
+          <span className="config-label">Weekly Start Day</span>
+          <select
+            value={profile.first_day_of_week}
+            onChange={e => { update('first_day_of_week', Number(e.target.value)); saveProfile(); }}
+            className="config-value bg-transparent border-none outline-none text-right cursor-pointer"
+          >
+            <option value={0}>Sunday</option>
+            <option value={1}>Monday</option>
+            <option value={6}>Saturday</option>
+          </select>
+        </div>
+
+        <div className="config-section-header">Display</div>
+        <div className="config-item" onClick={() => {
+          const themes = ['light', 'dark', 'system'];
+          const current = themes.indexOf(theme || 'system');
+          setTheme(themes[(current + 1) % themes.length]);
+        }}>
+          <span className="config-label">Theme</span>
+          <span className="config-value capitalize">{theme}</span>
+        </div>
+        <div className="config-item" onClick={() => { toggle('show_balance'); saveProfile(); }}>
+          <span className="config-label">Show Balance</span>
+          <span className="config-value">{profile.show_balance ? 'ON' : 'OFF'}</span>
+        </div>
+        <div className="config-item" onClick={() => { toggle('compact_mode'); saveProfile(); }}>
+          <span className="config-label">Compact Mode</span>
+          <span className="config-value">{profile.compact_mode ? 'ON' : 'OFF'}</span>
+        </div>
+
+        <div className="config-section-header">AI</div>
+        <div className="config-item" onClick={() => { toggle('ai_enabled'); saveProfile(); }}>
+          <span className="config-label">AI Assistant</span>
+          <span className="config-value">{profile.ai_enabled ? 'ON' : 'OFF'}</span>
+        </div>
+        <div className="config-item" onClick={() => { toggle('ai_auto_categorize'); saveProfile(); }}>
+          <span className="config-label">Auto-Categorize</span>
+          <span className="config-value">{profile.ai_auto_categorize ? 'ON' : 'OFF'}</span>
+        </div>
+        <div className="config-item" onClick={() => { toggle('ai_suggestions'); saveProfile(); }}>
+          <span className="config-label">AI Suggestions</span>
+          <span className="config-value">{profile.ai_suggestions ? 'ON' : 'OFF'}</span>
+        </div>
+
+        <div className="config-section-header">Other</div>
+        <div className="config-item" onClick={() => setView('passcode')}>
+          <span className="config-label">Passcode</span>
+          <span className="config-value">{hasPin ? 'ON' : 'OFF'}</span>
+        </div>
+        <div className="config-item" onClick={exportData}>
+          <span className="config-label">Export Data</span>
+          <span className="config-value">CSV →</span>
+        </div>
+        <div className="config-item" onClick={() => router.push('/dashboard/import-export')}>
+          <span className="config-label">Import Data</span>
+          <span className="config-value">→</span>
+        </div>
+
+        {/* Save button */}
+        <div className="p-4">
+          <motion.button
+            onClick={saveProfile}
+            disabled={loading}
+            className="w-full py-3 rounded-xl bg-primary text-primary-foreground text-sm font-medium disabled:opacity-60"
+            whileTap={{ scale: 0.97 }}
+          >
+            {loading ? 'Saving...' : 'Save Changes'}
+          </motion.button>
+        </div>
       </div>
-      <motion.button onClick={onChange} whileTap={{ scale: 0.9 }}
-        className={`relative w-11 h-6 rounded-full transition-colors ${checked ? 'bg-primary' : 'bg-muted'}`}>
-        <motion.div
-          className="absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow-sm"
-          animate={{ x: checked ? 20 : 0 }}
-          transition={{ type: 'spring', stiffness: 500, damping: 30 }}
-        />
-      </motion.button>
-    </div>
-  );
+    );
+  }
+
+  // ── Passcode View ──
+  if (view === 'passcode') {
+    return (
+      <div className="space-y-0">
+        <div className="flex items-center gap-3 px-4 py-3">
+          <button onClick={() => setView('grid')} className="p-1">
+            <CaretLeft className="w-5 h-5" />
+          </button>
+          <h1 className="text-xl font-semibold">Passcode</h1>
+        </div>
+
+        <div className="px-4 py-6 space-y-4">
+          {hasPin ? (
+            <div className="space-y-4">
+              <div className="flex items-center justify-between py-3">
+                <span className="text-sm font-medium text-emerald-500">PIN Protection Active</span>
+                <button onClick={removePin} className="text-sm text-red-400">Remove PIN</button>
+              </div>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              <p className="text-sm text-muted-foreground">Set a 4-digit PIN to lock the app.</p>
+              <div className="underline-field">
+                <label>PIN Code</label>
+                <input
+                  type="password"
+                  maxLength={4}
+                  placeholder="0000"
+                  value={pinInput}
+                  onChange={e => setPinInput(e.target.value.replace(/\D/g, ''))}
+                  className="text-center tracking-[0.5em]"
+                />
+              </div>
+              <motion.button
+                onClick={savePin}
+                className="w-full py-3 rounded-xl bg-primary text-primary-foreground text-sm font-medium"
+                whileTap={{ scale: 0.97 }}
+              >
+                Set PIN
+              </motion.button>
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  return null;
 }

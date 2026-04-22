@@ -3,13 +3,17 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  Plus, MagnifyingGlass, Funnel, X, ArrowsLeftRight, TrendUp, TrendDown, Brain,
-  TrashSimple, PencilSimple, CheckCircle, CircleNotch, FloppyDisk, Paperclip
+  MagnifyingGlass, Funnel, X, ArrowsLeftRight, Brain,
+  TrashSimple, PencilSimple, CheckCircle, CircleNotch, FloppyDisk, Paperclip,
+  CaretLeft, CaretRight, Plus
 } from '@phosphor-icons/react';
-import { formatCurrency, formatRelativeDate, formatDate, groupTransactionsByDate } from '@/lib/utils';
+import { formatCurrency, formatDate, groupTransactionsByDate } from '@/lib/utils';
 import { toast } from 'sonner';
 import Link from 'next/link';
+import { format, subMonths, addMonths } from 'date-fns';
 import type { Transaction, TransactionFilters } from '@/types';
+
+type SubTab = 'daily' | 'monthly' | 'total';
 
 export default function TransactionsPage() {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
@@ -17,7 +21,7 @@ export default function TransactionsPage() {
   const [filters, setFilters] = useState<TransactionFilters>({ type: 'all' });
   const [search, setSearch] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
-  const [showFilters, setShowFilters] = useState(false);
+  const [showSearch, setShowSearch] = useState(false);
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(false);
   const [total, setTotal] = useState(0);
@@ -25,9 +29,10 @@ export default function TransactionsPage() {
   const [editingTx, setEditingTx] = useState<Transaction | null>(null);
   const [editForm, setEditForm] = useState({ description: '', amount: '', type: 'expense' as string });
   const [editSaving, setEditSaving] = useState(false);
+  const [currentDate, setCurrentDate] = useState(new Date());
+  const [subTab, setSubTab] = useState<SubTab>('daily');
   const searchTimerRef = useRef<ReturnType<typeof setTimeout>>(null);
 
-  // Debounce search input
   useEffect(() => {
     if (searchTimerRef.current) clearTimeout(searchTimerRef.current);
     searchTimerRef.current = setTimeout(() => setDebouncedSearch(search), 400);
@@ -40,7 +45,7 @@ export default function TransactionsPage() {
       const p = reset ? 1 : page;
       const params = new URLSearchParams({
         page: p.toString(),
-        limit: '25',
+        limit: '50',
         ...(filters.type && filters.type !== 'all' ? { type: filters.type } : {}),
         ...(filters.account_id ? { account_id: filters.account_id } : {}),
         ...(filters.category_id ? { category_id: filters.category_id } : {}),
@@ -48,10 +53,8 @@ export default function TransactionsPage() {
         ...(filters.date_to ? { date_to: filters.date_to } : {}),
         ...(debouncedSearch ? { search: debouncedSearch } : {}),
       });
-
       const res = await fetch(`/api/transactions?${params}`);
       const data = await res.json();
-
       if (reset) {
         setTransactions(data.data || []);
         setPage(1);
@@ -61,7 +64,7 @@ export default function TransactionsPage() {
       setHasMore(data.has_more);
       setTotal(data.total || 0);
     } catch {
-      toast.error('Failed to load transactions');
+      toast.error('Failed to load');
     } finally {
       setLoading(false);
     }
@@ -74,17 +77,13 @@ export default function TransactionsPage() {
       await fetch(`/api/transactions/${id}`, { method: 'DELETE' });
       setTransactions(prev => prev.filter(t => t.id !== id));
       setTotal(prev => prev - 1);
-      toast.success('Transaction deleted');
-    } catch {
-      toast.error('Failed to delete');
-    }
+      toast.success('Deleted');
+    } catch { toast.error('Failed'); }
   };
 
   const bulkDelete = async () => {
     const ids = Array.from(selectedIds);
-    for (const id of ids) {
-      await fetch(`/api/transactions/${id}`, { method: 'DELETE' });
-    }
+    for (const id of ids) await fetch(`/api/transactions/${id}`, { method: 'DELETE' });
     setTransactions(prev => prev.filter(t => !selectedIds.has(t.id)));
     setTotal(prev => prev - ids.length);
     setSelectedIds(new Set());
@@ -94,19 +93,14 @@ export default function TransactionsPage() {
   const toggleSelect = (id: string) => {
     setSelectedIds(prev => {
       const next = new Set(prev);
-      if (next.has(id)) { next.delete(id); } else { next.add(id); }
+      if (next.has(id)) next.delete(id); else next.add(id);
       return next;
     });
   };
 
-  // ─── Edit Modal Logic ─────────────────────────────────────────────────
   const openEdit = (tx: Transaction) => {
     setEditingTx(tx);
-    setEditForm({
-      description: tx.description || '',
-      amount: (tx.amount / 100).toFixed(2),
-      type: tx.type,
-    });
+    setEditForm({ description: tx.description || '', amount: (tx.amount / 100).toFixed(2), type: tx.type });
   };
 
   const saveEdit = async () => {
@@ -116,125 +110,96 @@ export default function TransactionsPage() {
       const res = await fetch(`/api/transactions/${editingTx.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          description: editForm.description,
-          amount: editForm.amount,
-          type: editForm.type,
-        }),
+        body: JSON.stringify({ description: editForm.description, amount: editForm.amount, type: editForm.type }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
-
       setTransactions(prev => prev.map(t => t.id === editingTx.id ? { ...t, ...data.data } : t));
       setEditingTx(null);
-      toast.success('Transaction updated');
-    } catch {
-      toast.error('Failed to update');
-    } finally {
-      setEditSaving(false);
-    }
+      toast.success('Updated');
+    } catch { toast.error('Failed'); } finally { setEditSaving(false); }
   };
 
   const grouped = groupTransactionsByDate(transactions);
-  const incomeTotal = transactions.reduce((sum, transaction) => sum + (transaction.type === 'income' ? transaction.amount : 0), 0);
-  const expenseTotal = transactions.reduce((sum, transaction) => sum + (transaction.type === 'expense' ? transaction.amount : 0), 0);
+  const incomeTotal = transactions.reduce((s, t) => s + (t.type === 'income' ? t.amount : 0), 0);
+  const expenseTotal = transactions.reduce((s, t) => s + (t.type === 'expense' ? t.amount : 0), 0);
+  const netTotal = incomeTotal - expenseTotal;
+  const currency = transactions[0]?.currency || 'USD';
+
+  const prevMonth = () => setCurrentDate(d => subMonths(d, 1));
+  const nextMonth = () => setCurrentDate(d => addMonths(d, 1));
 
   return (
-    <div className="mobile-page">
-      <div className="mobile-page-header">
+    <div className="space-y-0">
+      {/* Header — month navigation + search/filter icons */}
+      <div className="flex items-center justify-between px-4 py-3">
+        <div className="flex items-center gap-3">
+          <button onClick={prevMonth} className="p-1"><CaretLeft className="w-5 h-5" /></button>
+          <span className="text-lg font-semibold">{format(currentDate, 'MMM yyyy')}</span>
+          <button onClick={nextMonth} className="p-1"><CaretRight className="w-5 h-5" /></button>
+        </div>
+        <div className="flex items-center gap-2">
+          <button onClick={() => setShowSearch(!showSearch)} className="p-2">
+            <MagnifyingGlass className="w-5 h-5 text-muted-foreground" />
+          </button>
+          <button onClick={() => {
+            const next = filters.type === 'all' ? 'expense' : filters.type === 'expense' ? 'income' : 'all';
+            setFilters(f => ({ ...f, type: next }));
+          }} className="p-2">
+            <Funnel className="w-5 h-5 text-muted-foreground" />
+          </button>
+        </div>
+      </div>
+
+      {/* Sub-tabs */}
+      <div className="sub-tabs">
+        {(['daily', 'monthly', 'total'] as const).map(tab => (
+          <button
+            key={tab}
+            onClick={() => setSubTab(tab)}
+            className={`sub-tab ${subTab === tab ? 'active' : ''}`}
+          >
+            {tab.charAt(0).toUpperCase() + tab.slice(1)}
+          </button>
+        ))}
+      </div>
+
+      {/* Summary row — Income / Expenses / Total */}
+      <div className="grid grid-cols-3 text-center py-2.5 border-b border-border/20">
         <div>
-          <h1 className="text-3xl font-serif font-bold tracking-tight">Transactions</h1>
-          <p className="text-sm text-muted-foreground mt-1 font-mono">{total.toLocaleString()} total</p>
+          <p className="text-[10px] text-muted-foreground uppercase">Income</p>
+          <p className="text-sm font-semibold text-blue-400">{formatCurrency(incomeTotal, currency)}</p>
         </div>
-        <div className="flex items-center gap-3 w-full sm:w-auto">
-          <Link href="/dashboard/transactions/new" className="text-xs font-medium text-primary">
-            + Manual
-          </Link>
-          <Link href="/dashboard/ai-assistant" className="text-xs font-medium text-emerald-500">
-            ✦ AI Entry
-          </Link>
+        <div>
+          <p className="text-[10px] text-muted-foreground uppercase">Expenses</p>
+          <p className="text-sm font-semibold text-red-400">{formatCurrency(expenseTotal, currency)}</p>
         </div>
-      </div>
-
-      <div className="grid grid-cols-3 gap-2">
-        <div className="stat-card !p-3">
-          <p className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">Income</p>
-          <p className="mt-1 text-lg font-serif font-bold text-emerald-500">{formatCurrency(incomeTotal, transactions[0]?.currency || 'USD')}</p>
-        </div>
-        <div className="stat-card !p-3">
-          <p className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">Expenses</p>
-          <p className="mt-1 text-lg font-serif font-bold text-red-400">{formatCurrency(expenseTotal, transactions[0]?.currency || 'USD')}</p>
-        </div>
-        <div className="stat-card !p-3">
-          <p className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">Net</p>
-          <p className={`mt-1 text-lg font-serif font-bold ${incomeTotal - expenseTotal >= 0 ? 'text-foreground' : 'text-red-400'}`}>{formatCurrency(incomeTotal - expenseTotal, transactions[0]?.currency || 'USD')}</p>
+        <div>
+          <p className="text-[10px] text-muted-foreground uppercase">Total</p>
+          <p className={`text-sm font-semibold ${netTotal >= 0 ? 'text-foreground' : 'text-red-400'}`}>
+            {formatCurrency(netTotal, currency)}
+          </p>
         </div>
       </div>
 
-      <div className="flex flex-col gap-2.5 sm:flex-row sm:items-center">
-        <div className="relative flex-1">
-          <MagnifyingGlass className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" weight="light" />
-          <input
-            value={search}
-            onChange={e => setSearch(e.target.value)}
-            placeholder="Search transactions..."
-            className="w-full pl-9 pr-4 py-2.5 rounded-xl text-sm focus:outline-none input-animated"
-            style={{
-              border: '1px solid hsl(var(--foreground) / 0.06)',
-              background: 'hsl(var(--card) / 0.5)',
-              backdropFilter: 'blur(8px)',
-            }}
-          />
-          {search && (
-            <button onClick={() => setSearch('')} className="absolute right-3 top-1/2 -translate-y-1/2">
-              <X className="w-3.5 h-3.5 text-muted-foreground" weight="light" />
-            </button>
-          )}
-        </div>
-
-        <div className="flex items-center gap-1 overflow-x-auto rounded-xl p-1 scrollbar-thin"
-          style={{ border: '1px solid hsl(var(--foreground) / 0.06)', background: 'hsl(var(--card) / 0.4)' }}>
-          {(['all', 'income', 'expense', 'transfer'] as const).map(type => (
-            <button key={type} onClick={() => setFilters(f => ({ ...f, type }))}
-              className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all duration-200 ${
-                filters.type === type ? 'bg-emerald-500 text-white shadow-sm' : 'text-muted-foreground hover:text-foreground'
-              }`}>
-              {type === 'all' ? 'All' : type.charAt(0).toUpperCase() + type.slice(1)}
-            </button>
-          ))}
-        </div>
-
-        <motion.button onClick={() => setShowFilters(!showFilters)}
-          className={`flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl text-sm transition-all duration-200 ${showFilters ? 'text-emerald-500' : 'text-muted-foreground hover:text-foreground'}`}
-          style={{ border: `1px solid ${showFilters ? 'hsl(var(--primary) / 0.2)' : 'hsl(var(--foreground) / 0.06)'}`, background: showFilters ? 'hsl(var(--primary) / 0.05)' : 'transparent' }}
-          whileTap={{ scale: 0.97 }}>
-          <Funnel className="w-3.5 h-3.5" weight="light" /> Filters
-        </motion.button>
-      </div>
-
-      {/* Extended filters */}
+      {/* Search bar (toggled) */}
       <AnimatePresence>
-        {showFilters && (
-          <motion.div className="grid grid-cols-1 gap-3 p-4 glass-card sm:grid-cols-4"
-            initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }}>
-            <div>
-              <label className="text-xs font-medium text-muted-foreground mb-1.5 block">From date</label>
-              <input type="date" value={filters.date_from || ''} onChange={e => setFilters(f => ({ ...f, date_from: e.target.value }))}
-                className="w-full px-3 py-2 rounded-xl text-xs focus:outline-none input-animated"
-                style={{ border: '1px solid hsl(var(--foreground) / 0.06)', background: 'hsl(var(--foreground) / 0.02)' }} />
-            </div>
-            <div>
-              <label className="text-xs font-medium text-muted-foreground mb-1.5 block">To date</label>
-              <input type="date" value={filters.date_to || ''} onChange={e => setFilters(f => ({ ...f, date_to: e.target.value }))}
-                className="w-full px-3 py-2 rounded-xl text-xs focus:outline-none input-animated"
-                style={{ border: '1px solid hsl(var(--foreground) / 0.06)', background: 'hsl(var(--foreground) / 0.02)' }} />
-            </div>
-            <div className="flex items-end sm:col-span-2 lg:col-span-1">
-              <button onClick={() => { setFilters({ type: 'all' }); setSearch(''); }}
-                className="px-3 py-2 rounded-xl text-xs text-muted-foreground hover:text-foreground w-full transition-all duration-200"
-                style={{ border: '1px solid hsl(var(--foreground) / 0.06)' }}>
-                Clear all
-              </button>
+        {showSearch && (
+          <motion.div className="px-4 py-2" initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }}>
+            <div className="relative">
+              <MagnifyingGlass className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+              <input
+                value={search}
+                onChange={e => setSearch(e.target.value)}
+                placeholder="Search..."
+                autoFocus
+                className="w-full pl-9 pr-8 py-2.5 rounded-lg text-sm bg-foreground/[0.03] border border-border/30 focus:outline-none"
+              />
+              {search && (
+                <button onClick={() => setSearch('')} className="absolute right-3 top-1/2 -translate-y-1/2">
+                  <X className="w-3.5 h-3.5 text-muted-foreground" />
+                </button>
+              )}
             </div>
           </motion.div>
         )}
@@ -243,13 +208,11 @@ export default function TransactionsPage() {
       {/* Bulk actions */}
       <AnimatePresence>
         {selectedIds.size > 0 && (
-          <motion.div className="flex items-center justify-between px-4 py-2.5 glass-card"
-            style={{ borderColor: 'hsl(var(--primary) / 0.15)' }}
-            initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}>
-            <span className="text-sm font-medium text-emerald-500">{selectedIds.size} selected</span>
-            <button onClick={bulkDelete}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-red-500/10 text-red-400 text-xs font-medium hover:bg-red-500/20 transition-colors">
-              <TrashSimple className="w-3 h-3" weight="regular" /> Delete selected
+          <motion.div className="flex items-center justify-between px-4 py-2 bg-foreground/[0.02]"
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+            <span className="text-sm font-medium text-primary">{selectedIds.size} selected</span>
+            <button onClick={bulkDelete} className="text-xs font-medium text-red-400 flex items-center gap-1">
+              <TrashSimple className="w-3 h-3" /> Delete
             </button>
           </motion.div>
         )}
@@ -257,19 +220,21 @@ export default function TransactionsPage() {
 
       {/* Transaction list */}
       {loading && transactions.length === 0 ? (
-        <TransactionSkeleton />
+        <div className="flex items-center justify-center py-20">
+          <div className="w-8 h-8 border-2 border-primary/30 border-t-primary rounded-full animate-spin" />
+        </div>
       ) : transactions.length === 0 ? (
         <EmptyState />
       ) : (
-        <div className="space-y-5">
+        <div>
           {Object.entries(grouped)
             .sort(([a], [b]) => b.localeCompare(a))
             .map(([date, txs]) => (
               <div key={date}>
-                <div className="flex items-center gap-3 mb-2.5">
-                  <span className="text-xs font-semibold text-muted-foreground">{formatDate(date, 'EEEE, MMMM d')}</span>
-                  <div className="flex-1 h-px" style={{ background: 'hsl(var(--foreground) / 0.04)' }} />
-                  <span className="text-xs text-muted-foreground font-mono">
+                {/* Date header */}
+                <div className="flex items-center justify-between px-4 py-2 bg-foreground/[0.02]">
+                  <span className="text-xs font-medium text-muted-foreground">{formatDate(date, 'EEE, MMM d')}</span>
+                  <span className="text-xs font-medium tabular-nums text-muted-foreground">
                     {formatCurrency(
                       txs.reduce((s, t) => s + (t.type === 'income' ? t.amount : t.type === 'expense' ? -t.amount : 0), 0),
                       txs[0]?.currency || 'USD', { showSign: true }
@@ -277,136 +242,104 @@ export default function TransactionsPage() {
                   </span>
                 </div>
 
-                <div className="glass-card overflow-hidden"
-                  style={{ borderRadius: '16px' }}>
-                  {txs.map((tx, i) => (
-                    <motion.div key={tx.id}
-                      className={`group flex items-center gap-3 px-4 py-3.5 transition-all duration-200 ${selectedIds.has(tx.id) ? 'bg-emerald-500/[0.04]' : 'hover:bg-foreground/[0.02]'}`}
-                      style={i < txs.length - 1 ? { borderBottom: '1px solid hsl(var(--foreground) / 0.03)' } : {}}
-                      initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.02 }}>
-                      <button onClick={() => toggleSelect(tx.id)}
-                        className={`shrink-0 w-4 h-4 rounded flex items-center justify-center transition-all duration-200 ${
-                          selectedIds.has(tx.id) ? 'bg-emerald-500' : 'border border-muted-foreground/20 hover:border-emerald-500/50'
-                        }`}>
-                        {selectedIds.has(tx.id) && <CheckCircle className="w-3 h-3 text-white" weight="fill" />}
-                      </button>
-
-                      <div className="flat-list-icon">
-                        {tx.category?.icon || (tx.type === 'income' ? '💰' : tx.type === 'transfer' ? '↔️' : '💸')}
-                      </div>
-
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2">
-                          <span className="text-sm font-medium truncate">{tx.description || tx.category?.name || 'Transaction'}</span>
-                          {tx.is_ai_created && (
-                            <span className="px-1.5 py-0.5 rounded-md text-[9px] font-semibold"
-                              style={{ background: 'hsl(var(--primary) / 0.1)', color: 'hsl(var(--primary))' }}>AI</span>
-                          )}
-                        </div>
-                        <div className="flex items-center gap-2 mt-0.5">
-                          {tx.category && <span className="text-xs text-muted-foreground">{tx.category.name}</span>}
-                          <span className="text-xs text-muted-foreground/40">·</span>
-                          <span className="text-xs text-muted-foreground">{tx.account?.name}</span>
-                          {tx.attachments && tx.attachments.length > 0 && (
-                            <>
-                              <span className="text-xs text-muted-foreground/40">·</span>
-                              <Paperclip className="w-3 h-3 text-muted-foreground" weight="light" />
-                            </>
-                          )}
-                        </div>
-                      </div>
-
-                      <div className={`text-sm font-serif font-semibold editorial-number shrink-0 ${
-                        tx.type === 'income' ? 'text-emerald-500' : tx.type === 'expense' ? 'text-red-400' : 'text-blue-400'
+                {/* Transaction rows */}
+                {txs.map((tx) => (
+                  <div key={tx.id}
+                    className={`flat-list-item px-4 ${selectedIds.has(tx.id) ? 'bg-primary/[0.03]' : ''}`}>
+                    <button onClick={() => toggleSelect(tx.id)}
+                      className={`shrink-0 w-4 h-4 rounded flex items-center justify-center ${
+                        selectedIds.has(tx.id) ? 'bg-primary' : 'border border-muted-foreground/20'
                       }`}>
-                        {tx.type === 'income' ? '+' : tx.type === 'expense' ? '-' : ''}
-                        {formatCurrency(tx.amount, tx.currency)}
-                      </div>
+                      {selectedIds.has(tx.id) && <CheckCircle className="w-3 h-3 text-white" weight="fill" />}
+                    </button>
 
-                      <div className="flex items-center gap-0.5 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <button onClick={() => openEdit(tx)}
-                          className="p-1.5 rounded-lg hover:bg-foreground/[0.04] transition-colors text-muted-foreground hover:text-foreground">
-                          <PencilSimple className="w-3.5 h-3.5" weight="light" />
-                        </button>
-                        <button onClick={() => deleteTransaction(tx.id)}
-                          className="p-1.5 rounded-lg hover:bg-red-500/10 transition-colors text-muted-foreground hover:text-red-400">
-                          <TrashSimple className="w-3.5 h-3.5" weight="light" />
-                        </button>
-                      </div>
-                    </motion.div>
-                  ))}
-                </div>
+                    <div className="flat-list-icon">
+                      <span className="text-base">{tx.category?.icon || (tx.type === 'income' ? '💰' : '💸')}</span>
+                    </div>
+
+                    <div className="flex-1 min-w-0">
+                      <span className="text-sm font-medium truncate block">
+                        {tx.description || tx.category?.name || 'Transaction'}
+                      </span>
+                      <span className="text-xs text-muted-foreground">
+                        {tx.category?.name}{tx.account ? ` · ${tx.account.name}` : ''}
+                        {tx.attachments && tx.attachments.length > 0 && ' 📎'}
+                      </span>
+                    </div>
+
+                    <span className={`text-sm font-semibold tabular-nums shrink-0 ${
+                      tx.type === 'income' ? 'text-blue-400' : tx.type === 'expense' ? 'text-red-400' : 'text-foreground'
+                    }`}>
+                      {tx.type === 'income' ? '+' : tx.type === 'expense' ? '-' : ''}
+                      {formatCurrency(tx.amount, tx.currency)}
+                    </span>
+
+                    <div className="flex items-center gap-0.5 shrink-0">
+                      <button onClick={() => openEdit(tx)} className="p-1 text-muted-foreground">
+                        <PencilSimple className="w-3.5 h-3.5" />
+                      </button>
+                      <button onClick={() => deleteTransaction(tx.id)} className="p-1 text-muted-foreground">
+                        <TrashSimple className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  </div>
+                ))}
               </div>
             ))}
 
           {hasMore && (
-            <div className="flex justify-center pt-2">
-              <motion.button onClick={() => { setPage(p => p + 1); fetchTransactions(); }}
-                className="btn-secondary !rounded-xl"
-                whileTap={{ scale: 0.97 }}>
+            <div className="flex justify-center py-4">
+              <button onClick={() => { setPage(p => p + 1); fetchTransactions(); }}
+                className="text-sm text-primary font-medium">
                 Load more
-              </motion.button>
+              </button>
             </div>
           )}
         </div>
       )}
 
-      {/* ─── Edit Transaction Modal — Glass ─── */}
+      {/* Edit Transaction Modal */}
       <AnimatePresence>
         {editingTx && (
-          <motion.div className="fixed inset-0 z-50 flex items-center justify-center"
-            style={{ background: 'hsl(var(--background) / 0.6)', backdropFilter: 'blur(16px)' }}
+          <motion.div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center"
+            style={{ background: 'rgba(0,0,0,0.5)' }}
             initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
             onClick={() => setEditingTx(null)}>
-            <motion.div className="float-panel w-full max-w-md mx-4 p-6"
-              initial={{ scale: 0.95, opacity: 0, y: 10 }} animate={{ scale: 1, opacity: 1, y: 0 }} exit={{ scale: 0.95, opacity: 0, y: 10 }}
-              transition={{ duration: 0.25, ease: [0.4, 0, 0.2, 1] }}
+            <motion.div className="w-full max-w-md bg-card rounded-t-2xl sm:rounded-2xl p-5"
+              initial={{ y: 100 }} animate={{ y: 0 }} exit={{ y: 100 }}
               onClick={e => e.stopPropagation()}>
-              <div className="flex items-center justify-between mb-6">
-                <h3 className="text-lg font-serif font-semibold">Edit Transaction</h3>
-                <button onClick={() => setEditingTx(null)} className="p-1.5 rounded-lg hover:bg-foreground/[0.04] transition-colors">
-                  <X className="w-4 h-4" weight="light" />
-                </button>
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-semibold">Edit Transaction</h3>
+                <button onClick={() => setEditingTx(null)} className="p-1"><X className="w-4 h-4" /></button>
               </div>
 
-              <div className="space-y-4">
-                <div>
-                  <label className="text-sm font-medium mb-1.5 block">Description</label>
-                  <input value={editForm.description} onChange={e => setEditForm(f => ({ ...f, description: e.target.value }))}
-                    className="w-full px-3.5 py-2.5 rounded-xl text-sm focus:outline-none input-animated"
-                    style={{ border: '1px solid hsl(var(--foreground) / 0.06)', background: 'hsl(var(--foreground) / 0.02)' }} />
+              <div className="space-y-0">
+                <div className="underline-field">
+                  <label>Description</label>
+                  <input value={editForm.description} onChange={e => setEditForm(f => ({ ...f, description: e.target.value }))} />
                 </div>
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <label className="text-sm font-medium mb-1.5 block">Amount</label>
-                    <input type="number" step="0.01" value={editForm.amount}
-                      onChange={e => setEditForm(f => ({ ...f, amount: e.target.value }))}
-                      className="w-full px-3.5 py-2.5 rounded-xl text-sm focus:outline-none input-animated font-mono"
-                      style={{ border: '1px solid hsl(var(--foreground) / 0.06)', background: 'hsl(var(--foreground) / 0.02)' }} />
-                  </div>
-                  <div>
-                    <label className="text-sm font-medium mb-1.5 block">Type</label>
-                    <select value={editForm.type} onChange={e => setEditForm(f => ({ ...f, type: e.target.value }))}
-                      className="w-full px-3.5 py-2.5 rounded-xl text-sm focus:outline-none"
-                      style={{ border: '1px solid hsl(var(--foreground) / 0.06)', background: 'hsl(var(--foreground) / 0.02)' }}>
-                      <option value="expense">Expense</option>
-                      <option value="income">Income</option>
-                      <option value="transfer">Transfer</option>
-                    </select>
-                  </div>
+                <div className="underline-field">
+                  <label>Amount</label>
+                  <input type="number" step="0.01" value={editForm.amount}
+                    onChange={e => setEditForm(f => ({ ...f, amount: e.target.value }))} />
                 </div>
-                <div className="flex gap-2.5 pt-2">
-                  <button onClick={() => setEditingTx(null)}
-                    className="btn-secondary flex-1 !rounded-xl">
-                    Cancel
-                  </button>
-                  <motion.button onClick={saveEdit} disabled={editSaving}
-                    className="btn-primary flex-1 !rounded-xl disabled:opacity-50"
-                    whileTap={{ scale: 0.97 }}>
-                    {editSaving ? <CircleNotch className="w-4 h-4 animate-spin" weight="regular" /> : <FloppyDisk className="w-4 h-4" weight="regular" />}
-                    {editSaving ? 'Saving...' : 'Save'}
-                  </motion.button>
+                <div className="underline-field">
+                  <label>Type</label>
+                  <select value={editForm.type} onChange={e => setEditForm(f => ({ ...f, type: e.target.value }))}>
+                    <option value="expense">Expense</option>
+                    <option value="income">Income</option>
+                    <option value="transfer">Transfer</option>
+                  </select>
                 </div>
+              </div>
+
+              <div className="flex gap-3 pt-4">
+                <motion.button onClick={saveEdit} disabled={editSaving}
+                  className="flex-1 py-3 rounded-xl text-sm font-semibold text-white disabled:opacity-60"
+                  style={{ background: '#ff6b6b' }}
+                  whileTap={{ scale: 0.97 }}>
+                  {editSaving ? 'Saving...' : 'Save'}
+                </motion.button>
               </div>
             </motion.div>
           </motion.div>
@@ -416,43 +349,22 @@ export default function TransactionsPage() {
   );
 }
 
-function TransactionSkeleton() {
-  return (
-    <div className="space-y-3">
-      {[...Array(6)].map((_, i) => (
-        <div key={i} className="glass-card p-4 flex items-center gap-3">
-          <div className="w-9 h-9 rounded-xl shimmer-bg" />
-          <div className="flex-1 space-y-2">
-            <div className="h-3.5 rounded shimmer-bg w-40" />
-            <div className="h-2.5 rounded shimmer-bg w-24" />
-          </div>
-          <div className="h-4 rounded shimmer-bg w-16" />
-        </div>
-      ))}
-    </div>
-  );
-}
-
 function EmptyState() {
   return (
-    <motion.div className="text-center py-20" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-      <div className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-5" style={{ background: 'hsl(var(--foreground) / 0.04)' }}>
-        <ArrowsLeftRight className="w-7 h-7 text-muted-foreground" weight="light" />
+    <div className="text-center py-20 px-4">
+      <div className="w-14 h-14 rounded-full flex items-center justify-center mx-auto mb-4" style={{ background: 'hsl(var(--foreground) / 0.04)' }}>
+        <ArrowsLeftRight className="w-6 h-6 text-muted-foreground" />
       </div>
-      <h3 className="font-serif font-semibold text-lg mb-1.5">No transactions found</h3>
-      <p className="text-sm text-muted-foreground mb-5">Add your first transaction manually or use the AI assistant</p>
+      <h3 className="font-semibold text-lg mb-1">No transactions</h3>
+      <p className="text-sm text-muted-foreground mb-5">Tap + to add your first transaction</p>
       <div className="flex items-center justify-center gap-3">
-        <Link href="/dashboard/transactions/new">
-          <motion.button className="btn-secondary !rounded-xl" whileTap={{ scale: 0.97 }}>
-            <Plus className="w-4 h-4" weight="regular" /> Manual Entry
-          </motion.button>
+        <Link href="/dashboard/transactions/new" className="text-sm font-medium text-primary">
+          + Manual Entry
         </Link>
-        <Link href="/dashboard/ai-assistant">
-          <motion.button className="btn-primary !rounded-xl" whileTap={{ scale: 0.97 }}>
-            <Brain className="w-4 h-4" weight="duotone" /> Add with AI
-          </motion.button>
+        <Link href="/dashboard/ai-assistant" className="text-sm font-medium text-emerald-500">
+          ✦ AI Entry
         </Link>
       </div>
-    </motion.div>
+    </div>
   );
 }
