@@ -242,12 +242,11 @@ export default function AnalyticsPage() {
           />
           {expandedSections.trend && monthly.length > 0 && (
             <div className="px-4 py-4">
-              <LineChartCard
-                title=""
+              <AreaChartCard
                 labels={monthly.map(m => m.label)}
                 datasets={[
-                  { label: 'Income', data: monthly.map(m => m.income), color: '#4dabf7' },
-                  { label: 'Expenses', data: monthly.map(m => m.expenses), color: '#ff6b6b' },
+                  { label: 'Income', data: monthly.map(m => m.income), borderColor: '#4dabf7', bgFrom: 'rgba(77,171,247,0.2)', bgTo: 'transparent' },
+                  { label: 'Expenses', data: monthly.map(m => m.expenses), borderColor: '#ff6b6b', bgFrom: 'rgba(255,107,107,0.2)', bgTo: 'transparent' },
                 ]}
                 height={220}
               />
