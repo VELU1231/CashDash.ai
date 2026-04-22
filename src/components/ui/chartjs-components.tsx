@@ -809,3 +809,68 @@ export function MixedChartCard({ labels, barData, lineData, barColor, lineColor,
   );
 }
 
+// ─── LINE CHART (Clean wire-style) ───────────────────────────────
+interface LineChartProps {
+  labels: string[];
+  data: number[];
+  color?: string;
+  formatValue?: (v: number) => string;
+  height?: number;
+  showDots?: boolean;
+}
+
+export function LineChartCard({ labels, data: values, color = '#10b981', formatValue, height = 200, showDots = true }: LineChartProps) {
+  const data = {
+    labels,
+    datasets: [{
+      data: values,
+      borderColor: color,
+      borderWidth: 2.5,
+      pointRadius: showDots ? 3 : 0,
+      pointHoverRadius: showDots ? 6 : 4,
+      pointBackgroundColor: color,
+      pointBorderColor: '#fff',
+      pointBorderWidth: 2,
+      tension: 0.4,
+      fill: false,
+    }],
+  };
+
+  const options = {
+    responsive: true,
+    maintainAspectRatio: false,
+    interaction: { mode: 'index' as const, intersect: false },
+    plugins: {
+      legend: { display: false },
+      tooltip: {
+        ...tooltipConfig,
+        callbacks: {
+          label: (ctx: any) => formatValue ? formatValue(ctx.parsed.y) : ctx.parsed.y,
+        },
+      },
+    },
+    scales: {
+      x: {
+        grid: { display: false },
+        ticks: { color: 'rgba(128,128,128,0.6)', font: { size: 10 } },
+        border: { display: false },
+      },
+      y: {
+        grid: { color: gridColor },
+        ticks: {
+          color: 'rgba(128,128,128,0.6)',
+          font: { size: 10 },
+          callback: (v: any) => formatValue ? formatValue(v) : v,
+        },
+        border: { display: false },
+      },
+    },
+    animation: { duration: 800, easing: 'easeOutQuart' as const },
+  };
+
+  return (
+    <div style={{ height }}>
+      <Line data={data} options={options} plugins={[shadowPlugin]} />
+    </div>
+  );
+}

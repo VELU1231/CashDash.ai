@@ -146,35 +146,28 @@ export default function TransactionsPage() {
           <h1 className="text-3xl font-serif font-bold tracking-tight">Transactions</h1>
           <p className="text-sm text-muted-foreground mt-1 font-mono">{total.toLocaleString()} total</p>
         </div>
-        <div className="mobile-page-actions w-full sm:w-auto sm:justify-end">
-          <Link href="/dashboard/transactions/new">
-            <motion.button className="btn-secondary !w-full !rounded-2xl !text-[13px] sm:!w-auto"
-              whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
-              <Plus className="w-4 h-4" weight="regular" /> Manual Entry
-            </motion.button>
+        <div className="flex items-center gap-3 w-full sm:w-auto">
+          <Link href="/dashboard/transactions/new" className="text-xs font-medium text-primary">
+            + Manual
           </Link>
-          <Link href="/dashboard/ai-assistant">
-            <motion.button className="inline-flex w-full items-center justify-center gap-2 rounded-2xl px-3.5 py-2 text-sm font-medium transition-all duration-200 sm:w-auto"
-              style={{ background: 'hsl(var(--primary) / 0.08)', color: 'hsl(var(--primary))' }}
-              whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
-              <Brain className="w-4 h-4" weight="duotone" /> AI Entry
-            </motion.button>
+          <Link href="/dashboard/ai-assistant" className="text-xs font-medium text-emerald-500">
+            ✦ AI Entry
           </Link>
         </div>
       </div>
 
-      <div className="mobile-card-grid">
-        <div className="stat-card">
-          <p className="text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">Income</p>
-          <p className="mt-2 text-2xl font-serif font-bold text-emerald-500 editorial-number">{formatCurrency(incomeTotal, transactions[0]?.currency || 'USD')}</p>
+      <div className="grid grid-cols-3 gap-2">
+        <div className="stat-card !p-3">
+          <p className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">Income</p>
+          <p className="mt-1 text-lg font-serif font-bold text-emerald-500">{formatCurrency(incomeTotal, transactions[0]?.currency || 'USD')}</p>
         </div>
-        <div className="stat-card">
-          <p className="text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">Expenses</p>
-          <p className="mt-2 text-2xl font-serif font-bold text-red-400 editorial-number">{formatCurrency(expenseTotal, transactions[0]?.currency || 'USD')}</p>
+        <div className="stat-card !p-3">
+          <p className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">Expenses</p>
+          <p className="mt-1 text-lg font-serif font-bold text-red-400">{formatCurrency(expenseTotal, transactions[0]?.currency || 'USD')}</p>
         </div>
-        <div className="stat-card">
-          <p className="text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">Net</p>
-          <p className={`mt-2 text-2xl font-serif font-bold editorial-number ${incomeTotal - expenseTotal >= 0 ? 'text-foreground' : 'text-red-400'}`}>{formatCurrency(incomeTotal - expenseTotal, transactions[0]?.currency || 'USD')}</p>
+        <div className="stat-card !p-3">
+          <p className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">Net</p>
+          <p className={`mt-1 text-lg font-serif font-bold ${incomeTotal - expenseTotal >= 0 ? 'text-foreground' : 'text-red-400'}`}>{formatCurrency(incomeTotal - expenseTotal, transactions[0]?.currency || 'USD')}</p>
         </div>
       </div>
 
@@ -298,7 +291,7 @@ export default function TransactionsPage() {
                         {selectedIds.has(tx.id) && <CheckCircle className="w-3 h-3 text-white" weight="fill" />}
                       </button>
 
-                      <div className="w-9 h-9 rounded-xl flex items-center justify-center text-base shrink-0" style={{ background: 'hsl(var(--foreground) / 0.04)' }}>
+                      <div className="flat-list-icon">
                         {tx.category?.icon || (tx.type === 'income' ? '💰' : tx.type === 'transfer' ? '↔️' : '💸')}
                       </div>
 

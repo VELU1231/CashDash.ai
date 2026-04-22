@@ -12,7 +12,7 @@ import { formatCurrency } from '@/lib/utils';
 import { format, subDays } from 'date-fns';
 
 const AreaChartCard = dynamic(() => import('@/components/ui/chartjs-components').then(m => ({ default: m.AreaChartCard })), { ssr: false });
-const BarChartCard = dynamic(() => import('@/components/ui/chartjs-components').then(m => ({ default: m.BarChartCard })), { ssr: false });
+const LineChartCard = dynamic(() => import('@/components/ui/chartjs-components').then(m => ({ default: m.LineChartCard })), { ssr: false });
 const DoughnutChartCard = dynamic(() => import('@/components/ui/chartjs-components').then(m => ({ default: m.DoughnutChartCard })), { ssr: false });
 const TreemapChartCard = dynamic(() => import('@/components/ui/chartjs-components').then(m => ({ default: m.TreemapChartCard })), { ssr: false });
 const MatrixChartCard = dynamic(() => import('@/components/ui/chartjs-components').then(m => ({ default: m.MatrixChartCard })), { ssr: false });
@@ -97,7 +97,7 @@ export default function AnalyticsPage() {
   const [activeWidgets, setActiveWidgets] = useState<WidgetType[]>([]);
   const [showFiltersPanel, setShowFiltersPanel] = useState(false);
   const [showAddWidgetMenu, setShowAddWidgetMenu] = useState(false);
-  const [trendChartType, setTrendChartType] = useState<'area' | 'bar'>('area');
+  // Charts always use line/area style per user preference
 
   useEffect(() => {
     const saved = localStorage.getItem('cashdash_widgets');
@@ -365,38 +365,22 @@ export default function AnalyticsPage() {
                   {period === '7d' ? 'Daily breakdown' : 'Monthly comparison'}
                 </p>
               </div>
-              <div className="flex items-center gap-4 text-xs text-muted-foreground">
-                <div className="flex bg-muted/50 rounded-md p-0.5">
-                  <button onClick={() => setTrendChartType('area')} className={`px-2 py-1 rounded-sm ${trendChartType === 'area' ? 'bg-background shadow-sm text-foreground' : ''}`}>Area</button>
-                  <button onClick={() => setTrendChartType('bar')} className={`px-2 py-1 rounded-sm ${trendChartType === 'bar' ? 'bg-background shadow-sm text-foreground' : ''}`}>Bar</button>
-                </div>
-                <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-emerald-500" />Income</span>
-                <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-red-400" />Expenses</span>
+              <div className="flex items-center gap-3 text-[10px] text-muted-foreground">
+                <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-emerald-500" />Income</span>
+                <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-red-400" />Expenses</span>
               </div>
             </div>
             {chartData.length > 0 ? (
-              trendChartType === 'area' ? (
                 <AreaChartCard
                   labels={chartData.map(m => m.label)}
                   datasets={[
-                    { label: 'Income', data: chartData.map(m => m.income), borderColor: '#10b981', bgFrom: 'rgba(16,185,129,0.18)', bgTo: 'rgba(16,185,129,0)' },
-                    { label: 'Expenses', data: chartData.map(m => m.expenses), borderColor: '#f87171', bgFrom: 'rgba(248,113,113,0.15)', bgTo: 'rgba(248,113,113,0)' },
+                    { label: 'Income', data: chartData.map(m => m.income), borderColor: '#10b981', bgFrom: 'rgba(16,185,129,0.15)', bgTo: 'rgba(16,185,129,0)' },
+                    { label: 'Expenses', data: chartData.map(m => m.expenses), borderColor: '#f87171', bgFrom: 'rgba(248,113,113,0.12)', bgTo: 'rgba(248,113,113,0)' },
                   ]}
                   formatValue={fmtCompact}
-                  height={260}
+                  height={240}
                   showTrendline={true}
-                  budgetLimit={summary.totalIncome > 0 ? summary.totalIncome * 0.7 : 50000} // Example dynamic budget limit (70% of income)
                 />
-              ) : (
-                <BarChartCard
-                  labels={chartData.map(m => m.label)}
-                  data={[...chartData.map(m => m.income), ...chartData.map(m => m.expenses)]} 
-                  colors={[...chartData.map(() => '#10b981'), ...chartData.map(() => '#f87171')]}
-                  formatValue={fmtCompact}
-                  height={260}
-                  budgetLimit={summary.totalIncome > 0 ? summary.totalIncome * 0.7 : 50000}
-                />
-              )
             ) : (
               <div className="flex flex-col items-center justify-center h-[260px] text-muted-foreground">
                 <ChartBar className="w-10 h-10 opacity-20 mb-2" />
@@ -415,12 +399,12 @@ export default function AnalyticsPage() {
               <p className="text-xs text-muted-foreground font-mono mt-0.5">Income minus expenses per period</p>
             </div>
             {chartData.length > 0 ? (
-              <BarChartCard
+              <LineChartCard
                 labels={chartData.map(m => m.label)}
                 data={chartData.map(m => m.income - m.expenses)}
-                colors={chartData.map(m => m.income >= m.expenses ? '#10b981' : '#f87171')}
+                color="#10b981"
                 formatValue={fmtCompact}
-                height={220}
+                height={200}
               />
             ) : (
               <div className="flex flex-col items-center justify-center h-[220px] text-muted-foreground">

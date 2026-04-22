@@ -6,7 +6,7 @@ import { motion } from 'framer-motion';
 import {
   TrendUp, TrendDown, Wallet, ArrowsLeftRight,
   Brain, ArrowUpRight, ArrowDownRight,
-  Plus, Target, Sparkle, Crown
+  Target, Sparkle, Crown
 } from '@phosphor-icons/react';
 import Link from 'next/link';
 import { format, parseISO } from 'date-fns';
@@ -14,7 +14,7 @@ import { formatCurrency, formatRelativeDate } from '@/lib/utils';
 import type { Profile, Transaction, Account } from '@/types';
 
 const AreaChartCard = dynamic(() => import('@/components/ui/chartjs-components').then(m => ({ default: m.AreaChartCard })), { ssr: false });
-const BarChartCard = dynamic(() => import('@/components/ui/chartjs-components').then(m => ({ default: m.BarChartCard })), { ssr: false });
+const LineChartCard = dynamic(() => import('@/components/ui/chartjs-components').then(m => ({ default: m.LineChartCard })), { ssr: false });
 const DoughnutChartCard = dynamic(() => import('@/components/ui/chartjs-components').then(m => ({ default: m.DoughnutChartCard })), { ssr: false });
 
 interface Props {
@@ -27,8 +27,8 @@ interface Props {
   flags?: { showAI?: boolean; showDailyChart?: boolean; showInsights?: boolean };
 }
 
-const fadeUp = { initial: { opacity: 0, y: 20 }, animate: { opacity: 1, y: 0 } };
-const stagger = { animate: { transition: { staggerChildren: 0.08 } } };
+const fadeUp = { initial: { opacity: 0, y: 16 }, animate: { opacity: 1, y: 0 } };
+const stagger = { animate: { transition: { staggerChildren: 0.06 } } };
 
 const CHART_PALETTE = [
   '#10b981', '#3b82f6', '#a855f7', '#f59e0b',
@@ -175,211 +175,144 @@ export function DashboardClient({ transactions, prevTransactions, accounts, tren
   const recentTransactions = liveTransactions.slice(0, 8);
   const fmtCompact = (value: number) => formatCurrency(value, currency, { compact: true });
 
-  const statCards = [
-    {
-      label: 'Income',
-      value: formatCurrency(stats.income, currency),
-      change: stats.incomePct,
-      icon: TrendUp,
-      color: 'text-emerald-500',
-      iconBg: 'bg-emerald-500/10',
-      invertChange: false,
-    },
-    {
-      label: 'Expenses',
-      value: formatCurrency(stats.expenses, currency),
-      change: stats.expensePct,
-      icon: TrendDown,
-      color: 'text-orange-500',
-      iconBg: 'bg-orange-500/10',
-      invertChange: true,
-    },
-    {
-      label: 'Savings Rate',
-      value: `${Math.max(0, stats.savingsRate)}%`,
-      change: null,
-      icon: Target,
-      color: 'text-violet-500',
-      iconBg: 'bg-violet-500/10',
-      invertChange: false,
-      subcopy: formatCurrency(stats.net, currency),
-    },
-    {
-      label: 'Accounts',
-      value: String(liveAccounts.length),
-      change: null,
-      icon: Wallet,
-      color: 'text-primary',
-      iconBg: 'bg-primary/10',
-      invertChange: false,
-      subcopy: refreshing ? 'Refreshing' : 'Active wallets',
-    },
-  ];
-
-  const actionCards = [
-    { href: '/dashboard/transactions/new', label: 'Add', subcopy: 'Quick expense', icon: Plus },
-    { href: '/dashboard/transactions', label: 'History', subcopy: 'Review entries', icon: ArrowsLeftRight },
-    { href: '/dashboard/accounts', label: 'Accounts', subcopy: 'Check balances', icon: Wallet },
-    { href: '/dashboard/ai-assistant', label: 'AI', subcopy: 'Chat to log', icon: Brain, disabled: !flags?.showAI },
-  ];
-
   return (
-    <div className="space-y-4 md:space-y-6">
+    <div className="space-y-3 md:space-y-5">
+      {/* ─── Hero Balance Card ─── */}
       <motion.section
         className="glass-card overflow-hidden"
-        initial={{ opacity: 0, y: 12 }}
+        initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.45, ease: [0.4, 0, 0.2, 1] }}
+        transition={{ duration: 0.4, ease: [0.4, 0, 0.2, 1] }}
       >
-        <div className="space-y-5 p-5 md:p-6">
-          <div className="flex items-start justify-between gap-4">
-            <div>
-              <p className="text-[11px] font-medium uppercase tracking-[0.24em] text-muted-foreground">{currentMonth}</p>
-              <h2 className="mt-2 text-3xl font-serif font-bold tracking-tight md:text-5xl">{formatCurrency(stats.totalBalance, currency)}</h2>
-              <p className="mt-2 text-sm text-muted-foreground">
-                Available across {liveAccounts.length} account{liveAccounts.length === 1 ? '' : 's'}
-                {refreshing ? '  •  syncing' : ''}
-              </p>
-            </div>
-            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/10 text-primary md:h-14 md:w-14">
-              <Wallet className="h-6 w-6" weight="duotone" />
-            </div>
-          </div>
+        <div className="p-4 md:p-6">
+          <p className="text-[10px] font-medium uppercase tracking-[0.2em] text-muted-foreground">{currentMonth}</p>
+          <h2 className="mt-1.5 text-2xl font-serif font-bold tracking-tight md:text-4xl">{formatCurrency(stats.totalBalance, currency)}</h2>
+          <p className="mt-1 text-xs text-muted-foreground">
+            {liveAccounts.length} account{liveAccounts.length === 1 ? '' : 's'}
+            {refreshing ? '  ·  syncing' : ''}
+          </p>
 
-          <div className="grid grid-cols-2 gap-3 md:grid-cols-3">
-            <div className="rounded-2xl border border-border/70 bg-card/70 p-3.5">
-              <p className="text-xs text-muted-foreground">This month in</p>
-              <p className="mt-1 text-base font-semibold text-emerald-500">{formatCurrency(stats.income, currency, { compact: true })}</p>
+          {/* Inline Income / Expense / Net row */}
+          <div className="mt-4 flex items-center gap-0 text-center" style={{ borderTop: '1px solid hsl(var(--foreground) / 0.04)' }}>
+            <div className="flex-1 py-3">
+              <p className="text-[10px] text-muted-foreground">Income</p>
+              <p className="mt-0.5 text-sm font-semibold text-emerald-500">{fmtCompact(stats.income)}</p>
             </div>
-            <div className="rounded-2xl border border-border/70 bg-card/70 p-3.5">
-              <p className="text-xs text-muted-foreground">This month out</p>
-              <p className="mt-1 text-base font-semibold text-orange-500">{formatCurrency(stats.expenses, currency, { compact: true })}</p>
+            <div className="w-px self-stretch bg-border/40" />
+            <div className="flex-1 py-3">
+              <p className="text-[10px] text-muted-foreground">Expenses</p>
+              <p className="mt-0.5 text-sm font-semibold text-orange-500">{fmtCompact(stats.expenses)}</p>
             </div>
-            <div className="col-span-2 rounded-2xl border border-border/70 bg-card/70 p-3.5 md:col-span-1">
-              <p className="text-xs text-muted-foreground">Net flow</p>
-              <p className={`mt-1 text-base font-semibold ${stats.net >= 0 ? 'text-primary' : 'text-red-500'}`}>
-                {stats.net >= 0 ? '+' : '-'}{formatCurrency(Math.abs(stats.net), currency, { compact: true })}
+            <div className="w-px self-stretch bg-border/40" />
+            <div className="flex-1 py-3">
+              <p className="text-[10px] text-muted-foreground">Net</p>
+              <p className={`mt-0.5 text-sm font-semibold ${stats.net >= 0 ? 'text-primary' : 'text-red-500'}`}>
+                {stats.net >= 0 ? '+' : ''}{fmtCompact(stats.net)}
               </p>
             </div>
           </div>
-        </div>
-
-        <div className="grid grid-cols-4 border-t border-border/70 bg-foreground/[0.015]">
-          {actionCards.map(({ href, label, subcopy, icon: Icon, disabled }) => (
-            <Link
-              key={href}
-              href={disabled ? '/dashboard' : href}
-              className="border-r border-border/60 last:border-r-0"
-            >
-              <div className={`flex min-h-[84px] flex-col items-center justify-center gap-1.5 px-2 py-3 text-center transition-colors ${disabled ? 'opacity-40' : 'hover:bg-foreground/[0.025]'}`}>
-                <Icon className="h-5 w-5 text-primary" weight="regular" />
-                <span className="text-xs font-semibold text-foreground">{label}</span>
-                <span className="text-[10px] text-muted-foreground">{subcopy}</span>
-              </div>
-            </Link>
-          ))}
         </div>
       </motion.section>
 
-      {profile?.subscription_tier === 'free' && (
-        <motion.div
-          className="glass-card flex items-center justify-between gap-4 p-4"
-          style={{ borderColor: 'hsl(var(--primary) / 0.15)' }}
-          initial={{ opacity: 0, y: -8 }}
-          animate={{ opacity: 1, y: 0 }}
-        >
-          <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-primary/10 text-primary">
-              <Crown className="h-5 w-5" weight="duotone" />
-            </div>
-            <div>
-              <h3 className="text-sm font-semibold text-foreground">Unlock Pro tools</h3>
-              <p className="text-xs text-muted-foreground">Receipt scanning, richer insights, and multi-currency workflows.</p>
-            </div>
-          </div>
-          <Link href="/pricing" className="shrink-0">
-            <button className="btn-primary !h-10 !rounded-2xl !px-4 !py-0 !text-xs">Upgrade</button>
-          </Link>
-        </motion.div>
-      )}
-
+      {/* ─── AI Insight ─── */}
       {insight && (profile?.subscription_tier !== 'free' || process.env.NODE_ENV === 'development') && (
         <motion.div
-          className="glass-card flex items-start gap-4 p-4"
-          style={{ borderColor: 'hsl(var(--primary) / 0.12)' }}
-          initial={{ opacity: 0, y: -8 }}
-          animate={{ opacity: 1, y: 0 }}
+          className="glass-card flex items-start gap-3 p-3.5"
+          style={{ borderColor: 'hsl(var(--primary) / 0.1)' }}
+          initial={{ opacity: 0 }} animate={{ opacity: 1 }}
         >
-          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-primary/10 text-primary">
-            <Sparkle className="h-5 w-5" weight="duotone" />
-          </div>
-          <div>
-            <h3 className="text-sm font-semibold text-foreground">AI financial health report</h3>
-            <p className="mt-1 text-sm leading-relaxed text-muted-foreground">{insight}</p>
-          </div>
+          <Sparkle className="h-4 w-4 shrink-0 mt-0.5 text-primary" weight="duotone" />
+          <p className="text-xs leading-relaxed text-muted-foreground">{insight}</p>
         </motion.div>
       )}
 
-      <motion.div className="grid grid-cols-2 gap-3 md:grid-cols-4" initial="initial" animate="animate" variants={stagger}>
-        {statCards.map((stat) => {
+      {/* ─── Stat Cards ─── */}
+      <motion.div className="grid grid-cols-2 gap-2 md:grid-cols-4 md:gap-3" initial="initial" animate="animate" variants={stagger}>
+        {[
+          {
+            label: 'Income', value: formatCurrency(stats.income, currency),
+            change: stats.incomePct, icon: TrendUp,
+            color: 'text-emerald-500', iconBg: 'bg-emerald-500/10', invertChange: false,
+          },
+          {
+            label: 'Expenses', value: formatCurrency(stats.expenses, currency),
+            change: stats.expensePct, icon: TrendDown,
+            color: 'text-orange-500', iconBg: 'bg-orange-500/10', invertChange: true,
+          },
+          {
+            label: 'Savings', value: `${Math.max(0, stats.savingsRate)}%`,
+            change: null, icon: Target,
+            color: 'text-violet-500', iconBg: 'bg-violet-500/10', invertChange: false,
+            subcopy: fmtCompact(stats.net),
+          },
+          {
+            label: 'Accounts', value: String(liveAccounts.length),
+            change: null, icon: Wallet,
+            color: 'text-primary', iconBg: 'bg-primary/10', invertChange: false,
+            subcopy: refreshing ? 'Syncing' : 'Active',
+          },
+        ].map((stat) => {
           const Icon = stat.icon;
           const isPositive = stat.change === null ? true : stat.invertChange ? stat.change < 0 : stat.change >= 0;
 
           return (
-            <motion.div key={stat.label} variants={fadeUp} className="rounded-[24px] border border-border/70 bg-card/80 p-4 shadow-sm">
-              <div className="flex items-start justify-between gap-2">
-                <div className={`flex h-10 w-10 items-center justify-center rounded-2xl ${stat.iconBg}`}>
-                  <Icon className={`h-4.5 w-4.5 ${stat.color}`} weight="regular" />
+            <motion.div key={stat.label} variants={fadeUp} className="rounded-2xl border border-border/60 bg-card/70 p-3 md:p-4">
+              <div className="flex items-center justify-between gap-1">
+                <div className={`flex h-8 w-8 items-center justify-center rounded-xl ${stat.iconBg}`}>
+                  <Icon className="h-3.5 w-3.5 ${stat.color}" weight="regular" style={{ color: 'inherit' }} />
                 </div>
                 {stat.change !== null && (
-                  <span className={`inline-flex items-center gap-0.5 text-[11px] font-medium ${isPositive ? 'text-emerald-500' : 'text-red-500'}`}>
-                    {isPositive ? <ArrowUpRight className="h-3 w-3" weight="bold" /> : <ArrowDownRight className="h-3 w-3" weight="bold" />}
+                  <span className={`inline-flex items-center gap-0.5 text-[10px] font-medium ${isPositive ? 'text-emerald-500' : 'text-red-500'}`}>
+                    {isPositive ? <ArrowUpRight className="h-2.5 w-2.5" weight="bold" /> : <ArrowDownRight className="h-2.5 w-2.5" weight="bold" />}
                     {Math.abs(stat.change).toFixed(1)}%
                   </span>
                 )}
               </div>
-              <p className="mt-4 text-xs text-muted-foreground">{stat.label}</p>
-              <p className="mt-1 text-lg font-semibold leading-tight text-foreground md:text-2xl">{stat.value}</p>
-              <p className="mt-1 text-[11px] text-muted-foreground">{stat.subcopy || 'vs last month'}</p>
+              <p className="mt-2.5 text-[10px] text-muted-foreground uppercase tracking-wider">{stat.label}</p>
+              <p className="mt-0.5 text-base font-semibold leading-tight text-foreground md:text-lg">{stat.value}</p>
+              <p className="mt-0.5 text-[10px] text-muted-foreground">{stat.subcopy || 'vs last month'}</p>
             </motion.div>
           );
         })}
       </motion.div>
 
-      <div className="grid grid-cols-1 gap-4 xl:grid-cols-[1.2fr_0.8fr]">
-        <motion.section className="glass-card p-5 md:p-6" initial={{ opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }}>
-          <div className="mb-5 flex items-center justify-between">
+      {/* ─── Charts Row ─── */}
+      <div className="grid grid-cols-1 gap-3 md:gap-4 xl:grid-cols-[1.2fr_0.8fr]">
+        {/* Income vs Expenses — Area/Line Chart */}
+        <motion.section className="glass-card p-4 md:p-5" initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
+          <div className="mb-4 flex items-center justify-between">
             <div>
-              <h3 className="text-base font-semibold text-foreground">Income vs expenses</h3>
-              <p className="text-xs text-muted-foreground">Six month trend</p>
+              <h3 className="text-sm font-semibold text-foreground">Income vs Expenses</h3>
+              <p className="text-[10px] text-muted-foreground">Six month trend</p>
             </div>
-            <Link href="/dashboard/analytics" className="text-xs font-medium text-primary">Open</Link>
+            <Link href="/dashboard/analytics" className="text-[10px] font-medium text-primary">Open</Link>
           </div>
           {trendChartData.length > 0 ? (
             <AreaChartCard
               labels={trendChartData.map(item => item.label)}
               datasets={[
-                { label: 'Income', data: trendChartData.map(item => item.income), borderColor: '#10b981', bgFrom: 'rgba(16,185,129,0.18)', bgTo: 'rgba(16,185,129,0)' },
-                { label: 'Expenses', data: trendChartData.map(item => item.expenses), borderColor: '#f97316', bgFrom: 'rgba(249,115,22,0.16)', bgTo: 'rgba(249,115,22,0)' },
+                { label: 'Income', data: trendChartData.map(item => item.income), borderColor: '#10b981', bgFrom: 'rgba(16,185,129,0.15)', bgTo: 'rgba(16,185,129,0)' },
+                { label: 'Expenses', data: trendChartData.map(item => item.expenses), borderColor: '#f97316', bgFrom: 'rgba(249,115,22,0.12)', bgTo: 'rgba(249,115,22,0)' },
               ]}
               formatValue={fmtCompact}
-              height={220}
+              height={200}
             />
           ) : (
-            <div className="flex h-[220px] flex-col items-center justify-center text-center text-muted-foreground">
-              <TrendUp className="mb-3 h-9 w-9 opacity-25" weight="light" />
-              <p className="text-sm">Add transactions to unlock monthly trends.</p>
+            <div className="flex h-[200px] flex-col items-center justify-center text-center text-muted-foreground">
+              <TrendUp className="mb-2 h-8 w-8 opacity-20" weight="light" />
+              <p className="text-xs">Add transactions to see trends</p>
             </div>
           )}
         </motion.section>
 
-        <motion.section className="glass-card p-5 md:p-6" initial={{ opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
-          <div className="mb-5 flex items-center justify-between">
+        {/* Category Mix — Doughnut + flat list */}
+        <motion.section className="glass-card p-4 md:p-5" initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }}>
+          <div className="mb-4 flex items-center justify-between">
             <div>
-              <h3 className="text-base font-semibold text-foreground">Category mix</h3>
-              <p className="text-xs text-muted-foreground">Where your money is going</p>
+              <h3 className="text-sm font-semibold text-foreground">Category Mix</h3>
+              <p className="text-[10px] text-muted-foreground">Where your money goes</p>
             </div>
-            <Link href="/dashboard/categories" className="text-xs font-medium text-primary">Manage</Link>
+            <Link href="/dashboard/categories" className="text-[10px] font-medium text-primary">Manage</Link>
           </div>
           {categoryData.length > 0 ? (
             <>
@@ -387,149 +320,146 @@ export function DashboardClient({ transactions, prevTransactions, accounts, tren
                 labels={categoryData.map(item => item.name)}
                 data={categoryData.map(item => item.total)}
                 colors={categoryData.map((item, index) => item.fill || CHART_PALETTE[index % CHART_PALETTE.length])}
-                centerValue={formatCurrency(stats.expenses, currency, { compact: true })}
+                centerValue={fmtCompact(stats.expenses)}
                 centerLabel="Spent"
-                height={170}
+                height={150}
                 formatValue={(value: number) => formatCurrency(value, currency)}
               />
-              <div className="mt-4 space-y-2.5">
+              <div className="mt-3">
                 {categoryData.slice(0, 4).map((item) => (
-                  <div key={item.name} className="flex items-center gap-3 rounded-2xl border border-border/60 bg-card/50 px-3 py-2.5">
-                    <span className="text-base">{item.icon}</span>
+                  <div key={item.name} className="flat-list-item">
+                    <div className="flat-list-icon">{item.icon}</div>
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center justify-between gap-2">
-                        <span className="truncate text-sm font-medium text-foreground">{item.name}</span>
-                        <span className="text-xs text-muted-foreground">{item.percentage}%</span>
+                        <span className="truncate text-xs font-medium text-foreground">{item.name}</span>
+                        <span className="text-[10px] text-muted-foreground font-mono">{item.percentage}%</span>
                       </div>
-                      <p className="text-xs text-muted-foreground">{formatCurrency(item.total, currency)}</p>
+                      <p className="text-[10px] text-muted-foreground">{formatCurrency(item.total, currency)}</p>
                     </div>
                   </div>
                 ))}
               </div>
             </>
           ) : (
-            <div className="flex h-[220px] flex-col items-center justify-center text-center text-muted-foreground">
-              <Target className="mb-3 h-9 w-9 opacity-25" weight="light" />
-              <p className="text-sm">Your expense categories will appear here.</p>
+            <div className="flex h-[200px] flex-col items-center justify-center text-center text-muted-foreground">
+              <Target className="mb-2 h-8 w-8 opacity-20" weight="light" />
+              <p className="text-xs">Categories appear when you add expenses</p>
             </div>
           )}
         </motion.section>
       </div>
 
+      {/* ─── Daily Spending — Line Chart (was bar) ─── */}
       {dailyData.length > 0 && (
-        <motion.section className="glass-card p-5 md:p-6" initial={{ opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.25 }}>
-          <div className="mb-5 flex items-center justify-between">
+        <motion.section className="glass-card p-4 md:p-5" initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
+          <div className="mb-4 flex items-center justify-between">
             <div>
-              <h3 className="text-base font-semibold text-foreground">Daily spending</h3>
-              <p className="text-xs text-muted-foreground">This month&apos;s rhythm</p>
+              <h3 className="text-sm font-semibold text-foreground">Daily Spending</h3>
+              <p className="text-[10px] text-muted-foreground">This month&apos;s rhythm</p>
             </div>
-            <span className="text-xs text-muted-foreground">{dailyData.length} days</span>
+            <span className="text-[10px] text-muted-foreground">{dailyData.length} days</span>
           </div>
-          <BarChartCard
+          <LineChartCard
             labels={dailyData.map(item => item.date)}
             data={dailyData.map(item => item.amount)}
-            colors={dailyData.map(() => '#10b981')}
+            color="#10b981"
             formatValue={fmtCompact}
-            height={170}
+            height={160}
           />
         </motion.section>
       )}
 
-      <div className="grid grid-cols-1 gap-4 xl:grid-cols-[0.9fr_1.1fr]">
-        <motion.section className="glass-card p-5 md:p-6" initial={{ opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}>
-          <div className="mb-4 flex items-center justify-between">
+      {/* ─── Accounts + Recent Transactions ─── */}
+      <div className="grid grid-cols-1 gap-3 md:gap-4 xl:grid-cols-2">
+        {/* Accounts — flat list */}
+        <motion.section className="glass-card overflow-hidden" initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.25 }}>
+          <div className="flex items-center justify-between px-4 pt-4 pb-1">
             <div>
-              <h3 className="text-base font-semibold text-foreground">Accounts</h3>
-              <p className="text-xs text-muted-foreground">Your active wallets</p>
+              <h3 className="text-sm font-semibold text-foreground">Accounts</h3>
+              <p className="text-[10px] text-muted-foreground">Your wallets</p>
             </div>
-            <Link href="/dashboard/accounts" className="text-xs font-medium text-primary">View all</Link>
+            <Link href="/dashboard/accounts" className="text-[10px] font-medium text-primary">All</Link>
           </div>
           {liveAccounts.length > 0 ? (
-            <div className="space-y-2">
-              {liveAccounts.slice(0, 6).map((account) => (
-                <div key={account.id} className="flex items-center gap-3 rounded-[22px] border border-border/60 bg-card/55 px-3.5 py-3">
-                  <div className="flex h-11 w-11 items-center justify-center rounded-2xl text-lg" style={{ background: `${account.color}18` }}>
+            <div>
+              {liveAccounts.slice(0, 5).map((account) => (
+                <div key={account.id} className="flat-list-item">
+                  <div className="flat-list-icon" style={{ background: `${account.color}15` }}>
                     {account.icon}
                   </div>
                   <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm font-medium text-foreground">{account.name}</p>
-                    <p className="text-xs capitalize text-muted-foreground">{account.type}</p>
+                    <p className="truncate text-xs font-medium text-foreground">{account.name}</p>
+                    <p className="text-[10px] capitalize text-muted-foreground">{account.type}</p>
                   </div>
-                  <p className={`text-sm font-semibold ${account.balance >= 0 ? 'text-foreground' : 'text-red-500'}`}>
+                  <p className={`text-xs font-semibold tabular-nums ${account.balance >= 0 ? 'text-foreground' : 'text-red-500'}`}>
                     {formatCurrency(account.balance, account.currency)}
                   </p>
                 </div>
               ))}
             </div>
           ) : (
-            <div className="rounded-[24px] border border-dashed border-border p-6 text-center text-muted-foreground">
-              <Wallet className="mx-auto mb-3 h-8 w-8 opacity-30" weight="light" />
-              <p className="text-sm">No accounts yet.</p>
+            <div className="px-4 py-8 text-center text-muted-foreground">
+              <Wallet className="mx-auto mb-2 h-7 w-7 opacity-25" weight="light" />
+              <p className="text-xs">No accounts yet</p>
             </div>
           )}
         </motion.section>
 
-        <motion.section className="glass-card p-5 md:p-6" initial={{ opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.35 }}>
-          <div className="mb-4 flex items-center justify-between">
+        {/* Recent Transactions — flat list */}
+        <motion.section className="glass-card overflow-hidden" initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}>
+          <div className="flex items-center justify-between px-4 pt-4 pb-1">
             <div>
-              <h3 className="text-base font-semibold text-foreground">Recent transactions</h3>
-              <p className="text-xs text-muted-foreground">Latest activity in your wallet</p>
+              <h3 className="text-sm font-semibold text-foreground">Recent</h3>
+              <p className="text-[10px] text-muted-foreground">Latest activity</p>
             </div>
-            <Link href="/dashboard/transactions" className="text-xs font-medium text-primary">View all</Link>
+            <Link href="/dashboard/transactions" className="text-[10px] font-medium text-primary">All</Link>
           </div>
           {recentTransactions.length > 0 ? (
-            <div className="space-y-2">
-              {recentTransactions.map((tx, index) => (
-                <motion.div
-                  key={tx.id}
-                  className="flex items-center gap-3 rounded-[22px] border border-border/60 bg-card/55 px-3.5 py-3"
-                  initial={{ opacity: 0, x: -8 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: 0.4 + index * 0.03 }}
-                >
-                  <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-foreground/[0.04] text-base">
+            <div>
+              {recentTransactions.map((tx) => (
+                <div key={tx.id} className="flat-list-item">
+                  <div className="flat-list-icon">
                     {tx.category?.icon || (tx.type === 'income' ? '💰' : tx.type === 'transfer' ? '↔️' : '💸')}
                   </div>
                   <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm font-medium text-foreground">{tx.description || tx.category?.name || 'Transaction'}</p>
-                    <p className="text-xs text-muted-foreground">{formatRelativeDate(tx.transaction_date)}</p>
+                    <p className="truncate text-xs font-medium text-foreground">{tx.description || tx.category?.name || 'Transaction'}</p>
+                    <p className="text-[10px] text-muted-foreground">{formatRelativeDate(tx.transaction_date)}</p>
                   </div>
-                  <p className={`text-sm font-semibold ${tx.type === 'income' ? 'text-emerald-500' : tx.type === 'expense' ? 'text-red-500' : 'text-primary'}`}>
+                  <p className={`text-xs font-semibold tabular-nums ${tx.type === 'income' ? 'text-emerald-500' : tx.type === 'expense' ? 'text-red-500' : 'text-primary'}`}>
                     {tx.type === 'income' ? '+' : tx.type === 'expense' ? '-' : ''}
                     {formatCurrency(tx.amount, tx.currency)}
                   </p>
-                </motion.div>
+                </div>
               ))}
             </div>
           ) : (
-            <div className="rounded-[24px] border border-dashed border-border p-6 text-center text-muted-foreground">
-              <ArrowsLeftRight className="mx-auto mb-3 h-8 w-8 opacity-30" weight="light" />
-              <p className="text-sm">No transactions yet.</p>
+            <div className="px-4 py-8 text-center text-muted-foreground">
+              <ArrowsLeftRight className="mx-auto mb-2 h-7 w-7 opacity-25" weight="light" />
+              <p className="text-xs">No transactions yet</p>
             </div>
           )}
         </motion.section>
       </div>
 
+      {/* ─── Empty State CTA ─── */}
       {transactions.length === 0 && (
         <motion.section
-          className="glass-card flex items-start gap-4 p-5 md:p-6"
-          style={{ borderColor: 'hsl(var(--primary) / 0.12)' }}
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.45 }}
+          className="glass-card flex items-start gap-3 p-4"
+          style={{ borderColor: 'hsl(var(--primary) / 0.1)' }}
+          initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.35 }}
         >
-          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-primary/10 text-primary">
-            <Brain className="h-6 w-6" weight="duotone" />
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
+            <Brain className="h-5 w-5" weight="duotone" />
           </div>
           <div>
-            <h3 className="text-base font-semibold text-foreground">Start with one message</h3>
-            <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
-              Say something like “I spent ₱150 on lunch and ₱50 on jeep fare” and CashDash will prepare the entry for you.
+            <h3 className="text-sm font-semibold text-foreground">Start with one message</h3>
+            <p className="mt-0.5 text-xs leading-relaxed text-muted-foreground">
+              Say something like &ldquo;I spent ₱150 on lunch&rdquo; and CashDash will log it for you.
             </p>
             <Link href="/dashboard/ai-assistant">
-              <motion.button className="btn-primary mt-4 !rounded-2xl" whileTap={{ scale: 0.97 }}>
-                <Brain className="h-4 w-4" weight="regular" /> Open AI assistant
-              </motion.button>
+              <motion.span className="mt-3 inline-flex items-center gap-1.5 rounded-xl bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground" whileTap={{ scale: 0.97 }}>
+                <Brain className="h-3.5 w-3.5" weight="regular" /> Open AI
+              </motion.span>
             </Link>
           </div>
         </motion.section>

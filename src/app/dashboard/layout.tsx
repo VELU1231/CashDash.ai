@@ -34,8 +34,8 @@ export default async function DashboardLayout({
         <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
           <DashboardTopbar profile={profile} />
           <main className="flex-1 overflow-y-auto scrollbar-thin relative mobile-app-surface">
-            <div className="mx-auto w-full max-w-6xl pb-24 md:pb-0">
-              <div className="px-4 py-4 sm:px-6 md:py-8">
+            <div className="mx-auto w-full md:max-w-6xl pb-24 md:pb-0">
+              <div className="px-3 py-3 sm:px-5 md:px-6 md:py-6">
                 {children}
               </div>
             </div>

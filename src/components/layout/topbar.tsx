@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { usePathname } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
-import { MagnifyingGlass, Plus, X, Sparkle, ArrowLeft } from '@phosphor-icons/react';
+import { MagnifyingGlass, Plus, X, ArrowLeft } from '@phosphor-icons/react';
 import Link from 'next/link';
 import type { Profile } from '@/types';
 
@@ -32,68 +32,55 @@ export function DashboardTopbar({ profile }: TopbarProps) {
 
   return (
     <header
-      className="safe-area-top sticky top-0 z-30 shrink-0 border-b border-border/70 bg-background/92 backdrop-blur-xl"
+      className="safe-area-top sticky top-0 z-30 shrink-0 border-b border-border/60 bg-background/92 backdrop-blur-xl"
     >
-      <div className="mx-auto flex h-16 w-full max-w-6xl items-center gap-3 px-4 sm:px-6">
+      <div className="mx-auto flex h-14 w-full items-center gap-3 px-3 sm:px-5 md:px-6 md:max-w-6xl md:h-16">
         <div className="flex min-w-0 flex-1 items-center gap-3">
           {!isRoot && (
             <Link
               href="/dashboard"
-              className="inline-flex h-10 w-10 items-center justify-center rounded-2xl border border-border/70 bg-card/80 text-muted-foreground transition-colors hover:text-foreground md:hidden"
+              className="inline-flex h-9 w-9 items-center justify-center rounded-xl text-muted-foreground transition-colors hover:text-foreground md:hidden"
             >
               <ArrowLeft className="h-5 w-5" weight="regular" />
             </Link>
           )}
 
           <div className="min-w-0 flex-1">
-            <p className="text-[11px] font-medium uppercase tracking-[0.24em] text-muted-foreground md:hidden">
+            <p className="text-[10px] font-medium uppercase tracking-[0.2em] text-muted-foreground md:hidden">
               Hello, {firstName}
             </p>
             <div className="flex items-baseline gap-2">
-              <h1 className="truncate text-lg font-semibold text-foreground md:text-2xl">{pageMeta.title}</h1>
+              <h1 className="truncate text-base font-semibold text-foreground md:text-xl">{pageMeta.title}</h1>
               <p className="hidden text-sm text-muted-foreground md:block">{pageMeta.subtitle}</p>
             </div>
           </div>
         </div>
 
-        <div className="flex items-center gap-2.5">
+        <div className="flex items-center gap-2">
           <motion.button
             onClick={() => setShowSearch(true)}
-            className="inline-flex h-10 w-10 items-center justify-center rounded-2xl border border-border/70 bg-card/80 text-muted-foreground transition-all duration-200 hover:text-foreground md:hidden"
+            className="inline-flex h-9 w-9 items-center justify-center rounded-xl text-muted-foreground transition-all duration-200 hover:text-foreground"
             whileTap={{ scale: 0.94 }}
           >
-            <MagnifyingGlass className="h-4 w-4" weight="regular" />
+            <MagnifyingGlass className="h-[18px] w-[18px]" weight="regular" />
           </motion.button>
 
-          <motion.button
+          <button
             onClick={() => setShowSearch(true)}
-            className="hidden items-center gap-2 rounded-2xl border border-border/70 bg-card/70 px-3.5 py-2 text-sm text-muted-foreground transition-all duration-200 hover:border-primary/30 hover:text-foreground md:flex"
-            whileHover={{ scale: 1.01 }}
+            className="hidden items-center gap-2 rounded-xl border border-border/60 bg-card/60 px-3 py-1.5 text-sm text-muted-foreground transition-all duration-200 hover:border-primary/30 hover:text-foreground md:flex"
           >
             <MagnifyingGlass className="h-3.5 w-3.5" weight="light" />
             <span className="text-[13px]">Search</span>
-          </motion.button>
-
-          <Link href="/dashboard/ai-assistant" className="hidden md:block">
-            <motion.button
-              className="inline-flex items-center gap-1.5 rounded-2xl bg-primary/10 px-3 py-2 text-sm font-medium text-primary"
-              whileHover={{ scale: 1.03 }}
-              whileTap={{ scale: 0.97 }}
-            >
-              <Sparkle className="h-3.5 w-3.5" weight="duotone" />
-              AI
-            </motion.button>
-          </Link>
+          </button>
 
           <Link href="/dashboard/transactions/new">
-            <motion.button
-              className="btn-primary !h-10 !rounded-2xl !px-3.5 !py-0"
-              whileHover={{ scale: 1.03 }}
-              whileTap={{ scale: 0.97 }}
+            <motion.div
+              className="inline-flex h-9 w-9 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-sm md:h-9 md:w-auto md:gap-1.5 md:px-3"
+              whileTap={{ scale: 0.95 }}
             >
               <Plus className="h-4 w-4" weight="bold" />
-              <span className="hidden md:inline">Add</span>
-            </motion.button>
+              <span className="hidden text-sm font-medium md:inline">Add</span>
+            </motion.div>
           </Link>
         </div>
       </div>
