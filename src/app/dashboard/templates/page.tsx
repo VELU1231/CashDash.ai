@@ -134,18 +134,59 @@ export default function TemplatesPage() {
           {[1,2,3].map(i => <div key={i} className="h-32 rounded-xl bg-card border border-border shimmer-bg" />)}
         </div>
       ) : templates.length === 0 ? (
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="rounded-2xl border border-border bg-card shadow-soft p-12 flex flex-col items-center justify-center text-center">
-          <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mb-4">
-            <BookTemplate className="w-8 h-8 text-primary" />
+        <div className="space-y-6">
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="text-center">
+            <h2 className="text-xl font-semibold mb-2">Quick Start Templates</h2>
+            <p className="text-sm text-muted-foreground max-w-md mx-auto mb-6">
+              Tap any template below to create it instantly, or create your own custom template.
+            </p>
+          </motion.div>
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+            {[
+              { emoji: '🏠', name: 'Rent / Mortgage', type: 'expense', amount: '1500', schedule: 'monthly', color: '#ff6b6b' },
+              { emoji: '💰', name: 'Salary', type: 'income', amount: '5000', schedule: 'monthly', color: '#10b981' },
+              { emoji: '🛒', name: 'Groceries', type: 'expense', amount: '150', schedule: 'weekly', color: '#ffa94d' },
+              { emoji: '📺', name: 'Netflix', type: 'expense', amount: '15.99', schedule: 'monthly', color: '#e50914' },
+              { emoji: '🎵', name: 'Spotify', type: 'expense', amount: '9.99', schedule: 'monthly', color: '#1db954' },
+              { emoji: '💡', name: 'Electricity', type: 'expense', amount: '120', schedule: 'monthly', color: '#ffd43b' },
+              { emoji: '📱', name: 'Phone Bill', type: 'expense', amount: '45', schedule: 'monthly', color: '#4dabf7' },
+              { emoji: '🌐', name: 'Internet', type: 'expense', amount: '60', schedule: 'monthly', color: '#748ffc' },
+              { emoji: '🏋️', name: 'Gym', type: 'expense', amount: '30', schedule: 'monthly', color: '#9775fa' },
+              { emoji: '🚗', name: 'Car Insurance', type: 'expense', amount: '150', schedule: 'monthly', color: '#38d9a9' },
+              { emoji: '☕', name: 'Daily Coffee', type: 'expense', amount: '5', schedule: 'daily', color: '#a0522d' },
+              { emoji: '🍔', name: 'Lunch', type: 'expense', amount: '12', schedule: 'daily', color: '#f783ac' },
+            ].map((tpl) => (
+              <motion.button key={tpl.name} whileTap={{ scale: 0.96 }}
+                onClick={() => {
+                  setForm({
+                    name: tpl.name,
+                    type: tpl.type as 'expense' | 'income',
+                    amount: tpl.amount,
+                    currency: profile?.default_currency || 'USD',
+                    description: '',
+                    category_id: '',
+                    account_id: accounts.length > 0 ? accounts[0].id : '',
+                    dest_account_id: '',
+                    schedule_type: tpl.schedule
+                  });
+                  setShowForm(true);
+                }}
+                className="flex flex-col items-center gap-2 rounded-xl border border-border/40 bg-card p-4 hover:border-primary/30 transition-all"
+              >
+                <div className="w-10 h-10 rounded-xl flex items-center justify-center text-xl" style={{ background: `${tpl.color}15` }}>
+                  {tpl.emoji}
+                </div>
+                <span className="text-xs font-medium text-center leading-tight">{tpl.name}</span>
+                <span className="text-[10px] text-muted-foreground capitalize">{tpl.schedule} · {tpl.type === 'income' ? '+' : '-'}${tpl.amount}</span>
+              </motion.button>
+            ))}
           </div>
-          <h2 className="text-xl font-semibold mb-2">No Templates Yet</h2>
-          <p className="text-muted-foreground max-w-md mx-auto mb-6">
-            Create templates for bills, subscriptions, or salaries to quickly log them with one click.
-          </p>
-          <button onClick={() => setShowForm(true)} className="px-6 py-2.5 rounded-xl bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90">
-            Create First Template
-          </button>
-        </motion.div>
+          <div className="text-center">
+            <button onClick={() => setShowForm(true)} className="px-6 py-2.5 rounded-xl bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90">
+              Create Custom Template
+            </button>
+          </div>
+        </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {templates.map(tpl => (

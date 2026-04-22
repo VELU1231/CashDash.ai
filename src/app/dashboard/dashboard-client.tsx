@@ -5,8 +5,7 @@ import dynamic from 'next/dynamic';
 import { motion } from 'framer-motion';
 import {
   TrendUp, TrendDown, Wallet, ArrowsLeftRight,
-  Brain, ArrowUpRight, ArrowDownRight,
-  Target, Sparkle, Crown
+  Brain, Target, Sparkle, Crown
 } from '@phosphor-icons/react';
 import Link from 'next/link';
 import { format, parseISO } from 'date-fns';
@@ -230,14 +229,10 @@ export function DashboardClient({ transactions, prevTransactions, accounts, tren
       <motion.div className="grid grid-cols-2 gap-2 md:grid-cols-4 md:gap-3" initial="initial" animate="animate" variants={stagger}>
         {[
           {
-            label: 'Income', value: formatCurrency(stats.income, currency),
-            change: stats.incomePct, icon: TrendUp,
-            color: 'text-emerald-500', iconBg: 'bg-emerald-500/10', invertChange: false,
-          },
-          {
-            label: 'Expenses', value: formatCurrency(stats.expenses, currency),
-            change: stats.expensePct, icon: TrendDown,
-            color: 'text-orange-500', iconBg: 'bg-orange-500/10', invertChange: true,
+            label: 'Daily Avg', value: fmtCompact(stats.expenses > 0 ? stats.expenses / 30 : 0),
+            change: null, icon: TrendDown,
+            color: 'text-orange-500', iconBg: 'bg-orange-500/10', invertChange: false,
+            subcopy: 'Spending per day',
           },
           {
             label: 'Savings', value: `${Math.max(0, stats.savingsRate)}%`,
@@ -246,31 +241,30 @@ export function DashboardClient({ transactions, prevTransactions, accounts, tren
             subcopy: fmtCompact(stats.net),
           },
           {
+            label: 'Transactions', value: String(liveTransactions.length),
+            change: null, icon: ArrowsLeftRight,
+            color: 'text-primary', iconBg: 'bg-primary/10', invertChange: false,
+            subcopy: 'This month',
+          },
+          {
             label: 'Accounts', value: String(liveAccounts.length),
             change: null, icon: Wallet,
-            color: 'text-primary', iconBg: 'bg-primary/10', invertChange: false,
+            color: 'text-emerald-500', iconBg: 'bg-emerald-500/10', invertChange: false,
             subcopy: refreshing ? 'Syncing' : 'Active',
           },
         ].map((stat) => {
           const Icon = stat.icon;
-          const isPositive = stat.change === null ? true : stat.invertChange ? stat.change < 0 : stat.change >= 0;
 
           return (
             <motion.div key={stat.label} variants={fadeUp} className="rounded-2xl border border-border/60 bg-card/70 p-3 md:p-4">
               <div className="flex items-center justify-between gap-1">
                 <div className={`flex h-8 w-8 items-center justify-center rounded-xl ${stat.iconBg}`}>
-                  <Icon className="h-3.5 w-3.5 ${stat.color}" weight="regular" style={{ color: 'inherit' }} />
+                  <Icon className={`h-3.5 w-3.5 ${stat.color}`} weight="regular" />
                 </div>
-                {stat.change !== null && (
-                  <span className={`inline-flex items-center gap-0.5 text-[10px] font-medium ${isPositive ? 'text-emerald-500' : 'text-red-500'}`}>
-                    {isPositive ? <ArrowUpRight className="h-2.5 w-2.5" weight="bold" /> : <ArrowDownRight className="h-2.5 w-2.5" weight="bold" />}
-                    {Math.abs(stat.change).toFixed(1)}%
-                  </span>
-                )}
               </div>
               <p className="mt-2.5 text-[10px] text-muted-foreground uppercase tracking-wider">{stat.label}</p>
               <p className="mt-0.5 text-base font-semibold leading-tight text-foreground md:text-lg">{stat.value}</p>
-              <p className="mt-0.5 text-[10px] text-muted-foreground">{stat.subcopy || 'vs last month'}</p>
+              <p className="mt-0.5 text-[10px] text-muted-foreground">{stat.subcopy}</p>
             </motion.div>
           );
         })}

@@ -31,6 +31,9 @@ export default function TransactionsPage() {
   const [editSaving, setEditSaving] = useState(false);
   const [currentDate, setCurrentDate] = useState(new Date());
   const [subTab, setSubTab] = useState<SubTab>('daily');
+  const [showFilters, setShowFilters] = useState(false);
+  const [dateFrom, setDateFrom] = useState('');
+  const [dateTo, setDateTo] = useState('');
   const searchTimerRef = useRef<ReturnType<typeof setTimeout>>(null);
 
   useEffect(() => {
@@ -131,7 +134,6 @@ export default function TransactionsPage() {
 
   return (
     <div className="space-y-0">
-      {/* Header — month navigation + search/filter icons */}
       <div className="flex items-center justify-between px-4 py-3">
         <div className="flex items-center gap-3">
           <button onClick={prevMonth} className="p-1"><CaretLeft className="w-5 h-5" /></button>
@@ -142,27 +144,56 @@ export default function TransactionsPage() {
           <button onClick={() => setShowSearch(!showSearch)} className="p-2">
             <MagnifyingGlass className="w-5 h-5 text-muted-foreground" />
           </button>
-          <button onClick={() => {
-            const next = filters.type === 'all' ? 'expense' : filters.type === 'expense' ? 'income' : 'all';
-            setFilters(f => ({ ...f, type: next }));
-          }} className="p-2">
-            <Funnel className="w-5 h-5 text-muted-foreground" />
+          <button onClick={() => setShowFilters(!showFilters)} className="p-2">
+            <Funnel className={`w-5 h-5 ${showFilters ? 'text-primary' : 'text-muted-foreground'}`} />
           </button>
         </div>
+      </div>
+
+      {/* Type filter pills — always visible */}
+      <div className="flex gap-1 px-4 pb-2">
+        {(['all', 'income', 'expense', 'transfer'] as const).map(type => (
+          <button key={type} onClick={() => setFilters(f => ({ ...f, type }))}
+            className={`flex-1 py-1.5 rounded-lg text-xs font-medium capitalize transition-all ${
+              filters.type === type ? 'bg-primary text-primary-foreground' : 'bg-foreground/[0.04] text-muted-foreground'
+            }`}>
+            {type === 'all' ? 'All' : type}
+          </button>
+        ))}
       </div>
 
       {/* Sub-tabs */}
       <div className="sub-tabs">
         {(['daily', 'monthly', 'total'] as const).map(tab => (
-          <button
-            key={tab}
-            onClick={() => setSubTab(tab)}
-            className={`sub-tab ${subTab === tab ? 'active' : ''}`}
-          >
+          <button key={tab} onClick={() => setSubTab(tab)}
+            className={`sub-tab ${subTab === tab ? 'active' : ''}`}>
             {tab.charAt(0).toUpperCase() + tab.slice(1)}
           </button>
         ))}
       </div>
+
+      {/* Date range filter (expandable) */}
+      {showFilters && (
+        <div className="px-4 py-3 border-b border-border/20 bg-foreground/[0.02] space-y-2">
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="text-[10px] text-muted-foreground block mb-1">From</label>
+              <input type="date" value={dateFrom} onChange={e => setDateFrom(e.target.value)}
+                className="w-full px-2 py-1.5 rounded-lg border border-border/30 bg-background text-sm" />
+            </div>
+            <div>
+              <label className="text-[10px] text-muted-foreground block mb-1">To</label>
+              <input type="date" value={dateTo} onChange={e => setDateTo(e.target.value)}
+                className="w-full px-2 py-1.5 rounded-lg border border-border/30 bg-background text-sm" />
+            </div>
+          </div>
+          {(dateFrom || dateTo) && (
+            <button onClick={() => { setDateFrom(''); setDateTo(''); }} className="text-xs text-red-400 font-medium">
+              Clear All Filters
+            </button>
+          )}
+        </div>
+      )}
 
       {/* Summary row — Income / Expenses / Total */}
       <div className="grid grid-cols-3 text-center py-2.5 border-b border-border/20">
