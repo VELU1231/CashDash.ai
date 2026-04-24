@@ -1,3 +1,4 @@
+export const runtime = 'edge';
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 
@@ -118,3 +119,4 @@ Provide a very brief (max 2 sentences), punchy, and actionable financial insight
     return NextResponse.json({ error: 'Failed to generate insights' }, { status: 500 });
   }
 }
+

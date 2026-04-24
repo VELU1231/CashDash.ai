@@ -1,3 +1,4 @@
+export const runtime = 'edge';
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
@@ -359,3 +360,4 @@ function HealthBar({ label, value, color }: { label: string; value: number; colo
     </div>
   );
 }
+

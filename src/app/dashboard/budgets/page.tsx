@@ -1,3 +1,4 @@
+export const runtime = 'edge';
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -399,3 +400,4 @@ export default function BudgetsPage() {
     </div>
   );
 }
+

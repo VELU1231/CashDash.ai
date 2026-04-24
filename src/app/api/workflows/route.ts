@@ -1,3 +1,4 @@
+export const runtime = 'edge';
 import { start } from 'workflow/api';
 import { handleNewUserOnboarding } from '@/workflows/user-onboarding';
 import { NextRequest, NextResponse } from 'next/server';
@@ -24,3 +25,4 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Failed to start workflow' }, { status: 500 });
   }
 }
+

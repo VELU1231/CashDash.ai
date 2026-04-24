@@ -1,3 +1,4 @@
+export const runtime = 'edge';
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { configureLemonSqueezy } from '@/lib/lemonsqueezy';
@@ -62,3 +63,4 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: error.message || 'Internal Server Error' }, { status: 500 });
   }
 }
+

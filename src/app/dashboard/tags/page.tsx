@@ -1,3 +1,4 @@
+export const runtime = 'edge';
 'use client';
 
 import { Tag, Plus } from 'lucide-react';
@@ -33,3 +34,4 @@ export default function TagsPage() {
     </div>
   );
 }
+

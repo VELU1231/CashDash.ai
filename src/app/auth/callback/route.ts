@@ -1,3 +1,4 @@
+export const runtime = 'edge';
 import { createClient } from '@/lib/supabase/server';
 import { NextResponse } from 'next/server';
 
@@ -16,3 +17,4 @@ export async function GET(request: Request) {
 
   return NextResponse.redirect(`${origin}/login?error=auth_failed`);
 }
+

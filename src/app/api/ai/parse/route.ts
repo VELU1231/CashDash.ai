@@ -1,3 +1,4 @@
+export const runtime = 'edge';
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { parseFinancialText } from '@/lib/ai-parser';
@@ -216,3 +217,4 @@ function getCategoryColor(name: string): string {
   if (lower.includes('housing')) return '#06b6d4';
   return '#94a3b8';
 }
+

@@ -1,3 +1,4 @@
+export const runtime = 'edge';
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { ensureUserData, ensureDefaultAccount } from '@/lib/ensure-user-data';
@@ -119,3 +120,4 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Failed to create transactions' }, { status: 500 });
   }
 }
+

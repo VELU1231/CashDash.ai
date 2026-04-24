@@ -1,3 +1,4 @@
+export const runtime = 'edge';
 // ─── DEPRECATED ─────────────────────────────────────────────────────────────
 // This file is no longer used. The auth + routing logic has been moved
 // directly into src/proxy.ts (the Next.js 16 proxy convention).

@@ -1,3 +1,4 @@
+export const runtime = 'edge';
 'use client';
 
 import Link from 'next/link';
@@ -165,3 +166,4 @@ function Feature({ icon, text, disabled }: { icon: React.ReactNode; text: string
     </div>
   );
 }
+

@@ -1,3 +1,4 @@
+export const runtime = 'edge';
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -567,3 +568,4 @@ function TogglePill({ active }: { active: boolean }) {
     </div>
   );
 }
+

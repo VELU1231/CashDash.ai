@@ -1,3 +1,4 @@
+export const runtime = 'edge';
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 
@@ -60,3 +61,4 @@ Return only JSON. Example:
     return NextResponse.json({ error: error.message || 'Scanning failed' }, { status: 500 });
   }
 }
+
