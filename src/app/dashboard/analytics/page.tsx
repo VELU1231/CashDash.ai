@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import dynamic from 'next/dynamic';
-import { motion } from 'framer-motion';
 import { CaretLeft, CaretRight } from '@phosphor-icons/react';
 import { formatCurrency } from '@/lib/utils';
 import { format, subMonths, addMonths } from 'date-fns';

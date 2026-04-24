@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, useEffect, useRef, useCallback } from 'react';
-import { Download, Upload, CheckCircle2, Loader2, FileWarning, Trash2, Edit2, Check, X } from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
+import { Download, Upload, CheckCircle2, Loader2, Trash2, Edit2, Check, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
 import Papa from 'papaparse';
@@ -13,7 +13,6 @@ export default function ImportExportPage() {
   const [selectedAccountId, setSelectedAccountId] = useState('');
   const [importing, setImporting] = useState(false);
   const [extracting, setExtracting] = useState(false);
-  const [progress, setProgress] = useState(0);
   const [statusText, setStatusText] = useState('');
   
   const [extractedTransactions, setExtractedTransactions] = useState<ParsedTransaction[]>([]);
@@ -57,7 +56,7 @@ export default function ImportExportPage() {
           setExtractedTransactions(txs);
           setExtracting(false);
           toast.success(`Found ${txs.length} transactions`);
-        } catch (err: any) {
+        } catch {
           toast.error('Failed to parse CSV format');
           setExtracting(false);
         }
@@ -135,7 +134,6 @@ export default function ImportExportPage() {
 
     setExtracting(true);
     setExtractedTransactions([]);
-    setProgress(0);
 
     const type = file.type;
     const name = file.name.toLowerCase();

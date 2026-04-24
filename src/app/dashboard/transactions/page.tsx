@@ -151,11 +151,11 @@ export default function TransactionsPage() {
       </div>
 
       {/* Type filter pills — always visible */}
-      <div className="flex gap-1 px-4 pb-2">
+      <div className="flex gap-1.5 px-4 pb-2">
         {(['all', 'income', 'expense', 'transfer'] as const).map(type => (
           <button key={type} onClick={() => setFilters(f => ({ ...f, type }))}
-            className={`flex-1 py-1.5 rounded-lg text-xs font-medium capitalize transition-all ${
-              filters.type === type ? 'bg-primary text-primary-foreground' : 'bg-foreground/[0.04] text-muted-foreground'
+            className={`flex-1 py-2 rounded-2xl text-xs font-medium capitalize transition-all duration-200 ${
+              filters.type === type ? 'bg-primary text-primary-foreground shadow-sm' : 'bg-foreground/[0.04] text-muted-foreground hover:bg-foreground/[0.07]'
             }`}>
             {type === 'all' ? 'All' : type}
           </button>
@@ -196,7 +196,7 @@ export default function TransactionsPage() {
       )}
 
       {/* Summary row — Income / Expenses / Total */}
-      <div className="grid grid-cols-3 text-center py-2.5 border-b border-border/20">
+      <div className="grid grid-cols-3 text-center py-3 mx-2 rounded-2xl bg-foreground/[0.015]">
         <div>
           <p className="text-[10px] text-muted-foreground uppercase">Income</p>
           <p className="text-sm font-semibold text-blue-400">{formatCurrency(incomeTotal, currency)}</p>
@@ -224,7 +224,7 @@ export default function TransactionsPage() {
                 onChange={e => setSearch(e.target.value)}
                 placeholder="Search..."
                 autoFocus
-                className="w-full pl-9 pr-8 py-2.5 rounded-lg text-sm bg-foreground/[0.03] border border-border/30 focus:outline-none"
+                className="w-full pl-9 pr-8 py-2.5 rounded-2xl text-sm bg-foreground/[0.03] border border-border/20 focus:outline-none focus:ring-2 focus:ring-primary/15 transition-all duration-200"
               />
               {search && (
                 <button onClick={() => setSearch('')} className="absolute right-3 top-1/2 -translate-y-1/2">
@@ -263,12 +263,12 @@ export default function TransactionsPage() {
             .map(([date, txs]) => (
               <div key={date}>
                 {/* Date header */}
-                <div className="flex items-center justify-between px-4 py-2 bg-foreground/[0.02]">
+                <div className="flex items-center justify-between px-4 py-2.5 bg-foreground/[0.015] rounded-xl mx-2 mt-2">
                   <span className="text-xs font-medium text-muted-foreground">{formatDate(date, 'EEE, MMM d')}</span>
                   <span className="text-xs font-medium tabular-nums text-muted-foreground">
                     {formatCurrency(
                       txs.reduce((s, t) => s + (t.type === 'income' ? t.amount : t.type === 'expense' ? -t.amount : 0), 0),
-                      txs[0]?.currency || 'USD', { showSign: true }
+                      txs[0]?.currency || currency, { showSign: true }
                     )}
                   </span>
                 </div>
@@ -278,10 +278,10 @@ export default function TransactionsPage() {
                   <div key={tx.id}
                     className={`flat-list-item px-4 ${selectedIds.has(tx.id) ? 'bg-primary/[0.03]' : ''}`}>
                     <button onClick={() => toggleSelect(tx.id)}
-                      className={`shrink-0 w-4 h-4 rounded flex items-center justify-center ${
-                        selectedIds.has(tx.id) ? 'bg-primary' : 'border border-muted-foreground/20'
+                      className={`shrink-0 w-5 h-5 rounded-full flex items-center justify-center transition-all duration-200 ${
+                        selectedIds.has(tx.id) ? 'bg-primary scale-110' : 'border border-muted-foreground/15 hover:border-primary/40'
                       }`}>
-                      {selectedIds.has(tx.id) && <CheckCircle className="w-3 h-3 text-white" weight="fill" />}
+                      {selectedIds.has(tx.id) && <CheckCircle className="w-3.5 h-3.5 text-white" weight="fill" />}
                     </button>
 
                     <div className="flat-list-icon">
@@ -305,11 +305,11 @@ export default function TransactionsPage() {
                       {formatCurrency(tx.amount, tx.currency)}
                     </span>
 
-                    <div className="flex items-center gap-0.5 shrink-0">
-                      <button onClick={() => openEdit(tx)} className="p-1 text-muted-foreground">
+                    <div className="flex items-center gap-1 shrink-0 opacity-60 hover:opacity-100 transition-opacity duration-200">
+                      <button onClick={() => openEdit(tx)} className="p-1.5 rounded-lg text-muted-foreground hover:bg-foreground/[0.04] hover:text-primary transition-all duration-200">
                         <PencilSimple className="w-3.5 h-3.5" />
                       </button>
-                      <button onClick={() => deleteTransaction(tx.id)} className="p-1 text-muted-foreground">
+                      <button onClick={() => deleteTransaction(tx.id)} className="p-1.5 rounded-lg text-muted-foreground hover:bg-red-500/10 hover:text-red-400 transition-all duration-200">
                         <TrashSimple className="w-3.5 h-3.5" />
                       </button>
                     </div>
@@ -336,7 +336,7 @@ export default function TransactionsPage() {
             style={{ background: 'rgba(0,0,0,0.5)' }}
             initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
             onClick={() => setEditingTx(null)}>
-            <motion.div className="w-full max-w-md bg-card rounded-t-2xl sm:rounded-2xl p-5"
+            <motion.div className="w-full max-w-md bg-card rounded-t-3xl sm:rounded-3xl p-6 shadow-2xl"
               initial={{ y: 100 }} animate={{ y: 0 }} exit={{ y: 100 }}
               onClick={e => e.stopPropagation()}>
               <div className="flex items-center justify-between mb-4">
@@ -366,7 +366,7 @@ export default function TransactionsPage() {
 
               <div className="flex gap-3 pt-4">
                 <motion.button onClick={saveEdit} disabled={editSaving}
-                  className="flex-1 py-3 rounded-xl text-sm font-semibold text-white disabled:opacity-60"
+                  className="flex-1 py-3 rounded-2xl text-sm font-semibold text-white disabled:opacity-60 transition-all duration-200"
                   style={{ background: '#ff6b6b' }}
                   whileTap={{ scale: 0.97 }}>
                   {editSaving ? 'Saving...' : 'Save'}

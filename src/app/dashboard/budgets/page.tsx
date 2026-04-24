@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Plus, ChartBar, Target, X, CircleNotch, FloppyDisk,
-  PencilSimple, TrashSimple, Warning, CheckCircle
+  PencilSimple, TrashSimple, Warning
 } from '@phosphor-icons/react';
 import { formatCurrency } from '@/lib/utils';
 import { toast } from 'sonner';

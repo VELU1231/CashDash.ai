@@ -4,6 +4,7 @@ import './globals.css';
 import { Providers } from '@/components/providers';
 import { I18nProvider } from '@/lib/i18n';
 import { Toaster } from 'sonner';
+import { CookieConsent } from '@/components/ui/cookie-consent';
 
 const inter = Inter({
   subsets: ['latin'],
@@ -77,6 +78,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                 },
               }}
             />
+            <CookieConsent />
           </Providers>
         </I18nProvider>
       </body>

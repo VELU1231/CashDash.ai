@@ -3,11 +3,10 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import {
-  Plus, Wallet, TrendUp, TrendDown, CreditCard,
-  PiggyBank, ChartBar, PencilSimple, TrashSimple, Eye, EyeSlash,
-  DotsThree, ArrowsClockwise
+  Plus, Wallet, PencilSimple, TrashSimple, EyeSlash,
+  ArrowsClockwise
 } from '@phosphor-icons/react';
-import { formatCurrency, ACCOUNT_COLORS, ACCOUNT_ICONS } from '@/lib/utils';
+import { formatCurrency, ACCOUNT_COLORS } from '@/lib/utils';
 import { toast } from 'sonner';
 import type { Account, AccountFormData, AccountType } from '@/types';
 import { IconDisplay } from '@/components/ui/icon-picker';
@@ -27,6 +26,7 @@ export default function AccountsPage() {
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [editingAccount, setEditingAccount] = useState<Account | null>(null);
+  const [profileCurrency, setProfileCurrency] = useState('USD');
   const [form, setForm] = useState<AccountFormData>({
     name: '', type: 'cash', icon: '💰', color: '#10b981',
     currency: 'USD', initial_balance: '0', description: '', parent_id: '',
@@ -38,9 +38,14 @@ export default function AccountsPage() {
   const fetchAccounts = async () => {
     setLoading(true);
     try {
-      const res = await fetch('/api/accounts');
-      const data = await res.json();
-      setAccounts(data.data || []);
+      const [accRes, profileRes] = await Promise.all([
+        fetch('/api/accounts').then(r => r.json()),
+        fetch('/api/profile').then(r => r.json()),
+      ]);
+      setAccounts(accRes.data || []);
+      if (profileRes.data?.default_currency) {
+        setProfileCurrency(profileRes.data.default_currency);
+      }
     } catch { toast.error('Failed to load accounts'); }
     finally { setLoading(false); }
   };
@@ -67,7 +72,7 @@ export default function AccountsPage() {
       fetchAccounts();
       setShowForm(false);
       setEditingAccount(null);
-      setForm({ name: '', type: 'cash', icon: '💰', color: '#10b981', currency: 'USD', initial_balance: '0', description: '', parent_id: '' });
+      setForm({ name: '', type: 'cash', icon: '💰', color: '#10b981', currency: profileCurrency, initial_balance: '0', description: '', parent_id: '' });
     } catch (e: unknown) {
       toast.error(e instanceof Error ? e.message : 'Failed to save');
     } finally { setSaving(false); }
@@ -133,7 +138,7 @@ export default function AccountsPage() {
         <div className="relative z-10">
           <p className="text-emerald-100 text-sm font-medium mb-1.5">Total Net Worth</p>
           <div className="text-4xl sm:text-5xl font-serif font-bold tracking-tight mb-5 editorial-number">
-            {formatCurrency(totalBalance, 'USD')}
+            {formatCurrency(totalBalance, profileCurrency)}
           </div>
           <div className="grid grid-cols-3 gap-3 text-sm text-emerald-100 font-mono">
             <span>{accounts.filter(a => a.balance >= 0).length} positive</span>

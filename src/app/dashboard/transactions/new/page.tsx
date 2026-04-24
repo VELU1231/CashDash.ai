@@ -177,8 +177,8 @@ export default function NewTransactionPage() {
           {(['income', 'expense', 'transfer'] as const).map(type => (
             <button key={type} type="button"
               onClick={() => setForm({ ...form, type, category_id: '', dest_account_id: type === 'transfer' ? form.dest_account_id : '' })}
-              className="py-2.5 rounded-lg border text-sm font-medium capitalize transition-all"
-              style={form.type === type ? { borderColor: typeColors[type], color: typeColors[type] } : { borderColor: 'hsl(var(--border) / 0.5)', color: 'hsl(var(--muted-foreground))' }}>
+              className="py-2.5 rounded-2xl border text-sm font-medium capitalize transition-all duration-200"
+              style={form.type === type ? { borderColor: typeColors[type], color: typeColors[type], background: `${typeColors[type]}08` } : { borderColor: 'hsl(var(--border) / 0.3)', color: 'hsl(var(--muted-foreground))' }}>
               {type}
             </button>
           ))}
@@ -272,7 +272,7 @@ export default function NewTransactionPage() {
             value={form.note}
             onChange={e => setForm({ ...form, note: e.target.value })}
             rows={3}
-            className="w-full rounded-lg border border-border/30 bg-foreground/[0.02] px-3 py-2 text-sm focus:outline-none resize-none"
+            className="w-full rounded-2xl border border-border/20 bg-foreground/[0.02] px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/10 resize-none transition-all duration-200"
             placeholder="Add extra details, receipts, or reminders..."
           />
         </div>
@@ -303,13 +303,13 @@ export default function NewTransactionPage() {
         {/* Save / Continue — clearly different actions */}
         <div className="px-4 pt-5 pb-4 space-y-2">
           <motion.button type="submit" disabled={loading}
-            className="w-full py-3.5 rounded-xl text-sm font-semibold text-white disabled:opacity-60"
+            className="w-full py-3.5 rounded-2xl text-sm font-semibold text-white disabled:opacity-60 transition-all duration-200 shadow-sm"
             style={{ background: typeColors[form.type] }}
             whileTap={{ scale: 0.97 }}>
             {loading ? 'Saving...' : 'Save & Close'}
           </motion.button>
           <motion.button type="button" onClick={handleSaveAndContinue} disabled={loading}
-            className="w-full py-3 rounded-xl border border-border/50 text-sm font-medium text-muted-foreground disabled:opacity-60 flex items-center justify-center gap-1.5"
+            className="w-full py-3 rounded-2xl border border-border/30 text-sm font-medium text-muted-foreground disabled:opacity-60 flex items-center justify-center gap-1.5 hover:bg-foreground/[0.02] transition-all duration-200"
             whileTap={{ scale: 0.97 }}>
             <Plus className="w-4 h-4" /> Save & Add Another
           </motion.button>

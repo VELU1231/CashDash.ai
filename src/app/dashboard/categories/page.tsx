@@ -3,8 +3,8 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  FolderOpen, Plus, Edit3, Trash2, Tag, ChevronDown, ChevronRight
-} from 'lucide-react';
+  FolderOpen, Plus, PencilSimple, TrashSimple, CaretDown, CaretRight
+} from '@phosphor-icons/react';
 import { ACCOUNT_COLORS } from '@/lib/utils';
 import { toast } from 'sonner';
 import type { Category, CategoryFormData, CategoryType } from '@/types';
@@ -145,7 +145,7 @@ export default function CategoriesPage() {
                               onClick={() => toggleExpand(parent.id)}
                               className={`p-0.5 rounded hover:bg-muted ${!parent.subcategories?.length ? 'invisible' : ''}`}
                             >
-                              {expandedParents[parent.id] ? <ChevronDown className="w-4 h-4 text-muted-foreground" /> : <ChevronRight className="w-4 h-4 text-muted-foreground" />}
+                              {expandedParents[parent.id] ? <CaretDown className="w-4 h-4 text-muted-foreground" /> : <CaretRight className="w-4 h-4 text-muted-foreground" />}
                             </button>
                             <div className="w-8 h-8 rounded-lg flex items-center justify-center text-lg" style={{ background: `${parent.color}20` }}>
                               <span>{parent.icon}</span>
@@ -159,11 +159,11 @@ export default function CategoriesPage() {
                             </button>
                             <button onClick={() => { setEditingCategory(parent); setForm({ name: parent.name, type: parent.type, icon: parent.icon, color: parent.color, parent_id: '' }); setShowForm(true); }}
                               className="p-1.5 rounded-lg hover:bg-muted text-muted-foreground hover:text-foreground transition-colors">
-                              <Edit3 className="w-3.5 h-3.5" />
+                              <PencilSimple className="w-3.5 h-3.5" />
                             </button>
                             <button onClick={() => deleteCategory(parent.id)}
                               className="p-1.5 rounded-lg hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors">
-                              <Trash2 className="w-3.5 h-3.5" />
+                              <TrashSimple className="w-3.5 h-3.5" />
                             </button>
                           </div>
                         </div>
@@ -190,11 +190,11 @@ export default function CategoriesPage() {
                                   <div className="flex items-center gap-1 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
                                     <button onClick={() => { setEditingCategory(sub as any); setForm({ name: sub.name, type: parent.type, icon: sub.icon, color: sub.color, parent_id: parent.id }); setShowForm(true); }}
                                       className="p-1 rounded-md hover:bg-muted text-muted-foreground hover:text-foreground transition-colors">
-                                      <Edit3 className="w-3 h-3" />
+                                      <PencilSimple className="w-3 h-3" />
                                     </button>
                                     <button onClick={() => deleteCategory(sub.id)}
                                       className="p-1 rounded-md hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors">
-                                      <Trash2 className="w-3 h-3" />
+                                      <TrashSimple className="w-3 h-3" />
                                     </button>
                                   </div>
                                 </div>

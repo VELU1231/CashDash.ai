@@ -5,12 +5,12 @@ import { useRouter } from 'next/navigation';
 import { useTheme } from 'next-themes';
 import { motion } from 'framer-motion';
 import {
-  Gear, Coins, LockSimple, Calculator, Desktop,
-  ArrowCounterClockwise, EnvelopeSimple, Question, ThumbsUp,
+  Gear, Coins, LockSimple,
+  ArrowCounterClockwise, EnvelopeSimple, Question,
   CaretLeft, Moon, Sun, SunDim, SignOut, Brain,
   CreditCard, Bell, ShieldCheck, FileArrowDown, FileArrowUp,
   Tag, Repeat, Target, ChartLineUp, UserCircle,
-  Palette, Globe, Clock, CalendarBlank
+  Palette
 } from '@phosphor-icons/react';
 import { toast } from 'sonner';
 import { CURRENCIES } from '@/lib/utils';

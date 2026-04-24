@@ -3,9 +3,9 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  Brain, PaperPlaneRight, CircleNotch, CheckCircle, XCircle, Sparkle,
-  Calendar, CurrencyDollar, ChatCircle, Trash, Info,
-  PencilSimple, FloppyDisk, X, CaretDown
+  Brain, PaperPlaneRight, CircleNotch, CheckCircle, Sparkle,
+  Trash, Info,
+  PencilSimple, FloppyDisk, X
 } from '@phosphor-icons/react';
 import { formatCurrency, formatDate, CURRENCIES } from '@/lib/utils';
 import { toast } from 'sonner';

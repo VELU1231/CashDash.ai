@@ -5,7 +5,7 @@ import dynamic from 'next/dynamic';
 import { motion } from 'framer-motion';
 import {
   TrendUp, TrendDown, Wallet, ArrowsLeftRight,
-  Brain, Target, Sparkle, Crown
+  Brain, Target, Sparkle
 } from '@phosphor-icons/react';
 import Link from 'next/link';
 import { format, parseISO } from 'date-fns';
@@ -34,7 +34,7 @@ const CHART_PALETTE = [
   '#ef4444', '#06b6d4', '#ec4899', '#64748b',
 ];
 
-export function DashboardClient({ transactions, prevTransactions, accounts, trendData, profile, currentMonth, flags }: Props) {
+export function DashboardClient({ transactions, prevTransactions, accounts, trendData, profile, currentMonth }: Props) {
   const currency = profile?.default_currency || 'USD';
   const [exchangeRates, setExchangeRates] = useState<Record<string, number>>({});
   const [insight, setInsight] = useState<string | null>(null);
