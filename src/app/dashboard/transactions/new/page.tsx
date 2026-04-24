@@ -1,4 +1,3 @@
-export const runtime = 'edge';
 'use client';
 
 import { ArrowLeft, Scan, CircleNotch, Paperclip, X, Camera, Plus } from '@phosphor-icons/react';
