@@ -1,8 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { extractTransactionsFromText } from '@/lib/smart-parser';
-// eslint-disable-next-line @typescript-eslint/no-require-imports
-const pdfParse = require('pdf-parse');
 
 export async function POST(request: NextRequest) {
   try {
@@ -27,13 +25,7 @@ export async function POST(request: NextRequest) {
     let text = '';
 
     if (file.type === 'application/pdf' || file.name.endsWith('.pdf')) {
-      try {
-        const pdfData = await pdfParse(buffer);
-        text = pdfData.text;
-      } catch (err: any) {
-         console.error('PDF Parse Error:', err);
-         return NextResponse.json({ error: 'Failed to read PDF file. Make sure it is not password protected.' }, { status: 400 });
-      }
+      return NextResponse.json({ error: 'PDF files must be processed on the client side.' }, { status: 400 });
     } else if (file.type === 'text/plain' || file.name.endsWith('.txt')) {
       text = buffer.toString('utf-8');
     } else {

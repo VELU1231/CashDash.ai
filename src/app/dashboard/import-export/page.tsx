@@ -8,6 +8,8 @@ import Papa from 'papaparse';
 import { createWorker, PSM } from 'tesseract.js';
 import { ParsedTransaction } from '@/lib/smart-parser';
 
+import * as pdfjsLib from 'pdfjs-dist';
+
 export default function ImportExportPage() {
   const [accounts, setAccounts] = useState<any[]>([]);
   const [selectedAccountId, setSelectedAccountId] = useState('');
@@ -22,6 +24,11 @@ export default function ImportExportPage() {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
+    // Initialize PDF worker
+    if (typeof window !== 'undefined' && !pdfjsLib.GlobalWorkerOptions.workerSrc) {
+      pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.mjs`;
+    }
+    
     fetch('/api/accounts').then(r => r.json()).then(res => {
       setAccounts(res.data || []);
       if (res.data?.length > 0) setSelectedAccountId(res.data[0].id);
@@ -106,10 +113,28 @@ export default function ImportExportPage() {
   };
 
   const processPDF = async (file: File) => {
-    setStatusText('Extracting PDF text...');
+    setStatusText('Loading PDF engine...');
     try {
+      const arrayBuffer = await file.arrayBuffer();
+      const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+      
+      let fullText = '';
+      for (let i = 1; i <= pdf.numPages; i++) {
+        setStatusText(`Extracting page ${i} of ${pdf.numPages}...`);
+        const page = await pdf.getPage(i);
+        const textContent = await page.getTextContent();
+        const pageText = textContent.items.map((item: any) => item.str).join(' ');
+        fullText += pageText + '\n';
+      }
+      
+      if (!fullText.trim()) {
+        throw new Error('No text found in PDF. It might be a scanned image.');
+      }
+
+      setStatusText('Extracting transactions...');
       const formData = new FormData();
-      formData.append('file', file);
+      const textFile = new File([fullText], 'pdf-extracted.txt', { type: 'text/plain' });
+      formData.append('file', textFile);
       
       const res = await fetch('/api/import/extract', {
         method: 'POST',
@@ -122,6 +147,7 @@ export default function ImportExportPage() {
       setExtractedTransactions(data.transactions || []);
       toast.success(`Found ${data.transactions?.length || 0} transactions`);
     } catch (err: any) {
+      console.error(err);
       toast.error(err.message || 'Failed to process PDF');
     } finally {
       setExtracting(false);
