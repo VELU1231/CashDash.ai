@@ -26,7 +26,7 @@
     --secondary-foreground: 215 25% 27%;
 
     --muted: 210 20% 96%;               /* #F1F5F9 */
-    --muted-foreground: 215 16% 47%;    /* #64748B — slate 500 */
+    --muted-foreground: 215 16% 40%;    /* #566880 — boosted for WCAG AA 4.5:1 contrast */
 
     --accent: 210 20% 96%;              /* slate 100 */
     --accent-foreground: 222 47% 11%;
@@ -66,7 +66,7 @@
     --secondary-foreground: 210 40% 98%;
 
     --muted: 220 30% 12%;
-    --muted-foreground: 215 20% 65%;    
+    --muted-foreground: 215 20% 72%;    /* Boosted for WCAG AA 4.5:1 on deep navy */
 
     --accent: 220 30% 12%;              
     --accent-foreground: 210 40% 98%;
@@ -574,14 +574,14 @@
 
   .btn-primary {
     @apply inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl text-sm font-medium;
-    background: linear-gradient(135deg, hsl(160 84% 39%) 0%, hsl(160 84% 34%) 100%);
+    background: linear-gradient(135deg, hsl(160 84% 36%) 0%, hsl(160 84% 30%) 100%); /* Darkened for WCAG AA white text contrast */
     color: white;
-    box-shadow: 0 2px 8px hsl(160 84% 39% / 0.25);
+    box-shadow: 0 2px 8px hsl(160 84% 36% / 0.25);
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   }
 
   .btn-primary:hover {
-    box-shadow: 0 4px 16px hsl(160 84% 39% / 0.35);
+    box-shadow: 0 4px 16px hsl(160 84% 36% / 0.35);
     transform: translateY(-1px);
   }
 

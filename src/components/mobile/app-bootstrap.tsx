@@ -169,7 +169,7 @@ export function AppBootstrap() {
                     </button>
                   </div>
                 </div>
-                <button className="rounded-xl p-1.5 text-muted-foreground transition-colors hover:text-foreground" onClick={dismissInstall}>
+                <button aria-label="Dismiss install prompt" className="rounded-xl p-1.5 text-muted-foreground transition-colors hover:text-foreground" onClick={dismissInstall}>
                   <X className="h-4 w-4" weight="bold" />
                 </button>
               </div>

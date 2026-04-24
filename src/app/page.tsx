@@ -167,13 +167,13 @@ export default function HomePage() {
                 <div className="ai-message assistant text-sm">
                   <p className="font-medium text-foreground mb-2">✅ Got it! I logged 2 transactions:</p>
                   <div className="space-y-1.5">
-                    <div className="flex items-center justify-between text-xs rounded-xl px-3 py-2.5" style={{ background: 'hsl(var(--foreground) / 0.03)' }}>
-                      <span>☕ Coffee → Food & Drinks</span>
-                      <span className="font-semibold font-serif text-red-400">-₱10.00</span>
+                    <div className="flex items-center justify-between text-xs rounded-xl px-3 py-2.5" style={{ background: 'hsl(var(--foreground) / 0.06)' }}>
+                      <span className="text-foreground">☕ Coffee → Food & Drinks</span>
+                      <span className="font-semibold font-serif text-red-500">-₱10.00</span>
                     </div>
-                    <div className="flex items-center justify-between text-xs rounded-xl px-3 py-2.5" style={{ background: 'hsl(var(--foreground) / 0.03)' }}>
-                      <span>🚌 Bus fare → Transportation</span>
-                      <span className="font-semibold font-serif text-red-400">-₱15.00</span>
+                    <div className="flex items-center justify-between text-xs rounded-xl px-3 py-2.5" style={{ background: 'hsl(var(--foreground) / 0.06)' }}>
+                      <span className="text-foreground">🚌 Bus fare → Transportation</span>
+                      <span className="font-semibold font-serif text-red-500">-₱15.00</span>
                     </div>
                   </div>
                   <p className="text-xs text-muted-foreground mt-2.5 font-mono">Today · Philippine Peso</p>
