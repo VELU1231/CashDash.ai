@@ -159,7 +159,7 @@ export default function PricingPage() {
 
 function Feature({ icon, text, disabled }: { icon: React.ReactNode; text: string; disabled?: boolean }) {
   return (
-    <div className={`flex items-center gap-3 ${disabled ? 'opacity-50' : ''}`}>
+    <div className={`flex items-center gap-3 ${disabled ? 'opacity-60' : ''}`}>
       {icon}
       <span className={disabled ? 'text-muted-foreground' : 'text-foreground'}>{text}</span>
     </div>

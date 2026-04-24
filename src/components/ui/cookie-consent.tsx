@@ -45,7 +45,7 @@ export function CookieConsent() {
           >
             <p className="text-sm text-muted-foreground leading-relaxed mb-4">
               We use essential cookies for authentication and preferences. No tracking or advertising cookies.{' '}
-              <Link href="/privacy" className="text-primary hover:underline">Learn more</Link>
+              <Link href="/privacy" className="text-primary underline hover:no-underline">Learn more</Link>
             </p>
             <div className="flex gap-2">
               <button
