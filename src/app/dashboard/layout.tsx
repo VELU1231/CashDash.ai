@@ -4,6 +4,7 @@ import { DashboardSidebar } from '@/components/layout/sidebar';
 import { DashboardTopbar } from '@/components/layout/topbar';
 import { MobileNav } from '@/components/layout/mobile-nav';
 import { LockScreen } from '@/components/ui/lock-screen';
+import { OfflineBadge } from '@/components/ui/offline-badge';
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = { title: 'Dashboard' };
@@ -33,6 +34,7 @@ export default async function DashboardLayout({
 
         <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
           <DashboardTopbar profile={profile} />
+          <OfflineBadge />
           <main className="flex-1 overflow-y-auto scrollbar-thin relative mobile-app-surface">
             <div className="mx-auto w-full md:max-w-6xl pb-24 md:pb-0">
               <div className="px-3 py-3 sm:px-5 md:px-6 md:py-6">

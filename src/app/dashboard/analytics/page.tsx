@@ -5,6 +5,7 @@ import dynamic from 'next/dynamic';
 import { CaretLeft, CaretRight } from '@phosphor-icons/react';
 import { formatCurrency } from '@/lib/utils';
 import { format, subMonths, addMonths } from 'date-fns';
+import { PromoCard } from '@/components/ads/promo-card';
 
 const PieChartCard = dynamic(() => import('@/components/ui/chartjs-components').then(m => ({ default: m.PieChartCard })), { ssr: false });
 const AreaChartCard = dynamic(() => import('@/components/ui/chartjs-components').then(m => ({ default: m.AreaChartCard })), { ssr: false });
@@ -323,6 +324,10 @@ export default function AnalyticsPage() {
           )}
         </>
       )}
+      {/* Promo — 1 per page, free tier */}
+      <div className="mt-4">
+        <PromoCard page="analytics" />
+      </div>
     </div>
   );
 }

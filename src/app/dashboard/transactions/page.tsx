@@ -12,6 +12,7 @@ import { toast } from 'sonner';
 import Link from 'next/link';
 import { format, subMonths, addMonths } from 'date-fns';
 import type { Transaction, TransactionFilters } from '@/types';
+import { PromoCard } from '@/components/ads/promo-card';
 
 type SubTab = 'daily' | 'monthly' | 'total';
 
@@ -211,6 +212,11 @@ export default function TransactionsPage() {
             {formatCurrency(netTotal, currency)}
           </p>
         </div>
+      </div>
+
+      {/* Promo — 1 per page, free tier */}
+      <div className="px-4 py-2">
+        <PromoCard page="transactions" />
       </div>
 
       {/* Search bar (toggled) */}

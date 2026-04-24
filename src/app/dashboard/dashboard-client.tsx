@@ -11,6 +11,7 @@ import Link from 'next/link';
 import { format, parseISO } from 'date-fns';
 import { formatCurrency, formatRelativeDate } from '@/lib/utils';
 import type { Profile, Transaction, Account } from '@/types';
+import { PromoCard } from '@/components/ads/promo-card';
 
 const AreaChartCard = dynamic(() => import('@/components/ui/chartjs-components').then(m => ({ default: m.AreaChartCard })), { ssr: false });
 const LineChartCard = dynamic(() => import('@/components/ui/chartjs-components').then(m => ({ default: m.LineChartCard })), { ssr: false });
@@ -458,6 +459,10 @@ export function DashboardClient({ transactions, prevTransactions, accounts, tren
           </div>
         </motion.section>
       )}
+      {/* Self-hosted promo — 1 per page, free tier only */}
+      <div className="mt-4">
+        <PromoCard page="dashboard" tier={profile?.subscription_tier} />
+      </div>
     </div>
   );
 }
