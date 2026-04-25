@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "next dev",
     "dev:host": "next dev --hostname 0.0.0.0",
-    "build": "next build",
+    "build": "node scripts/patch-workflow-runtime.js && next build && node scripts/patch-workflow-runtime.js",
     "preview": "npm run build && wrangler pages dev .vercel/output/static",
     "start": "next start",
     "lint": "next lint",
@@ -14,7 +14,8 @@
     "cap:sync": "npx cap sync android",
     "cap:open:android": "npx cap open android",
     "cap:run:android": "npx cap run android",
-    "cap:assets": "npx @capacitor/assets generate --android"
+    "cap:assets": "npx @capacitor/assets generate --android",
+    "patch:workflow": "node scripts/patch-workflow-runtime.js"
   },
   "dependencies": {
     "@ai-sdk/google": "^3.0.64",
