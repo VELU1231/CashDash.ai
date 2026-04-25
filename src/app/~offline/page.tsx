@@ -1,5 +1,5 @@
-export const runtime = 'edge';
 'use client';
+export const runtime = 'edge';
 
 import Link from 'next/link';
 import { WifiSlash, House } from '@phosphor-icons/react';
