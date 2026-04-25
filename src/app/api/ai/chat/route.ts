@@ -1,4 +1,3 @@
-export const runtime = 'edge';
 import { streamText, tool } from 'ai';
 import { createOpenAI } from '@ai-sdk/openai';
 import { z } from 'zod';

@@ -1,4 +1,2 @@
-name = "cashbash-ai"
-compatibility_date = "2026-04-24"
-compatibility_flags = ["nodejs_compat"]
-pages_build_output_dir = ".vercel/output/static"
+# This file is superseded by wrangler.jsonc (used by @opennextjs/cloudflare)
+# Do not add config here.

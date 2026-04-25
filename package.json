@@ -6,8 +6,9 @@
   "scripts": {
     "dev": "next dev",
     "dev:host": "next dev --hostname 0.0.0.0",
-    "build": "node scripts/patch-workflow-runtime.js && next build && node scripts/patch-workflow-runtime.js",
-    "preview": "npm run build && wrangler pages dev .vercel/output/static",
+    "build": "next build",
+    "preview": "opennextjs-cloudflare build && opennextjs-cloudflare preview",
+    "deploy": "opennextjs-cloudflare build && opennextjs-cloudflare deploy",
     "start": "next start",
     "lint": "next lint",
     "type-check": "tsc --noEmit",
@@ -15,7 +16,7 @@
     "cap:open:android": "npx cap open android",
     "cap:run:android": "npx cap run android",
     "cap:assets": "npx @capacitor/assets generate --android",
-    "patch:workflow": "node scripts/patch-workflow-runtime.js"
+    "cf-typegen": "wrangler types --env-interface CloudflareEnv cloudflare-env.d.ts"
   },
   "dependencies": {
     "@ai-sdk/google": "^3.0.64",
@@ -35,6 +36,7 @@
     "@heroicons/react": "^2.2.0",
     "@hookform/resolvers": "^3.10.0",
     "@lemonsqueezy/lemonsqueezy.js": "^4.0.0",
+    "@opennextjs/cloudflare": "^1.19.4",
     "@phosphor-icons/react": "^2.1.10",
     "@radix-ui/react-accordion": "^1.2.2",
     "@radix-ui/react-alert-dialog": "^1.1.4",
@@ -108,7 +110,6 @@
     "zustand": "^5.0.3"
   },
   "devDependencies": {
-    "@cloudflare/next-on-pages": "^1.13.16",
     "@lhci/cli": "^0.15.1",
     "@tailwindcss/forms": "^0.5.10",
     "@tailwindcss/typography": "^0.5.16",

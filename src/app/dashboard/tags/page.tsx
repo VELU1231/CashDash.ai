@@ -1,5 +1,4 @@
 'use client';
-export const runtime = 'edge';
 
 import { Tag, Plus } from 'lucide-react';
 import { motion } from 'framer-motion';

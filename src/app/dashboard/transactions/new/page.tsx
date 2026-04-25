@@ -1,5 +1,4 @@
 'use client';
-export const runtime = 'edge';
 
 import { ArrowLeft, Scan, CircleNotch, Paperclip, X, Camera, Plus } from '@phosphor-icons/react';
 import { motion } from 'framer-motion';

@@ -1,4 +1,3 @@
-export const runtime = 'edge';
 import { start } from 'workflow/api';
 import { handleNewUserOnboarding } from '@/workflows/user-onboarding';
 import { NextRequest, NextResponse } from 'next/server';
