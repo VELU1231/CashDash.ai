@@ -1,4 +1,8 @@
-export const runtime = 'edge';
+// Note: runtime is intentionally NOT set here. Each API route/page declares
+// its own `export const runtime = 'edge'` explicitly. The root layout must not
+// declare edge runtime as it propagates to ALL child routes — including
+// auto-generated workflow SDK routes that require Node.js (node:module).
+
 import type { Metadata, Viewport } from 'next';
 import { Inter, Fraunces, JetBrains_Mono } from 'next/font/google';
 import './globals.css';

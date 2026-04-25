@@ -1,3 +1,4 @@
+export const runtime = 'edge';
 'use client';
 
 import { motion } from 'framer-motion';
